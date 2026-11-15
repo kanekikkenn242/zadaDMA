@@ -8,25 +8,28 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 30
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       
-      - name: Setup Rust Toolchain
+      - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
-        with: 
-          targets: aarch64-apple-ios
+        with: { targets: aarch64-apple-ios }
         
-      - name: Build Rust Static Library
+      - name: Build Rust Crypto
         working-directory: Motor/zdma_crypto
         run: cargo build --release --target aarch64-apple-ios
         
-      - name: Download and Prepare kfd
+      - name: Download and Compile kfd
         run: |
           rm -rf Motor/kexploit/kfd
           git clone --depth 1 https://github.com/felix-pb/kfd.git Motor/kexploit/kfd
           rm -rf Motor/kexploit/kfd/.git
-          echo "--- KFD Structure ---"
-          ls -la Motor/kexploit/kfd/kfd/libkfd
+          cd Motor/kexploit/kfd/kfd
+          mkdir -p build
+          SDK=$(xcrun --sdk iphoneos --show-sdk-path)
+          for f in $(find . -name "*.c" ! -name "macos_kfd.c"); do
+            clang -c "$f" -arch arm64 -isysroot "$SDK" -I. -Ilibkfd -Iexploit -Ikutils -o "build/$(basename $f).o"
+          done
+          ar rcs build/libkfd.a build/*.o
           
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -40,7 +43,7 @@ jobs:
             -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
             
-      - name: Force Copy Patches
+      - name: Copy Patches
         run: |
           APP=build/Build/Products/Release-iphoneos/zadaDMA.app
           if [ -f Payload/zadaDMA.app/aimdrag_neck.3105 ]; then cp Payload/zadaDMA.app/aimdrag_neck.3105 "$APP/"; fi
