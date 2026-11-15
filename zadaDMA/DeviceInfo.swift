@@ -11,12 +11,10 @@ struct DeviceInfo {
             return identifier + String(UnicodeScalar(UInt8(value)))
         }
     }
-    
     var systemVersion: String {
-        return "\(UIDevice.current.systemVersion) (\(ProcessInfo.processInfo.operatingSystemVersionString.components(separatedBy: " ").last ?? ""))"
+        UIDevice.current.systemVersion
     }
-    
     var buildVersion: String {
-        return ProcessInfo.processInfo.operatingSystemVersionString
+        ProcessInfo.processInfo.operatingSystemVersionString
     }
 }
