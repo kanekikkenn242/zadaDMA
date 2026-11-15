@@ -1,4 +1,5 @@
 import SwiftUI
+
 @MainActor
 final class AppState: ObservableObject {
     enum Phase { case booting, antiTamper, forceUpdate, welcome, dashboard, blocked(String) }
@@ -9,12 +10,18 @@ final class AppState: ObservableObject {
     @Published var log: [String] = []
 
     func boot() {
-        var e: NSError?
-        if !MotorBridge.bootstrap(withError: &e) {
+        do {
+            if !(try MotorBridge.bootstrap()) {
+                phase = .antiTamper
+                log.append("anti-tamper: failed")
+                return
+            }
+        } catch {
             phase = .antiTamper
-            log.append("anti-tamper: \(e?.localizedDescription ?? "?")")
+            log.append("anti-tamper: \(error.localizedDescription)")
             return
         }
+
         AppUpdateChecker.check { [weak self] blocked, reason in
             Task { @MainActor in
                 guard let self else { return }
@@ -23,7 +30,12 @@ final class AppState: ObservableObject {
             }
         }
     }
-    func enterDashboard() { phase = .dashboard; preload() }
+
+    func enterDashboard() { 
+        phase = .dashboard
+        preload() 
+    }
+
     func preload() {
         MotorBridge.ensureSandbox { [weak self] ok, _ in
             Task { @MainActor in
@@ -34,10 +46,15 @@ final class AppState: ObservableObject {
             }
         }
     }
+
     func apply(packageData: Data, bundleID: String, pass: String) {
-        var e: NSError?
-        let ok = MotorBridge.applyPackageData(packageData, passphrase: pass, bundleID: bundleID, error: &e)
-        log.append("patch \(bundleID): \(ok ? "ok" : e?.localizedDescription ?? "fail")")
+        do {
+            let ok = try MotorBridge.applyPackageData(packageData, passphrase: pass, bundleID: bundleID)
+            log.append("patch \(bundleID): \(ok ? "ok" : "fail")")
+        } catch {
+            log.append("patch \(bundleID): \(error.localizedDescription)")
+        }
     }
 }
+
 struct Product: Identifiable { let id, name, slug, category: String }
