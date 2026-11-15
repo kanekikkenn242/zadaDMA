@@ -26,7 +26,7 @@ jobs:
           git clone --depth 1 https://github.com/felix-pb/kfd.git Motor/kexploit/kfd
           rm -rf Motor/kexploit/kfd/.git
           echo "--- KFD Structure ---"
-          ls -la Motor/kexploit/kfd/kfd
+          ls -la Motor/kexploit/kfd/kfd/libkfd
           
       - name: Install XcodeGen
         run: brew install xcodegen
