@@ -15,10 +15,7 @@ struct RootView: View {
     var body: some View {
         switch state.phase {
         case .booting:
-            ZStack {
-                Color.black.ignoresSafeArea()
-                ProgressView().tint(.white)
-            }
+            ZStack { Color.black.ignoresSafeArea(); ProgressView().tint(.white) }
         case .license:
             LicenseGate()
         case .dashboard:
@@ -26,17 +23,9 @@ struct RootView: View {
         case .blocked(let reason):
             ZStack {
                 Color.black.ignoresSafeArea()
-                VStack(spacing: 16) {
-                    Image(systemName: "xmark.shield.fill")
-                        .font(.system(size: 60))
-                        .foregroundStyle(.red)
-                    Text("Blocked")
-                        .font(.title.bold())
-                        .foregroundStyle(.white)
-                    Text(reason)
-                        .foregroundStyle(.gray)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
+                VStack {
+                    Text("Blocked").font(.title).foregroundStyle(.red)
+                    Text(reason).foregroundStyle(.white)
                 }
             }
         }
