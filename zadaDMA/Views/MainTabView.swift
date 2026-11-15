@@ -15,6 +15,7 @@ struct MainTabView: View {
                 SupportView().tag(3)
             }.tabViewStyle(.page(indexDisplayMode: .never))
             
+            // Custom Tab Bar me madhësi fikse
             HStack {
                 TabButton(icon: "house.fill", title: "Inicio", isSelected: tab == 0) { tab = 0 }
                 Spacer()
@@ -24,9 +25,11 @@ struct MainTabView: View {
                 Spacer()
                 TabButton(icon: "questionmark.circle", title: "Soporte", isSelected: tab == 3) { tab = 3 }
             }
-            .padding(.horizontal, 20).padding(.vertical, 12)
-            .background(Color(white: 0.1)).clipShape(Capsule())
-            .padding(.horizontal, 16).padding(.bottom, 20)
+            .padding(.horizontal, 24)
+            .frame(height: 60) // Lartësi fikse
+            .background(Color(white: 0.1))
+            .clipShape(Capsule())
+            .padding(.horizontal, 20).padding(.bottom, 20)
         }
     }
 }
@@ -40,12 +43,12 @@ struct TabButton: View {
         Button(action: action) {
             VStack(spacing: 4) {
                 Image(systemName: icon).font(.system(size: 20))
-                Text(title).font(.system(size: 10, weight: .medium))
+                Text(title).font(.system(size: 10, weight: .medium)) // Font fiks
             }
             .foregroundColor(isSelected ? .white : .gray)
-            .padding(.horizontal, 16).padding(.vertical, 8)
+            .frame(width: 60, height: 44) // Kufizim i gjerësisë dhe lartësisë
             .background(isSelected ? Color(white: 0.2) : Color.clear)
-            .cornerRadius(14)
+            .cornerRadius(12)
         }
     }
 }
