@@ -21,9 +21,9 @@ targets:
       - path: zadaDMA
       - path: Motor
         excludes: ["zdma_crypto/**"]
-      - path: Motor/kexploit/kfd/exploit
-      - path: Motor/kexploit/kfd/kutils
-      - path: Motor/kexploit/kfd/libkfd
+      - path: Motor/kexploit/kfd/kfd/exploit
+      - path: Motor/kexploit/kfd/kfd/kutils
+      - path: Motor/kexploit/kfd/kfd/libkfd
       - path: Payload/zadaDMA.app
         excludes: ["Info.plist", "zadaDMA", "Assets.car"]
         buildPhase: resources
@@ -35,7 +35,7 @@ targets:
         PRODUCT_NAME: zadaDMA
         INFOPLIST_FILE: Payload/zadaDMA.app/Info.plist
         SWIFT_OBJC_BRIDGING_HEADER: Motor/MotorBridge.h
-        HEADER_SEARCH_PATHS: ["$(SRCROOT)/Motor", "$(SRCROOT)/Motor/kexploit/kfd"]
+        HEADER_SEARCH_PATHS: ["$(SRCROOT)/Motor", "$(SRCROOT)/Motor/kexploit/kfd/kfd"]
         LIBRARY_SEARCH_PATHS: ["$(SRCROOT)/Motor/zdma_crypto/target/aarch64-apple-ios/release"]
         OTHER_LDFLAGS: ["-ObjC", "-lc++", "-lzdma_crypto"]
         TARGETED_DEVICE_FAMILY: "1,2"
