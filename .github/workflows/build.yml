@@ -23,13 +23,18 @@ jobs:
           rm -rf Motor/kexploit/kfd
           git clone --depth 1 https://github.com/felix-pb/kfd.git Motor/kexploit/kfd
           rm -rf Motor/kexploit/kfd/.git
-          cd Motor/kexploit/kfd/kfd
-          mkdir -p build
+          
+          mkdir -p Motor/kexploit/kfd/build
           SDK=$(xcrun --sdk iphoneos --show-sdk-path)
-          for f in $(find . -name "*.c" ! -name "macos_kfd.c"); do
+          cd Motor/kexploit/kfd
+          
+          # Kompilojme vetem skedaret .c nga folderat e duhur
+          for f in $(find exploit libkfd kutils -name "*.c"); do
             clang -c "$f" -arch arm64 -isysroot "$SDK" -I. -Ilibkfd -Iexploit -Ikutils -o "build/$(basename $f).o"
           done
+          
           ar rcs build/libkfd.a build/*.o
+          echo "--- KFD u kompilua me sukses ---"
           
       - name: Install XcodeGen
         run: brew install xcodegen
