@@ -1,41 +1,55 @@
-#import "Bridge.h"
+#import "MotorBridge.h"
 #import "SandboxEscape.h"
-#import "PatchPackageCodec.h"
-#import "PatchTransaction.h"
 
 extern int kexploit_run(void);
 
 @implementation MotorBridge
 
 + (BOOL)bootstrap {
-    // 1. Provojmë Kernel Exploit
     int kfd_status = kexploit_run();
     if (kfd_status != 0) {
-        NSLog(@"[MotorBridge] Kernel Exploit dështoi.");
+        NSLog(@"[MotorBridge] Kernel Exploit failed.");
         return NO;
     }
-    NSLog(@"[MotorBridge] Kernel R/W u aktivizua.");
+    NSLog(@"[MotorBridge] Kernel R/W active.");
     return YES;
 }
 
-+ (BOOL)applyPatch:(NSString *)patchName {
-    // 1. Kontrollo Sandbox
-    if (!escape_sandbox_bad_query(@"com.dts.freefireth")) {
-        NSLog(@"[MotorBridge] Sandbox escape dështoi.");
++ (void)ensureSandbox:(void(^)(BOOL ok, NSError * _Nullable err))done {
+    BOOL ok = escape_sandbox_bad_query(@"com.dts.freefireth");
+    done(ok, nil);
+}
+
++ (BOOL)applyPackageData:(NSData *)data passphrase:(NSString *)pass bundleID:(NSString *)bundleID {
+    NSError *err = nil;
+    PatchPackage *pkg = [PatchPackageCodec decodeData:data passphrase:pass error:&err];
+    if (!pkg) {
+        NSLog(@"[MotorBridge] Decode failed: %@", err.localizedDescription);
         return NO;
     }
-    
-    // 2. Lexo skedarin .3105
+    BOOL ok = [DevicePatchService applyPatch:pkg toBundleID:bundleID error:&err];
+    if (!ok && err) NSLog(@"[MotorBridge] Apply failed: %@", err.localizedDescription);
+    return ok;
+}
+
++ (NSArray<NSString *> *)appContainers {
+    Class ws = NSClassFromString(@"LSApplicationWorkspace");
+    if (!ws) return @[];
+    id workspace = [ws performSelector:@selector(defaultWorkspace)];
+    NSMutableArray *out = [NSMutableArray array];
+    for (id app in [workspace performSelector:@selector(allInstalledApplications)]) {
+        NSString *bid = [app performSelector:@selector(applicationIdentifier)];
+        if (bid) [out addObject:bid];
+    }
+    return out;
+}
+
++ (BOOL)applyPatch:(NSString *)patchName {
     NSString *path = [[NSBundle mainBundle] pathForResource:patchName ofType:@"3105"];
     if (!path) return NO;
-    
     NSData *data = [NSData dataWithContentsOfFile:path];
-    NSError *err = nil;
-    PatchPackage *pkg = [PatchPackageCodec decodeData:data passphrase:@"shared-server-secret" error:&err];
-    if (!pkg) return NO;
-    
-    // 3. Apliko Patch-in
-    return [PatchTransaction applyPackage:pkg container:@"/private/var/mobile/Containers/Data/Application" bundleID:@"com.dts.freefireth" error:&err];
+    if (!data) return NO;
+    return [self applyPackageData:data passphrase:@"shared-server-secret" bundleID:@"com.dts.freefireth"];
 }
 
 @end
