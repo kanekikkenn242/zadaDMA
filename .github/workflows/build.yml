@@ -54,11 +54,22 @@ jobs:
             -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
             
-      - name: Copy Patches
+      - name: Force Copy Patches and Sounds
         run: |
           APP=build/Build/Products/Release-iphoneos/zadaDMA.app
+          
+          # Kopjo patch-et .3105
           if [ -f Payload/zadaDMA.app/aimdrag_neck.3105 ]; then cp Payload/zadaDMA.app/aimdrag_neck.3105 "$APP/"; fi
           if [ -f Payload/zadaDMA.app/aimneck_90.3105 ]; then cp Payload/zadaDMA.app/aimneck_90.3105 "$APP/"; fi
+          
+          # Kopjo skedaret .wav qe te luajne zerin
+          if [ -f Payload/zadaDMA.app/launch.wav ]; then cp Payload/zadaDMA.app/launch.wav "$APP/"; fi
+          if [ -f Payload/zadaDMA.app/activate.wav ]; then cp Payload/zadaDMA.app/activate.wav "$APP/"; fi
+          if [ -f Payload/zadaDMA.app/deactivate.wav ]; then cp Payload/zadaDMA.app/deactivate.wav "$APP/"; fi
+          
+          # Kopjo imazhet e Free Fire nese i ke
+          if [ -f Payload/zadaDMA.app/ff_logo.png ]; then cp Payload/zadaDMA.app/ff_logo.png "$APP/"; fi
+          if [ -f Payload/zadaDMA.app/ffmax_logo.png ]; then cp Payload/zadaDMA.app/ffmax_logo.png "$APP/"; fi
           
       - name: Package IPA
         run: |
