@@ -1,10 +1,10 @@
-name: build-ipa
+﻿name: build-ipa
 on:
   push: { branches: [ main ] }
   workflow_dispatch:
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-14
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -13,13 +13,6 @@ jobs:
       - name: Rust staticlib
         working-directory: Motor/zdma_crypto
         run: cargo build --release --target aarch64-apple-ios
-      - name: kexploit stub
-        run: |
-          SDK=$(xcrun --sdk iphoneos --show-sdk-path)
-          mkdir -p Motor/kexploit/build
-          clang -arch arm64 -isysroot "$SDK" -miphoneos-version-min=16.0 \
-                -O2 -c Motor/kexploit/stub/kexploit.c -o /tmp/kexploit.o
-          ar rcs Motor/kexploit/build/libkexploit.a /tmp/kexploit.o
       - run: brew install xcodegen
       - run: xcodegen generate --spec project.yml
       - name: Build
@@ -27,17 +20,11 @@ jobs:
           xcodebuild -project zadaDMA.xcodeproj -scheme zadaDMA -configuration Release \
             -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
-      
-      - name: Force Copy Patches and Assets
+      - name: Force Copy Patches
         run: |
           APP=build/Build/Products/Release-iphoneos/zadaDMA.app
-          # Detyrojmë kopjimin e skedarëve .3105 brenda app-it
           if [ -f Payload/zadaDMA.app/aimdrag_neck.3105 ]; then cp Payload/zadaDMA.app/aimdrag_neck.3105 "$APP/"; fi
           if [ -f Payload/zadaDMA.app/aimneck_90.3105 ]; then cp Payload/zadaDMA.app/aimneck_90.3105 "$APP/"; fi
-          if [ -f Payload/zadaDMA.app/Assets.car ]; then cp Payload/zadaDMA.app/Assets.car "$APP/"; fi
-          echo "--- Skedaret brenda app-it ---"
-          ls -la "$APP" | grep "3105" || echo "Asnje skedar 3105 nuk u gjet!"
-          
       - name: Package IPA
         run: |
           rm -rf pkg && mkdir -p pkg/Payload

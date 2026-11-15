@@ -1,5 +1,4 @@
-cat > project.yml << 'EOF'
-name: zadaDMA
+﻿name: zadaDMA
 options:
   bundleIdPrefix: com.apple.mobile
   deploymentTarget: { iOS: "16.0" }
@@ -40,4 +39,3 @@ targets:
         LIBRARY_SEARCH_PATHS: ["$(SRCROOT)/Motor/zdma_crypto/target/aarch64-apple-ios/release"]
         OTHER_LDFLAGS: ["-ObjC", "-lc++", "-lzdma_crypto"]
         TARGETED_DEVICE_FAMILY: "1,2"
-EOF
