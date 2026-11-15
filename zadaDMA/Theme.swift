@@ -1,21 +1,31 @@
 import SwiftUI
 
 extension Color {
-    static let appOrange = Color(red: 1.0, green: 0.478, blue: 0.0) // #FF7A00
-    static let appBlack = Color.black
-    static let appCard = Color(red: 0.1, green: 0.1, blue: 0.1) // #1A1A1A
-    static let appGray = Color.gray.opacity(0.6)
+    static let appOrange = Color(red: 1.0, green: 0.478, blue: 0.0)
+    static let appCard = Color(red: 0.1, green: 0.1, blue: 0.1)
 }
 
-// Ky buton nuk zmadhohet KURRE
 struct OrangeButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 16, weight: .semibold)) // Font fiks
+            .font(.system(size: 16, weight: .semibold))
             .foregroundColor(.black)
             .frame(maxWidth: .infinity)
-            .frame(height: 50) // Lartësi fikse
+            .padding(.vertical, 16)
             .background(Color.appOrange)
+            .cornerRadius(14)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
+    }
+}
+
+struct DarkButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(Color(white: 0.15))
             .cornerRadius(14)
             .opacity(configuration.isPressed ? 0.8 : 1.0)
     }
@@ -27,7 +37,6 @@ struct CardModifier: ViewModifier {
             .padding(16)
             .background(Color.appCard)
             .cornerRadius(16)
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.gray.opacity(0.2), lineWidth: 1))
     }
 }
 
