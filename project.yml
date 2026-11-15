@@ -37,7 +37,6 @@ targets:
         HEADER_SEARCH_PATHS: 
           - "$(SRCROOT)/Motor"
           - "$(SRCROOT)/Motor/kexploit"
-          - "$(SRCROOT)/Motor/kexploit/kfd/**"
         LIBRARY_SEARCH_PATHS: 
           - "$(SRCROOT)/Motor/zdma_crypto/target/aarch64-apple-ios/release"
         OTHER_LDFLAGS: 
