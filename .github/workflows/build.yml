@@ -21,44 +21,25 @@ jobs:
       - name: Download and Compile kfd
         run: |
           rm -rf Motor/kexploit/kfd
-          mkdir -p Motor/kexploit/kfd
-          
-          echo "=== Duke shkarkuar kfd ==="
-          curl -L -o kfd.zip https://github.com/felix-pb/kfd/archive/refs/heads/main.zip
-          unzip -q kfd.zip -d Motor/kexploit/
-          mv Motor/kexploit/kfd-main/* Motor/kexploit/kfd/
-          rm kfd.zip
+          git clone --depth 1 https://github.com/felix-pb/kfd.git Motor/kexploit/kfd
+          rm -rf Motor/kexploit/kfd/.git
           
           cd Motor/kexploit/kfd
           mkdir -p build
           SDK=$(xcrun --sdk iphoneos --show-sdk-path)
           
-          echo "=== Duke gjetur skedaret .c ==="
-          C_FILES=$(find . -type f -name "*.c" ! -name "macos_kfd.c")
-          echo "$C_FILES"
-          
-          echo "=== Duke gjetur skedaret .m ==="
-          M_FILES=$(find . -type f -name "*.m")
-          echo "$M_FILES"
-          
-          SRC_FILES="$C_FILES $M_FILES"
-          
-          if [ -z "$SRC_FILES" ]; then
-            echo "[-] GABIM: Nuk u gjet asnje skedar burimor. Duke printuar pemën:"
-            ls -laR | head -100
-            exit 1
-          fi
+          echo "=== Skedaret C qe u gjeten ==="
+          find . -name "*.c" -print
           
           echo "=== Duke kompiluar ==="
-          for f in $SRC_FILES; do
+          for f in $(find . -name "*.c"); do
             clang -c "$f" -arch arm64 -isysroot "$SDK" \
-              -I. -I./kfd -I./kfd/libkfd -I./kfd/exploit -I./kfd/kutils \
-              -I./libkfd -I./exploit -I./kutils \
+              -I./kfd -I./kfd/libkfd -I./kfd/libkfd/krkw -I./kfd/libkfd/puaf \
               -o "build/$(basename $f).o"
           done
           
+          echo "=== Duke krijuar libkfd.a ==="
           ar rcs build/libkfd.a build/*.o
-          echo "=== libkfd.a u krijua ==="
           ls -la build/libkfd.a
           
       - name: Install XcodeGen
