@@ -24,7 +24,6 @@ final class AppState: ObservableObject {
         let info = DeviceInfo()
         self.deviceModel = info.modelName
         self.deviceiOS = info.systemVersion
-        // Luajmë tingullin e nisjes (emri i skedarit tend)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             SoundManager.shared.play(sound: "welcome")
         }
@@ -40,13 +39,18 @@ final class AppState: ObservableObject {
         Localization.shared.translate(key, lang: language)
     }
     
-    func toggleFeature(_ name: String, isOn: Bool) {
+    // Funksioni që lidh Toggle-at me skedarët .3105
+    func toggleFeature(_ name: String, isOn: Bool, patchFile: String? = nil) {
         if isOn {
-            // Luajmë tingullin e aktivizimit (emri i skedarit tend)
             SoundManager.shared.play(sound: "activar")
             patchLog.append("✅ \(name) u injektua.")
+            
+            if let file = patchFile {
+                // Këtu thirret MotorBridge për të bërë injektimin real
+                // (Për thjeshtësi, po e lemë në log)
+                print("Duke aplikuar \(file).3105...")
+            }
         } else {
-            // Luajmë tingullin e deaktivizimit (emri i skedarit tend)
             SoundManager.shared.play(sound: "desactivar")
             patchLog.append("❌ \(name) u deaktivizua.")
         }
