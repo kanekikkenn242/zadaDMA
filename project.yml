@@ -34,10 +34,11 @@ targets:
         SWIFT_OBJC_BRIDGING_HEADER: Motor/MotorBridge.h
         HEADER_SEARCH_PATHS: 
           - "$(SRCROOT)/Motor"
-          - "$(SRCROOT)/Motor/kexploit/kfd/kfd"
+          - "$(SRCROOT)/Motor/kexploit/kfd"
+          - "$(SRCROOT)/Motor/kexploit/kfd/libkfd"
         LIBRARY_SEARCH_PATHS: 
           - "$(SRCROOT)/Motor/zdma_crypto/target/aarch64-apple-ios/release"
-          - "$(SRCROOT)/Motor/kexploit/kfd/kfd/build"
+          - "$(SRCROOT)/Motor/kexploit/kfd/build"
         OTHER_LDFLAGS: 
           - "-ObjC"
           - "-lc++"
