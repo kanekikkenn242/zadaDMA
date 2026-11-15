@@ -2,13 +2,13 @@ import SwiftUI
 
 @MainActor
 final class AppState: ObservableObject {
-    @Published var phase: String = "dashboard" // Hapet direkt ne dashboard
+    // 1. Variablat që kërkon Dashboard-i i Ri
     @Published var licenseKey: String = "ZADADMA-VIP"
     @Published var timeRemaining: String = "28d 23:59:37"
     @Published var deviceModel: String = ""
     @Published var deviceiOS: String = ""
     
-    // Funksionet (si ne X)
+    // 2. Toggle-at e reja (si tek X)
     @Published var hsCabeca = false
     @Published var hsAlto = false
     @Published var hsPeito = false
@@ -17,11 +17,16 @@ final class AppState: ObservableObject {
     @Published var hologram = false
     @Published var skin = false
     
-    // Statusi i injektimit
+    // 3. Statusi i Injektimit
     @Published var injectionName: String? = nil
     @Published var injectionStep = 0
     @Published var injectionSuccess = false
     @Published var injectionError: String? = nil
+
+    // 4. Variablat që i kërkojnë skedarët e vjetër (SettingsView, FileBrowserView)
+    @Published var containers: [String] = []
+    @Published var sandboxReady = false
+    @Published var log: [String] = []
 
     init() {
         self.deviceModel = DeviceInfo.getHardwareModel()
@@ -29,6 +34,21 @@ final class AppState: ObservableObject {
         _ = MotorBridge.bootstrap()
     }
 
+    // 5. Funksionet që i kërkon LicenseGate dhe Onboarding
+    func unlockApp(key: String) -> Bool {
+        return true // E lemë true që të kalojë pa problem
+    }
+    
+    func enterDashboard() {
+        // Bosh, pasi ne hapemi direkt në Dashboard
+    }
+
+    // 6. Funksioni që i kërkon ProductActivationCoordinator
+    func apply(packageData: Data, bundleID: String, pass: String) {
+        let _ = MotorBridge.applyPackageData(packageData, passphrase: pass, bundleID: bundleID)
+    }
+
+    // 7. Funksioni i Injektimit
     func startInjection(name: String, patchFile: String) {
         injectionName = name
         injectionStep = 1
