@@ -7,15 +7,16 @@ extension Color {
     static let appGray = Color.gray.opacity(0.6)
 }
 
+// Ky buton nuk zmadhohet KURRE
 struct OrangeButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.headline)
+            .font(.system(size: 16, weight: .semibold)) // Font fiks
             .foregroundColor(.black)
             .frame(maxWidth: .infinity)
-            .padding()
+            .frame(height: 50) // Lartësi fikse
             .background(Color.appOrange)
-            .cornerRadius(16)
+            .cornerRadius(14)
             .opacity(configuration.isPressed ? 0.8 : 1.0)
     }
 }
@@ -23,10 +24,10 @@ struct OrangeButtonStyle: ButtonStyle {
 struct CardModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .padding()
+            .padding(16)
             .background(Color.appCard)
             .cornerRadius(16)
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.gray.opacity(0.3), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.gray.opacity(0.2), lineWidth: 1))
     }
 }
 
