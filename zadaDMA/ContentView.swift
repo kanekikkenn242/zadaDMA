@@ -10,14 +10,17 @@ struct ContentView: View {
             
             if showSplash {
                 SplashView(showSplash: $showSplash)
+                    .transition(.opacity)
             } else if !state.hasCompletedOnboarding {
                 OnboardingView()
-            } else if !state.isActivated {
-                MainTabView() // Hapet direkt, por tab-i i Profile kërkon çelës
+                    .transition(.move(edge: .trailing))
             } else {
                 MainTabView()
+                    .transition(.opacity)
             }
         }
+        .animation(.easeInOut(duration: 0.4), value: showSplash)
+        .animation(.easeInOut(duration: 0.4), value: state.hasCompletedOnboarding)
         .preferredColorScheme(state.colorScheme)
     }
 }
