@@ -35,7 +35,9 @@ targets:
         INFOPLIST_FILE: Payload/zadaDMA.app/Info.plist
         SWIFT_OBJC_BRIDGING_HEADER: Motor/MotorBridge.h
         HEADER_SEARCH_PATHS: 
-          - "$(SRCROOT)/Motor/kexploit/kfd/kfd"
+          - "$(SRCROOT)/Motor"
+          - "$(SRCROOT)/Motor/kexploit"
+          - "$(SRCROOT)/Motor/kexploit/kfd/**"
         LIBRARY_SEARCH_PATHS: 
           - "$(SRCROOT)/Motor/zdma_crypto/target/aarch64-apple-ios/release"
         OTHER_LDFLAGS: 
