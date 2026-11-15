@@ -2,36 +2,35 @@ import SwiftUI
 
 @MainActor
 final class AppState: ObservableObject {
-    @Published var hasCompletedOnboarding: Bool = false
-    @Published var isActivated: Bool = false
-    @Published var licenseKey: String = ""
+    @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
+    @AppStorage("appLanguage") var language: String = "English"
+    @AppStorage("appAppearance") var appearance: String = "System"
+    @AppStorage("selectedGame") var selectedGame: String = "Free Fire"
+    @AppStorage("isActivated") var isActivated: Bool = false
     
-    // Të dhënat e Pajisjes
+    @Published var licenseKey: String = ""
     @Published var deviceModel: String = ""
     @Published var deviceiOS: String = ""
+    @Published var deviceBuild: String = ""
     
-    // Funksionet Free Fire
+    // Free Fire Toggles
     @Published var aimPeitoEnabled: Bool = false
     @Published var aimbotDragEnabled: Bool = false
-    @Published var isProcessing: Bool = false
-    
+
     init() {
-        self.deviceModel = DeviceInfo.getHardwareModel()
-        self.deviceiOS = DeviceInfo.getIOSVersion()
+        let info = DeviceInfo()
+        self.deviceModel = info.modelName
+        self.deviceiOS = info.systemVersion
+        self.deviceBuild = info.buildVersion
     }
     
-    func toggleAimPeito(_ isOn: Bool) {
-        aimPeitoEnabled = isOn
-        if isOn {
-            isProcessing = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                self.isProcessing = false
-            }
-        }
+    var colorScheme: ColorScheme? {
+        if appearance == "Light" { return .light }
+        if appearance == "Dark" { return .dark }
+        return nil
     }
     
-    // Funksioni që kërkon ProductActivationCoordinator (i vjetër)
-    func apply(packageData: Data, bundleID: String, pass: String) {
-        // Bosh, thjesht që të mos dështojë build-i
+    func t(_ key: String) -> String {
+        return Localization.shared.translate(key, lang: language)
     }
 }
