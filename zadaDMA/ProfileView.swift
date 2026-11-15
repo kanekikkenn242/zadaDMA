@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject var state: AppState
-    @Binding var showActivation: Bool
+    @State private var showActivation = false
     @State private var keyInput = ""
     @State private var errorMsg = ""
     
