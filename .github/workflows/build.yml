@@ -23,25 +23,29 @@ jobs:
           rm -rf Motor/kexploit/kfd
           mkdir -p Motor/kexploit/kfd
           
-          echo "=== Duke shkarkuar kfd nga GitHub ==="
+          echo "=== Duke shkarkuar kfd ==="
           curl -L -o kfd.zip https://github.com/felix-pb/kfd/archive/refs/heads/main.zip
           unzip -q kfd.zip -d Motor/kexploit/
           mv Motor/kexploit/kfd-main/* Motor/kexploit/kfd/
           rm kfd.zip
           
           cd Motor/kexploit/kfd
-          echo "=== Përmbajtja e folderit kfd ==="
-          ls -laR | head -60
-          
           mkdir -p build
           SDK=$(xcrun --sdk iphoneos --show-sdk-path)
           
-          echo "=== Duke gjetur skedaret (.c dhe .m) ==="
-          SRC_FILES=$(find . -type f \( -name "*.c" -o -name "*.m" \) ! -name "macos_kfd.c")
-          echo "$SRC_FILES"
+          echo "=== Duke gjetur skedaret .c ==="
+          C_FILES=$(find . -type f -name "*.c" ! -name "macos_kfd.c")
+          echo "$C_FILES"
+          
+          echo "=== Duke gjetur skedaret .m ==="
+          M_FILES=$(find . -type f -name "*.m")
+          echo "$M_FILES"
+          
+          SRC_FILES="$C_FILES $M_FILES"
           
           if [ -z "$SRC_FILES" ]; then
-            echo "[-] GABIM: Nuk u gjet asnje skedar burimor"
+            echo "[-] GABIM: Nuk u gjet asnje skedar burimor. Duke printuar pemën:"
+            ls -laR | head -100
             exit 1
           fi
           
