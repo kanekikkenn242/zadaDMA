@@ -1,6 +1,5 @@
 import Foundation
 import SwiftUI
-import sys.utsname
 
 enum DeviceInfo {
     static func getHardwareModel() -> String {
