@@ -1,6 +1,10 @@
 import SwiftUI
+
 struct GestaltEditor: View {
-    @State private var ipad = false, ai = false, region = false
+    @State private var ipad = false
+    @State private var ai = false
+    @State private var region = false
+
     var body: some View {
         Form {
             Toggle("iPadOS Mode", isOn: $ipad)
