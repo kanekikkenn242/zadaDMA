@@ -24,8 +24,9 @@ final class AppState: ObservableObject {
         let info = DeviceInfo()
         self.deviceModel = info.modelName
         self.deviceiOS = info.systemVersion
+        // Luajmë tingullin e nisjes (emri i skedarit tend)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            SoundManager.shared.play(sound: "launch")
+            SoundManager.shared.play(sound: "welcome")
         }
     }
     
@@ -41,10 +42,12 @@ final class AppState: ObservableObject {
     
     func toggleFeature(_ name: String, isOn: Bool) {
         if isOn {
-            SoundManager.shared.play(sound: "activate")
+            // Luajmë tingullin e aktivizimit (emri i skedarit tend)
+            SoundManager.shared.play(sound: "activar")
             patchLog.append("✅ \(name) u injektua.")
         } else {
-            SoundManager.shared.play(sound: "deactivate")
+            // Luajmë tingullin e deaktivizimit (emri i skedarit tend)
+            SoundManager.shared.play(sound: "desactivar")
             patchLog.append("❌ \(name) u deaktivizua.")
         }
     }
