@@ -21,10 +21,6 @@ targets:
       - path: zadaDMA
       - path: Motor
         excludes: ["zdma_crypto/**", "kexploit/kfd/**"]
-      # Ketu po i detyrojme skedaret C te kfd te kompilohen
-      - path: Motor/kexploit/kfd/kfd/libkfd
-      - path: Motor/kexploit/kfd/kfd/exploit
-      - path: Motor/kexploit/kfd/kfd/kutils
       - path: Payload/zadaDMA.app
         excludes: ["Info.plist", "zadaDMA", "Assets.car"]
         buildPhase: resources
@@ -38,13 +34,13 @@ targets:
         SWIFT_OBJC_BRIDGING_HEADER: Motor/MotorBridge.h
         HEADER_SEARCH_PATHS: 
           - "$(SRCROOT)/Motor"
-          - "$(SRCROOT)/Motor/kexploit"
           - "$(SRCROOT)/Motor/kexploit/kfd/kfd"
-          - "$(SRCROOT)/Motor/kexploit/kfd/kfd/libkfd"
         LIBRARY_SEARCH_PATHS: 
           - "$(SRCROOT)/Motor/zdma_crypto/target/aarch64-apple-ios/release"
+          - "$(SRCROOT)/Motor/kexploit/kfd/kfd/build"
         OTHER_LDFLAGS: 
           - "-ObjC"
           - "-lc++"
           - "-lzdma_crypto"
+          - "-lkfd"
         TARGETED_DEVICE_FAMILY: "1,2"
