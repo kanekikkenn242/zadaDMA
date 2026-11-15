@@ -9,7 +9,7 @@ struct MainTabView: View {
             TabView(selection: $tab) {
                 HomeView().tag(0)
                 FreeFireView().tag(1)
-                ProfileView(showActivation: .constant(false)).tag(2)
+                ProfileView().tag(2) // KETU U RREGULLUA
                 SupportView().tag(3)
             }.tabViewStyle(.page(indexDisplayMode: .never))
             
@@ -31,7 +31,6 @@ struct MainTabView: View {
     }
 }
 
-// KJO MUNGONTE:
 struct TabButton: View {
     let icon: String
     let title: String
