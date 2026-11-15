@@ -2,7 +2,6 @@ import SwiftUI
 
 @MainActor
 final class AppState: ObservableObject {
-    // E ndryshuam emrin e çelësit në "v2_..." që iOS ta harrojë statusin e vjetër
     @AppStorage("v2_hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
     @AppStorage("appLanguage") var language: String = "English"
     @AppStorage("appAppearance") var appearance: String = "System"
@@ -25,8 +24,6 @@ final class AppState: ObservableObject {
         let info = DeviceInfo()
         self.deviceModel = info.modelName
         self.deviceiOS = info.systemVersion
-        
-        // Zeri i nisjes
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             SoundManager.shared.play(sound: "welcome")
         }
