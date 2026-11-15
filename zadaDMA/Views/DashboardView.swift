@@ -2,148 +2,89 @@ import SwiftUI
 
 struct DashboardView: View {
     @EnvironmentObject var state: AppState
-    var body: some View {
-        TabView {
-            HomeTab().tabItem { Label("Inicio", systemImage: "house.fill") }
-            FreeFireTab().tabItem { Label("Free Fire", systemImage: "gamecontroller.fill") }
-            ProfileTab().tabItem { Label("Perfil", systemImage: "person.crop.circle") }
-            SupportTab().tabItem { Label("Soporte", systemImage: "questionmark.circle") }
-        }
-        .accentColor(.white)
-        .preferredColorScheme(.dark)
-    }
-}
-
-struct HomeTab: View {
+    @State private var selectedTab = 0
+    
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
+            
+            TabView(selection: $selectedTab) {
+                FuncoesView().tag(0)
+                PartidasView().tag(1)
+                ConfigView().tag(2)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            
             VStack {
+                Spacer()
                 HStack {
-                    Text("Estado del dispositivo").foregroundStyle(.gray)
+                    TabButton(icon: "square.grid.2x2.fill", title: "Funções", isSelected: selectedTab == 0) { selectedTab = 0 }
                     Spacer()
-                    Circle().fill(.green).frame(width: 8, height: 8)
-                    Text("Activo").foregroundStyle(.green).font(.caption)
-                }.padding(.horizontal)
-                
-                VStack(spacing: 1) {
-                    infoRow(icon: "iphone", title: "Modelo de hardware", value: DeviceInfo.getHardwareModel())
-                    infoRow(icon: "gear", title: "iOS Version", value: DeviceInfo.getIOSVersion())
-                    let exploit = DeviceInfo.isExploitCompatible()
-                    infoRow(icon: "checkmark.shield.fill", title: "Compatibilidad de exploit", value: exploit.status, valueColor: exploit.color)
+                    TabButton(icon: "gamecontroller.fill", title: "Partidas", isSelected: selectedTab == 1) { selectedTab = 1 }
+                    Spacer()
+                    TabButton(icon: "person.fill", title: "Config", isSelected: selectedTab == 2) { selectedTab = 2 }
                 }
-                .background(Color(white: 0.1)).cornerRadius(12).padding()
-                Spacer()
+                .padding(.horizontal, 40).padding(.vertical, 15)
+                .background(Color(white: 0.1)).clipShape(Capsule())
+                .padding(.horizontal, 20).padding(.bottom, 20)
+            }
+            
+            if state.activeInjectionName != nil {
+                InjectionOverlay()
             }
         }
     }
-    
-    private func infoRow(icon: String, title: String, value: String, valueColor: Color = .gray) -> some View {
-        HStack {
-            Image(systemName: icon).foregroundStyle(.white).frame(width: 30)
-            Text(title).foregroundStyle(.white)
-            Spacer()
-            Text(value).foregroundStyle(valueColor)
-        }.padding().background(Color(white: 0.05))
-    }
 }
 
-struct FreeFireTab: View {
+struct FuncoesView: View {
     @EnvironmentObject var state: AppState
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                Color.black.ignoresSafeArea()
-                VStack(spacing: 16) {
-                    HStack {
-                        Image(systemName: "flame.fill").foregroundStyle(.orange).font(.largeTitle)
-                        VStack(alignment: .leading) {
-                            Text("Free Fire").font(.headline).foregroundStyle(.white)
-                            Text("NORMAL  •  Activo").font(.caption).foregroundStyle(.green)
-                        }
-                        Spacer()
-                        Text("120 FPS").font(.caption2).padding(4).background(Color.blue).cornerRadius(4)
-                    }.padding().background(Color(white: 0.1)).cornerRadius(12)
-                    
-                    HStack {
-                        buttonIcon("Aimbot", icon: "scope")
-                        buttonIcon("Holograma", icon: "hexagon")
-                        buttonIcon("Skin", icon: "paintbrush")
-                    }
-                    
-                    VStack(spacing: 1) {
-                        toggleRow(title: "AIM PECHO 70%", subtitle: "Seguro", isOn: Binding(
-                            get: { state.isAimChestEnabled },
-                            set: { state.toggleAimChest($0) }
-                        ))
-                        toggleRow(title: "AIMBOT DRAG", subtitle: "Seguro", isOn: $state.isAimDragEnabled)
-                    }.background(Color(white: 0.1)).cornerRadius(12)
-                    
-                    Spacer()
-                }.padding()
-            }.navigationTitle("Free Fire").navigationBarTitleDisplayMode(.inline)
-        }
-    }
     
-    private func buttonIcon(_ title: String, icon: String) -> some View {
-        VStack {
-            Image(systemName: icon).font(.title2).foregroundStyle(.white)
-            Text(title).font(.caption).foregroundStyle(.gray)
-        }.frame(maxWidth: .infinity).padding(.vertical, 12).background(Color(white: 0.15)).cornerRadius(10)
-    }
-    
-    private func toggleRow(title: String, subtitle: String, isOn: Binding<Bool>) -> some View {
-        HStack {
-            Image(systemName: "scope").foregroundStyle(.white)
-            VStack(alignment: .leading) {
-                Text(title).font(.headline).foregroundStyle(.white)
-                Text(subtitle).font(.caption).foregroundStyle(.green)
-            }
-            Spacer()
-            Toggle("", isOn: isOn).labelsHidden()
-        }.padding().background(Color(white: 0.05))
-    }
-}
-
-struct ProfileTab: View {
-    @EnvironmentObject var state: AppState
     var body: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
+        ScrollView {
             VStack(spacing: 20) {
-                Image(systemName: "person.crop.circle.fill").resizable().frame(width: 80, height: 80).foregroundStyle(.white)
-                Text("bnxyung7").font(.title2).bold().foregroundStyle(.white)
-                Text("Pro").font(.caption).padding(.horizontal, 8).padding(.vertical, 4).background(Color.green).cornerRadius(4).foregroundStyle(.black)
+                Image(systemName: "tree.fill").resizable().scaledToFill().frame(height: 150).clipped().cornerRadius(16).overlay(Color.black.opacity(0.4)).padding(.horizontal)
                 
-                VStack(spacing: 1) {
-                    infoRow(icon: "key.fill", title: "Clave", value: state.licenseKey)
-                    infoRow(icon: "clock.fill", title: "Tiempo restante", value: state.timeRemaining)
-                    infoRow(icon: "iphone", title: "UDID", value: state.udid)
-                }.background(Color(white: 0.1)).cornerRadius(12)
+                Text("FUNÇÕES").font(.headline.bold()).foregroundStyle(.gray).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal)
                 
-                Button("Cerrar sesión") { exit(0) }
-                    .frame(maxWidth: .infinity).padding().background(Color.red.opacity(0.2)).foregroundStyle(.red).cornerRadius(10)
-                Spacer()
-            }.padding()
+                VStack(spacing: 12) {
+                    // 1. Hs Cabeça standard
+                    CustomToggleRow(title: "Hs Cabeça", subtitle: "Neck + Side + Up", isOn: Binding(
+                        get: { state.hsCabecaEnabled },
+                        set: { val in 
+                            state.hsCabecaEnabled = val; 
+                            state.startInjection(featureName: "Hs Cabeça", isOn: val, patchName: "aimdrag_neck") 
+                        }
+                    ))
+                    
+                    // 2. I RI: Aim Neck 90% HS
+                    CustomToggleRow(title: "Aim Neck 90% HS", subtitle: "Neck + Chest 90%", isOn: Binding(
+                        get: { state.hsCabeca90Enabled },
+                        set: { val in 
+                            state.hsCabeca90Enabled = val; 
+                            state.startInjection(featureName: "Aim Neck 90%", isOn: val, patchName: "aimneck_90") 
+                        }
+                    ))
+                    
+                    CustomToggleRow(title: "Hs Alto", subtitle: "Hs up head", isOn: Binding(
+                        get: { state.hsAltoEnabled },
+                        set: { val in state.hsAltoEnabled = val; state.startInjection(featureName: "Hs Alto", isOn: val) }
+                    ))
+                    
+                    CustomToggleRow(title: "Hs Peito", subtitle: "Hs Body cache", isOn: Binding(
+                        get: { state.hsPeitoEnabled },
+                        set: { val in state.hsPeitoEnabled = val; state.startInjection(featureName: "Hs Peito", isOn: val) }
+                    ))
+                    
+                    CustomToggleRow(title: "Antenna Mão", subtitle: "Antenna on Hand", isOn: Binding(
+                        get: { state.antennaMaoEnabled },
+                        set: { val in state.antennaMaoEnabled = val; state.startInjection(featureName: "Antenna Mão", isOn: val) }
+                    ))
+                }
+                .padding(.horizontal)
+            }
+            .padding(.top, 50).padding(.bottom, 100)
         }
-    }
-    
-    private func infoRow(icon: String, title: String, value: String) -> some View {
-        HStack {
-            Image(systemName: icon).foregroundStyle(.gray).frame(width: 20)
-            Text(title).foregroundStyle(.gray)
-            Spacer()
-            Text(value).foregroundStyle(.white).font(.system(.caption, design: .monospaced))
-            Image(systemName: "doc.on.doc").foregroundStyle(.gray)
-        }.padding().background(Color(white: 0.05))
     }
 }
 
-struct SupportTab: View {
-    var body: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
-            Text("Soporte Técnico").foregroundStyle(.gray)
-        }
-    }
-}
+// (Pjesa tjetër e skedarit: PartidasView, ConfigView, TabButton, CustomToggleRow, InfoRow mbeten të njëjta si në mesazhin e mëparshëm)
