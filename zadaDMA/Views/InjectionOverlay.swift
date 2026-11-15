@@ -5,14 +5,14 @@ struct InjectionOverlay: View {
     
     var body: some View {
         ZStack {
-            Color.black.opacity(0.8).ignoresSafeArea()
+            Color.black.opacity(0.85).ignoresSafeArea()
             
             VStack {
                 if state.injectionSuccess {
-                    // Success View
+                    // Pamja e Suksesit
                     VStack(spacing: 16) {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 60))
+                            .font(.system(size: 64))
                             .foregroundStyle(.green)
                         
                         Text("Injetado com sucesso")
@@ -39,11 +39,12 @@ struct InjectionOverlay: View {
                     .padding(40)
                     
                 } else {
-                    // Loading View
+                    // Pamja e Progresit
                     VStack(alignment: .leading, spacing: 16) {
                         HStack {
                             Image(systemName: "square.stack.3d.up.fill")
                                 .foregroundStyle(.green)
+                                .font(.title2)
                             Text("Injetando \(state.activeInjectionName ?? "")")
                                 .font(.headline)
                                 .foregroundStyle(.white)
@@ -53,7 +54,7 @@ struct InjectionOverlay: View {
                             .font(.caption)
                             .foregroundStyle(.gray)
                         
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 14) {
                             StepRow(text: "Iniciando injeção de \(state.activeInjectionName ?? "")...", isActive: state.injectionStep >= 1)
                             StepRow(text: "Verificando compatibilidade do dispositivo...", isActive: state.injectionStep >= 2)
                             StepRow(text: "Preparando os componentes da função...", isActive: state.injectionStep >= 3)
@@ -66,7 +67,7 @@ struct InjectionOverlay: View {
                     .padding(24)
                     .background(Color(white: 0.1))
                     .cornerRadius(24)
-                    .frame(height: 300)
+                    .frame(height: 280)
                     .padding(40)
                 }
             }
@@ -80,9 +81,8 @@ struct StepRow: View {
     
     var body: some View {
         HStack {
-            Image(systemName: isActive ? "checkmark" : "circle")
+            Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
                 .foregroundStyle(isActive ? .green : .gray)
-                .font(.caption)
             Text(text)
                 .font(.caption)
                 .foregroundStyle(isActive ? .white : .gray)
