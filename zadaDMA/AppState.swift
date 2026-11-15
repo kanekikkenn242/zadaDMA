@@ -29,10 +29,10 @@ final class AppState: ObservableObject {
     @Published var injectionStep: Int = 0
     @Published var injectionSuccess: Bool = false
 
-    // Variablat që i kërkojnë skedarët e tjerë (FileBrowser, Settings)
+    // Variablat që i kërkojnë skedarët e tjerë
     @Published var containers: [String] = []
     @Published var sandboxReady = false
-    @Published var log: [String] = [] // <--- KJO MUNGONTE
+    @Published var log: [String] = []
 
     func boot() {
         _ = MotorBridge.bootstrap()
@@ -68,7 +68,8 @@ final class AppState: ObservableObject {
     }
 
     func apply(packageData: Data, bundleID: String, pass: String) {
-        let _ = MotorBridge.applyPackageData(data, passphrase: pass, bundleID: bundleID)
+        // KETU E RREGULLOVA: perdorim packageData ne vend te data
+        let _ = MotorBridge.applyPackageData(packageData, passphrase: pass, bundleID: bundleID)
         self.log.append("Applied package to \(bundleID)")
     }
 
