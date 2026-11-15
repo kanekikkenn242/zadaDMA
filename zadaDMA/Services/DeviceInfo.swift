@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import sys.utsname
 
 enum DeviceInfo {
     static func getHardwareModel() -> String {
@@ -17,16 +18,6 @@ enum DeviceInfo {
     }
     
     static func isExploitCompatible() -> (status: String, color: Color) {
-        let version = UIDevice.current.systemVersion
-        let model = getHardwareModel()
-        if model.hasPrefix("iPhone9,") || model.hasPrefix("iPhone8,") {
-            if version.hasPrefix("15.") || version.hasPrefix("14.") || version.hasPrefix("13.") {
-                return ("Compatible", .green)
-            }
-        }
-        if version.hasPrefix("16.") || version.hasPrefix("17.") {
-            return ("No compatible", .red)
-        }
-        return ("Desconocido", .orange)
+        return ("Compatível", .green)
     }
 }
