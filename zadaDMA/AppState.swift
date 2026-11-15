@@ -11,17 +11,22 @@ final class AppState: ObservableObject {
     @Published var licenseKey: String = ""
     @Published var deviceModel: String = ""
     @Published var deviceiOS: String = ""
-    @Published var deviceBuild: String = ""
     
-    // Free Fire Toggles
+    @Published var selectedCategory: String = "Aimbot"
     @Published var aimPeitoEnabled: Bool = false
     @Published var aimbotDragEnabled: Bool = false
-
+    @Published var hologramEnabled: Bool = false
+    @Published var skinEnabled: Bool = false
+    
+    @Published var patchLog: [String] = []
+    
     init() {
         let info = DeviceInfo()
         self.deviceModel = info.modelName
         self.deviceiOS = info.systemVersion
-        self.deviceBuild = info.buildVersion
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            SoundManager.shared.play(sound: "launch")
+        }
     }
     
     var colorScheme: ColorScheme? {
@@ -31,6 +36,16 @@ final class AppState: ObservableObject {
     }
     
     func t(_ key: String) -> String {
-        return Localization.shared.translate(key, lang: language)
+        Localization.shared.translate(key, lang: language)
+    }
+    
+    func toggleFeature(_ name: String, isOn: Bool) {
+        if isOn {
+            SoundManager.shared.play(sound: "activate")
+            patchLog.append("✅ \(name) u injektua.")
+        } else {
+            SoundManager.shared.play(sound: "deactivate")
+            patchLog.append("❌ \(name) u deaktivizua.")
+        }
     }
 }
