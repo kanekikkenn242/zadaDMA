@@ -10,15 +10,9 @@ final class AppState: ObservableObject {
     @Published var log: [String] = []
 
     func boot() {
-        do {
-            if !(try MotorBridge.bootstrap()) {
-                phase = .antiTamper
-                log.append("anti-tamper: failed")
-                return
-            }
-        } catch {
+        if !MotorBridge.bootstrap() {
             phase = .antiTamper
-            log.append("anti-tamper: \(error.localizedDescription)")
+            log.append("anti-tamper: failed")
             return
         }
 
@@ -48,12 +42,8 @@ final class AppState: ObservableObject {
     }
 
     func apply(packageData: Data, bundleID: String, pass: String) {
-        do {
-            let ok = try MotorBridge.applyPackageData(packageData, passphrase: pass, bundleID: bundleID)
-            log.append("patch \(bundleID): \(ok ? "ok" : "fail")")
-        } catch {
-            log.append("patch \(bundleID): \(error.localizedDescription)")
-        }
+        let ok = MotorBridge.applyPackageData(packageData, passphrase: pass, bundleID: bundleID)
+        log.append("patch \(bundleID): \(ok ? "ok" : "fail")")
     }
 }
 
