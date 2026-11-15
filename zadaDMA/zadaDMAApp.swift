@@ -23,6 +23,22 @@ struct RootView: View {
             LicenseGate()
         case .dashboard:
             DashboardView()
+        case .blocked(let reason):
+            ZStack {
+                Color.black.ignoresSafeArea()
+                VStack(spacing: 16) {
+                    Image(systemName: "xmark.shield.fill")
+                        .font(.system(size: 60))
+                        .foregroundStyle(.red)
+                    Text("Blocked")
+                        .font(.title.bold())
+                        .foregroundStyle(.white)
+                    Text(reason)
+                        .foregroundStyle(.gray)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+            }
         }
     }
 }
