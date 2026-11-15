@@ -18,26 +18,31 @@ jobs:
         working-directory: Motor/zdma_crypto
         run: cargo build --release --target aarch64-apple-ios
         
-      - name: Download and Build kfd
+      - name: Download and Compile kfd
         run: |
           rm -rf Motor/kexploit/kfd
           git clone --depth 1 https://github.com/felix-pb/kfd.git Motor/kexploit/kfd
           rm -rf Motor/kexploit/kfd/.git
           
           cd Motor/kexploit/kfd
-          echo "=== Struktura e KFD ==="
-          ls -laR
+          mkdir -p build
+          SDK=$(xcrun --sdk iphoneos --show-sdk-path)
           
-          # Kompilojmë projektin e kfd për iOS arm64
-          echo "=== Duke kompiluar kfd ==="
-          xcodebuild -project kfd.xcodeproj -scheme kfd -configuration Release \
-            -sdk iphoneos -arch arm64 ONLY_ACTIVE_ARCH=NO \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-            -derivedDataPath build
+          echo "=== Duke gjetur skedaret (.c dhe .m) ==="
+          SRC_FILES=$(find . \( -name "*.c" -o -name "*.m" \) ! -name "macos_kfd.c")
+          echo "$SRC_FILES"
           
-          # Gjejmë librarinë e krijuar (nëse ekziston)
-          echo "=== Duke gjetur librarine ==="
-          find build -name "*.a" -o -name "*.dylib"
+          echo "=== Duke kompiluar ==="
+          for f in $SRC_FILES; do
+            clang -c "$f" -arch arm64 -isysroot "$SDK" \
+              -I. -I./kfd -I./kfd/libkfd -I./kfd/exploit -I./kfd/kutils \
+              -I./libkfd -I./exploit -I./kutils \
+              -o "build/$(basename $f).o"
+          done
+          
+          ar rcs build/libkfd.a build/*.o
+          echo "=== libkfd.a u krijua ==="
+          ls -la build/libkfd.a
           
       - name: Install XcodeGen
         run: brew install xcodegen
