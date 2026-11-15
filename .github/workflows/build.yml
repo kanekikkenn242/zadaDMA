@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 jobs:
   build:
-    runs-on: macos-14-arm64
+    runs-on: macos-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +36,7 @@ jobs:
           if [ -f Payload/zadaDMA.app/aimneck_90.3105 ]; then cp Payload/zadaDMA.app/aimneck_90.3105 "$APP/"; fi
           if [ -f Payload/zadaDMA.app/Assets.car ]; then cp Payload/zadaDMA.app/Assets.car "$APP/"; fi
           echo "--- Skedaret brenda app-it ---"
-          ls -la "$APP" | grep "3105"
+          ls -la "$APP" | grep "3105" || echo "Asnje skedar 3105 nuk u gjet!"
           
       - name: Package IPA
         run: |
