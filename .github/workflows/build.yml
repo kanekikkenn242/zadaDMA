@@ -25,9 +25,10 @@ jobs:
           rm -rf Motor/kexploit/kfd
           git clone --depth 1 https://github.com/felix-pb/kfd.git Motor/kexploit/kfd
           rm -rf Motor/kexploit/kfd/.git
-          echo "--- KFD Structure ---"
-          ls -la Motor/kexploit/kfd
-          ls -la Motor/kexploit/kfd/kfd
+          echo "--- Duke gjetur dhe kopjuar kfd.h ---"
+          # Gjejme skedarin kfd.h kudo brenda folderit dhe e kopjojme direkt te Motor/kexploit
+          find Motor/kexploit/kfd -name "kfd.h" -exec cp {} Motor/kexploit/ \;
+          ls -la Motor/kexploit/kfd.h
           
       - name: Install XcodeGen
         run: brew install xcodegen
