@@ -3,7 +3,7 @@
 @implementation MotorBridge
 
 + (BOOL)bootstrap {
-    NSError *err = nil;
+    NSError * __autoreleasing err = nil;
     BOOL ok = [AntiTamper verifyAndBlockIfNeeded:&err];
     if (!ok && err) NSLog(@"[MotorBridge] Anti-tamper failed: %@", err.localizedDescription);
     return ok;
@@ -14,7 +14,7 @@
 }
 
 + (BOOL)applyPackageData:(NSData *)data passphrase:(NSString *)pass bundleID:(NSString *)bundleID {
-    NSError *err = nil;
+    NSError * __autoreleasing err = nil;
     PatchPackage *pkg = [PatchPackageCodec decodeData:data passphrase:pass error:&err];
     if (!pkg) {
         NSLog(@"[MotorBridge] Decode failed: %@", err.localizedDescription);
