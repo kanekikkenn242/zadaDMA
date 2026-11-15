@@ -1,0 +1,7 @@
+build/
+zadaDMA.xcodeproj/
+Motor/zdma_crypto/target/
+Motor/kexploit/build/
+Payload/zadaDMA.app/zadaDMA
+*.ipa
+*.bak

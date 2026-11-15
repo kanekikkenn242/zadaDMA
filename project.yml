@@ -1,0 +1,37 @@
+name: zadaDMA
+options:
+  bundleIdPrefix: com.apple.mobile
+  deploymentTarget: { iOS: "16.0" }
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    CODE_SIGNING_ALLOWED: "NO"
+    CODE_SIGNING_REQUIRED: "NO"
+    CODE_SIGN_IDENTITY: ""
+    ENABLE_BITCODE: "NO"
+targets:
+  zadaDMA:
+    type: application
+    platform: iOS
+    sources:
+      - path: zadaDMA
+      - path: Motor
+        excludes: ["zdma_crypto/**", "kexploit/**"]
+      - path: Payload/zadaDMA.app
+        excludes: ["Info.plist", "zadaDMA"]
+    info:
+      path: Payload/zadaDMA.app/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.apple.mobile.MobileHouseArrest
+        PRODUCT_NAME: zadaDMA
+        INFOPLIST_FILE: Payload/zadaDMA.app/Info.plist
+        SWIFT_OBJC_BRIDGING_HEADER: Motor/MotorBridge.h
+        HEADER_SEARCH_PATHS: ["$(SRCROOT)/Motor"]
+        LIBRARY_SEARCH_PATHS:
+          - "$(SRCROOT)/Motor/zdma_crypto/target/aarch64-apple-ios/release"
+          - "$(SRCROOT)/Motor/kexploit/build"
+        OTHER_LDFLAGS: ["-ObjC", "-lc++", "-lzdma_crypto", "-lkexploit"]
+        TARGETED_DEVICE_FAMILY: "1,2"
