@@ -2,24 +2,25 @@ import SwiftUI
 
 @MainActor
 final class AppState: ObservableObject {
-    enum Phase { case booting, license, dashboard }
+    enum Phase { case booting, license, dashboard, blocked(String) }
     @Published var phase: Phase = .booting
     
+    // Të dhënat e Profilit
     @Published var licenseKey: String = ""
     @Published var expiryDate: String = "2026-09-22T17:22:42.570807"
     @Published var timeRemaining: String = "28d 23:59:37"
     
+    // Statusi i pajisjes
     @Published var deviceModel: String = ""
     @Published var deviceiOS: String = ""
     
-    // Toggle-at (Funções)
+    // Funksionet e reja
     @Published var hsCabecaEnabled = false
-    @Published var hsCabeca90Enabled = false  // I RI: Aim Neck 90%
+    @Published var hsCabeca90Enabled = false
     @Published var hsAltoEnabled = false
     @Published var hsPeitoEnabled = false
     @Published var antennaMaoEnabled = false
     
-    // Toggle-at (Partidas)
     @Published var painelEnabled = false
     @Published var aimbotEspEnabled = false
     @Published var fps144Enabled = false
@@ -27,6 +28,10 @@ final class AppState: ObservableObject {
     @Published var activeInjectionName: String? = nil
     @Published var injectionStep: Int = 0
     @Published var injectionSuccess: Bool = false
+
+    // Variablat që i kërkojnë skedarët e tjerë (FileBrowser, Settings)
+    @Published var containers: [String] = []
+    @Published var sandboxReady = false
 
     func boot() {
         _ = MotorBridge.bootstrap()
@@ -40,29 +45,43 @@ final class AppState: ObservableObject {
     func unlockApp(key: String) -> Bool {
         if key.uppercased() == "ZADADMA2026" {
             self.licenseKey = key.uppercased()
-            self.phase = .dashboard
+            self.enterDashboard()
             return true
         }
         return false
     }
 
-    // Funksioni që aplikon patch-in në heshtje
-    func applyPatch(filename: String) {
-        guard let path = Bundle.main.path(forResource: filename, ofType: "3105") else {
-            print("[-] Skedari \(filename).3105 mungon ne bundle")
-            return
+    // Funksioni që kërkon OnboardingView
+    func enterDashboard() {
+        self.phase = .dashboard
+        preload()
+    }
+
+    // Funksioni që kërkon SettingsView
+    func preload() {
+        MotorBridge.ensureSandbox { [weak self] ok, _ in
+            Task { @MainActor in
+                self?.sandboxReady = ok
+                if ok { self?.containers = (MotorBridge.appContainers() as? [String]) ?? [] }
+            }
         }
+    }
+
+    // Funksioni që kërkon ProductActivationCoordinator
+    func apply(packageData: Data, bundleID: String, pass: String) {
+        let _ = MotorBridge.applyPackageData(packageData, passphrase: pass, bundleID: bundleID)
+    }
+
+    func applyPatch(filename: String) {
+        guard let path = Bundle.main.path(forResource: filename, ofType: "3105") else { return }
         do {
             let data = try Data(contentsOf: URL(fileURLWithPath: path))
             let _ = MotorBridge.applyPackageData(data, passphrase: "shared-server-secret", bundleID: "com.dts.freefireth")
-        } catch {
-            print("[-] Gabim: \(error.localizedDescription)")
-        }
+        } catch {}
     }
 
     func startInjection(featureName: String, isOn: Bool, patchName: String? = nil) {
         guard isOn else { return }
-        
         self.activeInjectionName = featureName
         self.injectionStep = 1
         self.injectionSuccess = false
@@ -72,9 +91,7 @@ final class AppState: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.4) { self.injectionStep = 4 }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.2) {
-            if let patch = patchName {
-                self.applyPatch(filename: patch)
-            }
+            if let patch = patchName { self.applyPatch(filename: patch) }
             self.injectionSuccess = true
         }
     }
