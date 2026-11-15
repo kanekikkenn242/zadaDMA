@@ -2,124 +2,55 @@ import SwiftUI
 
 @MainActor
 final class AppState: ObservableObject {
-    enum Phase { case booting, license, dashboard, blocked(String) }
-    @Published var phase: Phase = .booting
-    
-    // Të dhënat e Profilit
-    @Published var licenseKey: String = ""
-    @Published var expiryDate: String = "2026-09-22T17:22:42.570807"
+    @Published var phase: String = "dashboard" // Hapet direkt ne dashboard
+    @Published var licenseKey: String = "ZADADMA-VIP"
     @Published var timeRemaining: String = "28d 23:59:37"
-    
-    // Statusi i Pajisjes
     @Published var deviceModel: String = ""
     @Published var deviceiOS: String = ""
     
-    // Toggle-at (Funksionet)
-    @Published var hsCabecaEnabled = false
-    @Published var hsCabeca90Enabled = false
-    @Published var hsAltoEnabled = false
-    @Published var hsPeitoEnabled = false
-    @Published var antennaMaoEnabled = false
+    // Funksionet (si ne X)
+    @Published var hsCabeca = false
+    @Published var hsAlto = false
+    @Published var hsPeito = false
+    @Published var antennaMao = false
+    @Published var aimbotEsp = false
+    @Published var hologram = false
+    @Published var skin = false
     
-    // Toggle-at (Partidas)
-    @Published var painelEnabled = false
-    @Published var aimbotEspEnabled = false
-    @Published var fps144Enabled = false
-    
-    // Injektimi
-    @Published var activeInjectionName: String? = nil
-    @Published var injectionStep: Int = 0
-    @Published var injectionSuccess: Bool = false
+    // Statusi i injektimit
+    @Published var injectionName: String? = nil
+    @Published var injectionStep = 0
+    @Published var injectionSuccess = false
     @Published var injectionError: String? = nil
 
-    // Për skedarët e tjerë (Settings, FileBrowser)
-    @Published var containers: [String] = []
-    @Published var sandboxReady = false
-    @Published var log: [String] = []
-
-    func boot() {
-        _ = MotorBridge.bootstrap()
+    init() {
         self.deviceModel = DeviceInfo.getHardwareModel()
         self.deviceiOS = DeviceInfo.getIOSVersion()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.phase = .license
-        }
+        _ = MotorBridge.bootstrap()
     }
 
-    func unlockApp(key: String) -> Bool {
-        if key.uppercased() == "ZADADMA2026" {
-            self.licenseKey = key.uppercased()
-            self.enterDashboard()
-            return true
-        }
-        return false
-    }
-
-    func enterDashboard() {
-        self.phase = .dashboard
-        preload()
-    }
-
-    func preload() {
-        MotorBridge.ensureSandbox { [weak self] ok, _ in
-            Task { @MainActor in
-                self?.sandboxReady = ok
-                if ok { self?.containers = (MotorBridge.appContainers() as? [String]) ?? [] }
-                self?.log.append("Sandbox ready: \(ok)")
-            }
-        }
-    }
-
-    func apply(packageData: Data, bundleID: String, pass: String) {
-        let _ = MotorBridge.applyPackageData(packageData, passphrase: pass, bundleID: bundleID)
-        self.log.append("Applied package to \(bundleID)")
-    }
-
-    func startInjection(featureName: String, isOn: Bool, patchName: String? = nil) {
-        guard isOn else { return }
-        self.activeInjectionName = featureName
-        self.injectionStep = 1
-        self.injectionSuccess = false
-        self.injectionError = nil
+    func startInjection(name: String, patchFile: String) {
+        injectionName = name
+        injectionStep = 1
+        injectionSuccess = false
+        injectionError = nil
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { self.injectionStep = 2 }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { self.injectionStep = 3 }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self.injectionStep = 2 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { self.injectionStep = 3 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             self.injectionStep = 4
-            guard let patch = patchName else {
-                self.injectionSuccess = true
-                return
-            }
             Task {
-                let result = await self.applyPatchAsync(filename: patch)
-                await MainActor.run {
-                    if result.0 { self.injectionSuccess = true }
-                    else {
-                        self.injectionError = result.1 ?? "Falha ao acessar o container."
-                        self.injectionSuccess = false
+                let path = Bundle.main.path(forResource: patchFile, ofType: "3105")
+                if let p = path, let data = try? Data(contentsOf: URL(fileURLWithPath: p)) {
+                    let ok = MotorBridge.applyPackageData(data, passphrase: "shared-server-secret", bundleID: "com.dts.freefireth")
+                    await MainActor.run {
+                        if ok { self.injectionSuccess = true }
+                        else { self.injectionError = "Sandbox escape falhou. iOS 27 bloqueia o exploit."; self.injectionSuccess = false }
                     }
+                } else {
+                    await MainActor.run { self.injectionError = "Skedari mungon në bundle."; self.injectionSuccess = false }
                 }
             }
         }
-    }
-    
-    private func applyPatchAsync(filename: String) async -> (Bool, String?) {
-        guard let path = Bundle.main.path(forResource: filename, ofType: "3105") else {
-            return (false, "Skedari \(filename).3105 mungon në bundle.")
-        }
-        do {
-            let data = try Data(contentsOf: URL(fileURLWithPath: path))
-            let ok = MotorBridge.applyPackageData(data, passphrase: "shared-server-secret", bundleID: "com.dts.freefireth")
-            return ok ? (true, nil) : (false, "Sandbox escape falhou.")
-        } catch {
-            return (false, error.localizedDescription)
-        }
-    }
-    
-    func closeInjection() {
-        self.activeInjectionName = nil
-        self.injectionStep = 0
-        self.injectionSuccess = false
-        self.injectionError = nil
     }
 }
