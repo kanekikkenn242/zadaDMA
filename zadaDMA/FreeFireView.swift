@@ -28,12 +28,24 @@ struct FreeFireView: View {
                 
                 VStack(spacing: 12) {
                     if state.selectedCategory == "Aimbot" {
-                        FeatureToggleRow(title: "AIM PECHO 70%", isOn: Binding(get: { state.aimPeitoEnabled }, set: { val in state.aimPeitoEnabled = val; state.toggleFeature("AIM PECHO", isOn: val) }))
-                        FeatureToggleRow(title: "AIMBOT DRAG", isOn: Binding(get: { state.aimbotDragEnabled }, set: { val in state.aimbotDragEnabled = val; state.toggleFeature("AIMBOT DRAG", isOn: val) }))
+                        FeatureToggleRow(title: "AIM PECHO 70%", isOn: Binding(
+                            get: { state.aimPeitoEnabled },
+                            set: { val in state.aimPeitoEnabled = val; state.toggleFeature("AIM PECHO", isOn: val) }
+                        ))
+                        FeatureToggleRow(title: "AIMBOT DRAG", isOn: Binding(
+                            get: { state.aimbotDragEnabled },
+                            set: { val in state.aimbotDragEnabled = val; state.toggleFeature("AIMBOT DRAG", isOn: val) }
+                        ))
                     } else if state.selectedCategory == "Holograma" {
-                        FeatureToggleRow(title: "HOLOGRAMA PURPLE", isOn: Binding(get: { state.hologramEnabled }, set: { val in state.hologramEnabled = val; state.toggleFeature("HOLOGRAMA", isOn: val) }))
+                        FeatureToggleRow(title: "HOLOGRAMA PURPLE", isOn: Binding(
+                            get: { state.hologramEnabled },
+                            set: { val in state.hologramEnabled = val; state.toggleFeature("HOLOGRAMA", isOn: val) }
+                        ))
                     } else if state.selectedCategory == "Skin" {
-                        FeatureToggleRow(title: "SKIN VIP", isOn: Binding(get: { state.skinEnabled }, set: { val in state.skinEnabled = val; state.toggleFeature("SKIN", isOn: val) }))
+                        FeatureToggleRow(title: "SKIN VIP", isOn: Binding(
+                            get: { state.skinEnabled },
+                            set: { val in state.skinEnabled = val; state.toggleFeature("SKIN", isOn: val) }
+                        ))
                     }
                 }.padding(.horizontal)
                 
@@ -56,5 +68,30 @@ struct CategoryButton: View {
             .foregroundColor(isActive ? .white : .gray).frame(maxWidth: .infinity).padding(.vertical, 12)
             .background(isActive ? Color(white: 0.2) : Color.appCard).cornerRadius(12)
         }
+    }
+}
+
+// KETU U RREGULLUA: Komponenti që mungonte
+struct FeatureToggleRow: View {
+    let title: String
+    @Binding var isOn: Bool
+    
+    var body: some View {
+        HStack {
+            Image(systemName: "scope").font(.title2).foregroundColor(.white)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.system(size: 15, weight: .bold)).foregroundColor(.white)
+                Text("Seguro").font(.system(size: 10, weight: .bold)).foregroundColor(.green)
+                    .padding(.horizontal, 6).padding(.vertical, 2)
+                    .background(Color.green.opacity(0.1))
+                    .cornerRadius(4)
+            }
+            Spacer()
+            Toggle("", isOn: $isOn).labelsHidden().tint(.green).scaleEffect(0.8)
+        }
+        .padding(.horizontal)
+        .frame(height: 64)
+        .background(Color.appCard)
+        .cornerRadius(16)
     }
 }
