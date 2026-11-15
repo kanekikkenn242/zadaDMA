@@ -16,7 +16,6 @@ struct FreeFireView: View {
                 
                 VStack(spacing: 12) {
                     if state.selectedCategory == "Aimbot" {
-                        // AIM PECHO - Skedari 70%
                         FeatureToggleRow(title: "AIM PECHO 70%", isOn: Binding(
                             get: { state.aimPeitoEnabled },
                             set: { val in 
@@ -25,7 +24,6 @@ struct FreeFireView: View {
                             }
                         ))
                         
-                        // AIMBOT DRAG - Skedari i ri
                         FeatureToggleRow(title: "AIMBOT DRAG", isOn: Binding(
                             get: { state.aimbotDragEnabled },
                             set: { val in 
@@ -36,18 +34,63 @@ struct FreeFireView: View {
                     } else if state.selectedCategory == "Holograma" {
                         FeatureToggleRow(title: "HOLOGRAMA PURPLE", isOn: Binding(
                             get: { state.hologramEnabled },
-                            set: { val in state.hologramEnabled = val; state.toggleFeature("HOLOGRAMA", isOn: val) }
+                            set: { val in 
+                                state.hologramEnabled = val
+                                state.toggleFeature("HOLOGRAMA", isOn: val, patchFile: "hologram") 
+                            }
                         ))
                     } else if state.selectedCategory == "Skin" {
                         FeatureToggleRow(title: "SKIN VIP", isOn: Binding(
                             get: { state.skinEnabled },
-                            set: { val in state.skinEnabled = val; state.toggleFeature("SKIN", isOn: val) }
+                            set: { val in 
+                                state.skinEnabled = val
+                                state.toggleFeature("SKIN", isOn: val, patchFile: "skin") 
+                            }
                         ))
                     }
                 }.padding(.horizontal)
                 
-                // ... log area
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Logs").font(.caption).foregroundColor(.gray)
+                    ForEach(state.patchLog.suffix(3), id: \.self) { log in
+                        Text(log).font(.system(size: 10, design: .monospaced)).foregroundColor(.green)
+                    }
+                }.padding().frame(maxWidth: .infinity, alignment: .leading).background(Color.black).cornerRadius(12).padding(.horizontal)
             }
         }
+    }
+}
+
+struct CategoryButton: View {
+    let icon: String; let title: String; let isActive: Bool; let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) { Image(systemName: icon); Text(title).font(.system(size: 14)) }
+            .foregroundColor(isActive ? .white : .gray).frame(maxWidth: .infinity).padding(.vertical, 12)
+            .background(isActive ? Color(white: 0.2) : Color.appCard).cornerRadius(12)
+        }
+    }
+}
+
+struct FeatureToggleRow: View {
+    let title: String
+    @Binding var isOn: Bool
+    var body: some View {
+        HStack {
+            Image(systemName: "scope").font(.title2).foregroundColor(.white)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.system(size: 15, weight: .bold)).foregroundColor(.white)
+                Text("Seguro").font(.system(size: 10, weight: .bold)).foregroundColor(.green)
+                    .padding(.horizontal, 6).padding(.vertical, 2)
+                    .background(Color.green.opacity(0.1))
+                    .cornerRadius(4)
+            }
+            Spacer()
+            Toggle("", isOn: $isOn).labelsHidden().tint(.green).scaleEffect(0.8)
+        }
+        .padding(.horizontal)
+        .frame(height: 64)
+        .background(Color.appCard)
+        .cornerRadius(16)
     }
 }
