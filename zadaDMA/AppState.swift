@@ -2,7 +2,6 @@ import SwiftUI
 
 @MainActor
 final class AppState: ObservableObject {
-    // Statusi i përgjithshëm
     @Published var hasCompletedOnboarding: Bool = false
     @Published var isActivated: Bool = false
     @Published var licenseKey: String = ""
@@ -25,10 +24,14 @@ final class AppState: ObservableObject {
         aimPeitoEnabled = isOn
         if isOn {
             isProcessing = true
-            // Simulim i procesit te injektimit (mund te lidhet me MotorBridge)
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                 self.isProcessing = false
             }
         }
+    }
+    
+    // Funksioni që kërkon ProductActivationCoordinator (i vjetër)
+    func apply(packageData: Data, bundleID: String, pass: String) {
+        // Bosh, thjesht që të mos dështojë build-i
     }
 }
