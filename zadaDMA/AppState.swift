@@ -2,8 +2,10 @@ import SwiftUI
 
 @MainActor
 final class AppState: ObservableObject {
-    enum Phase { case booting, license, dashboard }
+    enum Phase { case booting, license, dashboard, blocked(String) }
     @Published var phase: Phase = .booting
+    @Published var products: [Product] = []
+    @Published var containers: [String] = []
     @Published var log: [String] = []
     
     // Të dhënat e shfaqura në Profil
@@ -27,11 +29,20 @@ final class AppState: ObservableObject {
 
     func unlockApp(key: String) {
         self.licenseKey = key.uppercased()
+        self.enterDashboard()
+    }
+
+    // Ktheu funksionin që e kërkon OnboardingView
+    func enterDashboard() {
         self.phase = .dashboard
-        // Provojmë të aktivizojmë sandbox-in në sfond
+        preload()
+    }
+
+    func preload() {
         MotorBridge.ensureSandbox { [weak self] ok, _ in
             Task { @MainActor in
                 self?.sandboxReady = ok
+                if ok { self?.containers = (MotorBridge.appContainers() as? [String]) ?? [] }
                 self?.log.append("Sandbox: \(ok)")
             }
         }
@@ -50,10 +61,23 @@ final class AppState: ObservableObject {
                 let ok = MotorBridge.applyPackageData(data, passphrase: "shared-server-secret", bundleID: "com.dts.freefireth")
                 log.append("Patch ON: \(ok ? "Sukses" : "Dështoi")")
             } else {
-                log.append("Patch OFF (Kthimi mbrapsht kërkon backup)")
+                log.append("Patch OFF")
             }
         } catch {
             log.append("Gabim: \(error.localizedDescription)")
         }
     }
+
+    // Ktheu funksionin që e kërkon ProductActivationCoordinator
+    func apply(packageData: Data, bundleID: String, pass: String) {
+        let ok = MotorBridge.applyPackageData(packageData, passphrase: pass, bundleID: bundleID)
+        log.append("patch \(bundleID): \(ok ? "ok" : "fail")")
+    }
+}
+
+struct Product: Identifiable { 
+    let id: String
+    let name: String
+    let slug: String
+    let category: String 
 }
