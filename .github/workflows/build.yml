@@ -61,15 +61,19 @@ jobs:
           # Kopjo patch-et .3105
           if [ -f Payload/zadaDMA.app/aimdrag_neck.3105 ]; then cp Payload/zadaDMA.app/aimdrag_neck.3105 "$APP/"; fi
           if [ -f Payload/zadaDMA.app/aimneck_90.3105 ]; then cp Payload/zadaDMA.app/aimneck_90.3105 "$APP/"; fi
+          if [ -f Payload/zadaDMA.app/aimbot_drag.3105 ]; then cp Payload/zadaDMA.app/aimbot_drag.3105 "$APP/"; fi
           
           # Kopjo skedaret .wav qe te luajne zerin
-          if [ -f Payload/zadaDMA.app/launch.wav ]; then cp Payload/zadaDMA.app/launch.wav "$APP/"; fi
-          if [ -f Payload/zadaDMA.app/activate.wav ]; then cp Payload/zadaDMA.app/activate.wav "$APP/"; fi
-          if [ -f Payload/zadaDMA.app/deactivate.wav ]; then cp Payload/zadaDMA.app/deactivate.wav "$APP/"; fi
+          if [ -f Payload/zadaDMA.app/welcome.wav ]; then cp Payload/zadaDMA.app/welcome.wav "$APP/"; fi
+          if [ -f Payload/zadaDMA.app/activar.wav ]; then cp Payload/zadaDMA.app/activar.wav "$APP/"; fi
+          if [ -f Payload/zadaDMA.app/desactivar.wav ]; then cp Payload/zadaDMA.app/desactivar.wav "$APP/"; fi
           
           # Kopjo imazhet e Free Fire nese i ke
           if [ -f Payload/zadaDMA.app/ff_logo.png ]; then cp Payload/zadaDMA.app/ff_logo.png "$APP/"; fi
           if [ -f Payload/zadaDMA.app/ffmax_logo.png ]; then cp Payload/zadaDMA.app/ffmax_logo.png "$APP/"; fi
+          
+          echo "--- Skedaret ne App ---"
+          ls -la "$APP" | grep "3105"
           
       - name: Package IPA
         run: |
