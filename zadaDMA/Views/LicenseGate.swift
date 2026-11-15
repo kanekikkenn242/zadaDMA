@@ -9,68 +9,66 @@ struct LicenseGate: View {
         ZStack {
             Color.black.ignoresSafeArea()
             
-            VStack(spacing: 30) {
+            VStack(spacing: 24) {
                 Spacer()
                 
-                // Logo
                 Text("dope")
-                    .font(.system(size: 44, weight: .black, design: .rounded))
+                    .font(.system(size: 42, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
                 
-                VStack(spacing: 8) {
+                VStack(spacing: 6) {
                     Text("Entre para continuar")
-                        .font(.title3.bold())
+                        .font(.system(size: 18, weight: .bold))
                         .foregroundStyle(.white)
                     Text("Digite sua licença.")
-                        .font(.subheadline)
+                        .font(.system(size: 14))
                         .foregroundStyle(.gray)
                 }
                 
-                // Fusha e inputit
-                VStack(spacing: 16) {
+                VStack(spacing: 12) {
                     HStack {
                         Image(systemName: "key.fill")
                             .foregroundStyle(.gray)
-                            .font(.system(size: 16))
+                            .font(.system(size: 14))
                         TextField("KEY-XXXX-XXXXX", text: $keyInput)
                             .foregroundStyle(.white)
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.system(size: 15))
                             .autocorrectionDisabled()
                             .textInputAutocapitalization(.characters)
                     }
-                    .padding()
+                    .padding(.horizontal, 16)
+                    .frame(height: 52)
                     .background(Color(white: 0.12))
-                    .cornerRadius(16)
+                    .cornerRadius(14)
                     
                     if showError {
-                        Text("Chave inválida. Tente novamente.")
+                        Text("Chave inválida.")
                             .foregroundStyle(.red)
-                            .font(.caption)
+                            .font(.system(size: 13))
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 4)
                     }
                     
                     Button {
                         let success = state.unlockApp(key: keyInput)
                         if !success { showError = true }
                     } label: {
-                        HStack {
+                        HStack(spacing: 8) {
                             Text("Entrar")
-                                .font(.headline)
+                                .font(.system(size: 16, weight: .semibold))
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 14, weight: .bold))
+                                .font(.system(size: 12, weight: .bold))
                         }
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color(white: 0.6))
+                        .frame(height: 52)
+                        .background(Color(white: 0.7))
                         .foregroundStyle(.black)
-                        .cornerRadius(16)
+                        .cornerRadius(14)
                     }
                 }
                 .padding(.horizontal, 32)
                 
                 Button("Precisa de uma key? Clique aqui") {}
-                    .font(.footnote)
+                    .font(.system(size: 13))
                     .foregroundStyle(.gray)
                 
                 Spacer()
