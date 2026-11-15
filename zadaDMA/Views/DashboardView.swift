@@ -2,7 +2,6 @@ import SwiftUI
 
 struct DashboardView: View {
     @EnvironmentObject var state: AppState
-    
     var body: some View {
         TabView {
             HomeTab().tabItem { Label("Inicio", systemImage: "house.fill") }
@@ -20,15 +19,20 @@ struct HomeTab: View {
         ZStack {
             Color.black.ignoresSafeArea()
             VStack {
-                Text("Estado del dispositivo").foregroundStyle(.gray).frame(maxWidth: .infinity, alignment: .leading).padding()
+                HStack {
+                    Text("Estado del dispositivo").foregroundStyle(.gray)
+                    Spacer()
+                    Circle().fill(.green).frame(width: 8, height: 8)
+                    Text("Activo").foregroundStyle(.green).font(.caption)
+                }.padding(.horizontal)
+                
                 VStack(spacing: 1) {
-                    infoRow(icon: "iphone", title: "Modelo de hardware", value: "iPhone17,5")
-                    infoRow(icon: "gear", title: "iOS Version", value: "27.2.0 (24B508)")
-                    infoRow(icon: "checkmark.shield.fill", title: "Compatibilidad de exploit", value: "Compatible", valueColor: .green)
+                    infoRow(icon: "iphone", title: "Modelo de hardware", value: DeviceInfo.getHardwareModel())
+                    infoRow(icon: "gear", title: "iOS Version", value: DeviceInfo.getIOSVersion())
+                    let exploit = DeviceInfo.isExploitCompatible()
+                    infoRow(icon: "checkmark.shield.fill", title: "Compatibilidad de exploit", value: exploit.status, valueColor: exploit.color)
                 }
-                .background(Color(white: 0.1))
-                .cornerRadius(12)
-                .padding()
+                .background(Color(white: 0.1)).cornerRadius(12).padding()
                 Spacer()
             }
         }
@@ -40,21 +44,17 @@ struct HomeTab: View {
             Text(title).foregroundStyle(.white)
             Spacer()
             Text(value).foregroundStyle(valueColor)
-        }
-        .padding()
-        .background(Color(white: 0.05))
+        }.padding().background(Color(white: 0.05))
     }
 }
 
 struct FreeFireTab: View {
     @EnvironmentObject var state: AppState
-    
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.black.ignoresSafeArea()
                 VStack(spacing: 16) {
-                    // Karta e lartë (Free Fire)
                     HStack {
                         Image(systemName: "flame.fill").foregroundStyle(.orange).font(.largeTitle)
                         VStack(alignment: .leading) {
@@ -63,33 +63,25 @@ struct FreeFireTab: View {
                         }
                         Spacer()
                         Text("120 FPS").font(.caption2).padding(4).background(Color.blue).cornerRadius(4)
-                    }
-                    .padding().background(Color(white: 0.1)).cornerRadius(12)
+                    }.padding().background(Color(white: 0.1)).cornerRadius(12)
                     
-                    // Butonat
                     HStack {
                         buttonIcon("Aimbot", icon: "scope")
                         buttonIcon("Holograma", icon: "hexagon")
                         buttonIcon("Skin", icon: "paintbrush")
                     }
                     
-                    // Toggle-at (Aim Pecho dhe Drag)
                     VStack(spacing: 1) {
                         toggleRow(title: "AIM PECHO 70%", subtitle: "Seguro", isOn: Binding(
                             get: { state.isAimChestEnabled },
                             set: { state.toggleAimChest($0) }
                         ))
-                        
                         toggleRow(title: "AIMBOT DRAG", subtitle: "Seguro", isOn: $state.isAimDragEnabled)
-                    }
-                    .background(Color(white: 0.1)).cornerRadius(12)
+                    }.background(Color(white: 0.1)).cornerRadius(12)
                     
                     Spacer()
-                }
-                .padding()
-            }
-            .navigationTitle("Free Fire")
-            .navigationBarTitleDisplayMode(.inline)
+                }.padding()
+            }.navigationTitle("Free Fire").navigationBarTitleDisplayMode(.inline)
         }
     }
     
@@ -97,9 +89,7 @@ struct FreeFireTab: View {
         VStack {
             Image(systemName: icon).font(.title2).foregroundStyle(.white)
             Text(title).font(.caption).foregroundStyle(.gray)
-        }
-        .frame(maxWidth: .infinity).padding(.vertical, 12)
-        .background(Color(white: 0.15)).cornerRadius(10)
+        }.frame(maxWidth: .infinity).padding(.vertical, 12).background(Color(white: 0.15)).cornerRadius(10)
     }
     
     private func toggleRow(title: String, subtitle: String, isOn: Binding<Bool>) -> some View {
@@ -111,15 +101,12 @@ struct FreeFireTab: View {
             }
             Spacer()
             Toggle("", isOn: isOn).labelsHidden()
-        }
-        .padding()
-        .background(Color(white: 0.05))
+        }.padding().background(Color(white: 0.05))
     }
 }
 
 struct ProfileTab: View {
     @EnvironmentObject var state: AppState
-    
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
@@ -132,15 +119,10 @@ struct ProfileTab: View {
                     infoRow(icon: "key.fill", title: "Clave", value: state.licenseKey)
                     infoRow(icon: "clock.fill", title: "Tiempo restante", value: state.timeRemaining)
                     infoRow(icon: "iphone", title: "UDID", value: state.udid)
-                }
-                .background(Color(white: 0.1)).cornerRadius(12)
+                }.background(Color(white: 0.1)).cornerRadius(12)
                 
-                Button("Cerrar sesión") {
-                    exit(0)
-                }
-                .frame(maxWidth: .infinity).padding()
-                .background(Color.red.opacity(0.2)).foregroundStyle(.red).cornerRadius(10)
-                
+                Button("Cerrar sesión") { exit(0) }
+                    .frame(maxWidth: .infinity).padding().background(Color.red.opacity(0.2)).foregroundStyle(.red).cornerRadius(10)
                 Spacer()
             }.padding()
         }
@@ -153,8 +135,7 @@ struct ProfileTab: View {
             Spacer()
             Text(value).foregroundStyle(.white).font(.system(.caption, design: .monospaced))
             Image(systemName: "doc.on.doc").foregroundStyle(.gray)
-        }
-        .padding().background(Color(white: 0.05))
+        }.padding().background(Color(white: 0.05))
     }
 }
 
