@@ -9,7 +9,7 @@ struct MainTabView: View {
             TabView(selection: $tab) {
                 HomeView().tag(0)
                 FreeFireView().tag(1)
-                ProfileView().tag(2) // KETU U RREGULLUA
+                ProfileView().tag(2) // E RREGULLUAR: Pa parametra
                 SupportView().tag(3)
             }.tabViewStyle(.page(indexDisplayMode: .never))
             
