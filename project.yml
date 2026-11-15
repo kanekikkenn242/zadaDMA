@@ -18,12 +18,9 @@ targets:
     type: application
     platform: iOS
     sources:
-      # Skedaret Swift
       - path: zadaDMA
-      # Skedaret ObjC/C (Motor), por jo kfd (ai kompilohet vecmas)
       - path: Motor
         excludes: ["zdma_crypto/**", "kexploit/kfd/**"]
-      # Skedaret e Payload (perfshire .3105 nese jane aty)
       - path: Payload/zadaDMA.app
         excludes: ["Info.plist", "zadaDMA", "Assets.car"]
         buildPhase: resources
@@ -35,15 +32,12 @@ targets:
         PRODUCT_NAME: zadaDMA
         INFOPLIST_FILE: Payload/zadaDMA.app/Info.plist
         SWIFT_OBJC_BRIDGING_HEADER: Motor/MotorBridge.h
-        # Rruget per te gjetur skedaret .h
         HEADER_SEARCH_PATHS: 
           - "$(SRCROOT)/Motor"
           - "$(SRCROOT)/Motor/kexploit"
-        # Rruget per te gjetur librarite (Rust dhe kfd)
         LIBRARY_SEARCH_PATHS: 
           - "$(SRCROOT)/Motor/zdma_crypto/target/aarch64-apple-ios/release"
           - "$(SRCROOT)/Motor/kexploit/kfd/build"
-        # Lidhja e librarive
         OTHER_LDFLAGS: 
           - "-ObjC"
           - "-lc++"
