@@ -5,7 +5,10 @@ struct zadaDMAApp: App {
     @StateObject var state = AppState()
     var body: some Scene {
         WindowGroup {
-            RootView().environmentObject(state).task { state.boot() }
+            RootView()
+                .environmentObject(state)
+                .task { state.boot() }
+                .preferredColorScheme(.dark) // Detyron Dark Mode
         }
     }
 }
