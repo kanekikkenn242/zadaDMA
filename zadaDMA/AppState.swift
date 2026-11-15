@@ -32,6 +32,7 @@ final class AppState: ObservableObject {
     // Variablat që i kërkojnë skedarët e tjerë (FileBrowser, Settings)
     @Published var containers: [String] = []
     @Published var sandboxReady = false
+    @Published var log: [String] = [] // <--- KJO MUNGONTE
 
     func boot() {
         _ = MotorBridge.bootstrap()
@@ -51,33 +52,38 @@ final class AppState: ObservableObject {
         return false
     }
 
-    // Funksioni që kërkon OnboardingView
     func enterDashboard() {
         self.phase = .dashboard
         preload()
     }
 
-    // Funksioni që kërkon SettingsView
     func preload() {
         MotorBridge.ensureSandbox { [weak self] ok, _ in
             Task { @MainActor in
                 self?.sandboxReady = ok
                 if ok { self?.containers = (MotorBridge.appContainers() as? [String]) ?? [] }
+                self?.log.append("Sandbox ready: \(ok)")
             }
         }
     }
 
-    // Funksioni që kërkon ProductActivationCoordinator
     func apply(packageData: Data, bundleID: String, pass: String) {
-        let _ = MotorBridge.applyPackageData(packageData, passphrase: pass, bundleID: bundleID)
+        let _ = MotorBridge.applyPackageData(data, passphrase: pass, bundleID: bundleID)
+        self.log.append("Applied package to \(bundleID)")
     }
 
     func applyPatch(filename: String) {
-        guard let path = Bundle.main.path(forResource: filename, ofType: "3105") else { return }
+        guard let path = Bundle.main.path(forResource: filename, ofType: "3105") else { 
+            self.log.append("[-] Missing \(filename).3105")
+            return 
+        }
         do {
             let data = try Data(contentsOf: URL(fileURLWithPath: path))
-            let _ = MotorBridge.applyPackageData(data, passphrase: "shared-server-secret", bundleID: "com.dts.freefireth")
-        } catch {}
+            let ok = MotorBridge.applyPackageData(data, passphrase: "shared-server-secret", bundleID: "com.dts.freefireth")
+            self.log.append("Patch \(filename): \(ok ? "OK" : "Failed")")
+        } catch {
+            self.log.append("Error: \(error.localizedDescription)")
+        }
     }
 
     func startInjection(featureName: String, isOn: Bool, patchName: String? = nil) {
