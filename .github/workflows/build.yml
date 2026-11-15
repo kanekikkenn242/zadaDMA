@@ -1,3 +1,4 @@
+@'
 name: build-ipa
 on:
   push: { branches: [ main ] }
@@ -13,6 +14,11 @@ jobs:
       - name: Rust staticlib
         working-directory: Motor/zdma_crypto
         run: cargo build --release --target aarch64-apple-ios
+      - name: Download kfd
+        run: |
+          git clone --depth 1 https://github.com/felix-pb/kfd.git Motor/kexploit/kfd
+          rm -rf Motor/kexploit/kfd/.git
+          ls -la Motor/kexploit/kfd
       - run: brew install xcodegen
       - run: xcodegen generate --spec project.yml
       - name: Build
@@ -34,3 +40,4 @@ jobs:
         with:
           name: zadaDMA-ipa
           path: zadaDMA-unsigned.ipa
+'@ | Set-Content -Path ".github\workflows\build.yml" -Encoding UTF8
