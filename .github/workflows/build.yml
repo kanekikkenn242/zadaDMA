@@ -8,20 +8,24 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
       
-      - uses: dtolnay/rust-toolchain@stable
-        with: { targets: aarch64-apple-ios }
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with: 
+          targets: aarch64-apple-ios
         
-      - name: Rust staticlib
+      - name: Build Rust Static Library
         working-directory: Motor/zdma_crypto
         run: cargo build --release --target aarch64-apple-ios
         
-      - name: Download kfd
+      - name: Download and Prepare kfd
         run: |
           rm -rf Motor/kexploit/kfd
           git clone --depth 1 https://github.com/felix-pb/kfd.git Motor/kexploit/kfd
           rm -rf Motor/kexploit/kfd/.git
+          echo "--- KFD Structure ---"
           ls -la Motor/kexploit/kfd
           
       - name: Install XcodeGen
@@ -36,12 +40,16 @@ jobs:
             -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
             
-      - name: Force Copy Patches
+      - name: Force Copy Patches and Assets
         run: |
           APP=build/Build/Products/Release-iphoneos/zadaDMA.app
+          # Kopjo skedaret .3105
           if [ -f Payload/zadaDMA.app/aimdrag_neck.3105 ]; then cp Payload/zadaDMA.app/aimdrag_neck.3105 "$APP/"; fi
           if [ -f Payload/zadaDMA.app/aimneck_90.3105 ]; then cp Payload/zadaDMA.app/aimneck_90.3105 "$APP/"; fi
+          # Kopjo Assets.car nese ekziston
           if [ -f Payload/zadaDMA.app/Assets.car ]; then cp Payload/zadaDMA.app/Assets.car "$APP/"; fi
+          echo "--- Skedaret ne App ---"
+          ls -la "$APP" | grep "3105" || echo "Skedaret .3105 mungojne!"
           
       - name: Package IPA
         run: |
@@ -49,7 +57,8 @@ jobs:
           cp -R build/Build/Products/Release-iphoneos/zadaDMA.app pkg/Payload/
           (cd pkg && zip -ry ../zadaDMA-unsigned.ipa Payload)
           
-      - uses: actions/upload-artifact@v4
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
         with:
           name: zadaDMA-ipa
           path: zadaDMA-unsigned.ipa
