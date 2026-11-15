@@ -3,6 +3,7 @@ options:
   bundleIdPrefix: com.apple.mobile
   deploymentTarget: { iOS: "16.0" }
   createIntermediateGroups: true
+
 settings:
   base:
     SWIFT_VERSION: "5.9"
@@ -11,6 +12,7 @@ settings:
     CODE_SIGNING_REQUIRED: "NO"
     CODE_SIGN_IDENTITY: ""
     ENABLE_BITCODE: "NO"
+
 targets:
   zadaDMA:
     type: application
@@ -21,6 +23,7 @@ targets:
         excludes: ["zdma_crypto/**", "kexploit/**"]
       - path: Payload/zadaDMA.app
         excludes: ["Info.plist", "zadaDMA"]
+        buildPhase: resources
     info:
       path: Payload/zadaDMA.app/Info.plist
     settings:
