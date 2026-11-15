@@ -21,8 +21,10 @@ targets:
       - path: zadaDMA
       - path: Motor
         excludes: ["zdma_crypto/**", "kexploit/kfd/**"]
-      - path: Motor/kexploit/kfd/kfd
-        excludes: ["**/*.swift", "**/*.xcodeproj"]
+      # Ketu po i detyrojme skedaret C te kfd te kompilohen
+      - path: Motor/kexploit/kfd/kfd/libkfd
+      - path: Motor/kexploit/kfd/kfd/exploit
+      - path: Motor/kexploit/kfd/kfd/kutils
       - path: Payload/zadaDMA.app
         excludes: ["Info.plist", "zadaDMA", "Assets.car"]
         buildPhase: resources
@@ -37,6 +39,8 @@ targets:
         HEADER_SEARCH_PATHS: 
           - "$(SRCROOT)/Motor"
           - "$(SRCROOT)/Motor/kexploit"
+          - "$(SRCROOT)/Motor/kexploit/kfd/kfd"
+          - "$(SRCROOT)/Motor/kexploit/kfd/kfd/libkfd"
         LIBRARY_SEARCH_PATHS: 
           - "$(SRCROOT)/Motor/zdma_crypto/target/aarch64-apple-ios/release"
         OTHER_LDFLAGS: 
