@@ -52,6 +52,6 @@ class Localization {
     ]
     
     func translate(_ key: String, lang: String) -> String {
-        return dict[lang]?[key] ?? dict["English"]?[key] ?? key
+        dict[lang]?[key] ?? dict["English"]?[key] ?? key
     }
 }
