@@ -8,23 +8,19 @@ struct SplashView: View {
     var body: some View {
         VStack {
             Spacer()
-            
             ZStack {
                 Circle().stroke(Color.gray.opacity(0.3), lineWidth: 4).frame(width: 120, height: 120)
                 Circle().trim(from: 0, to: progress).stroke(Color.appOrange, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                     .frame(width: 120, height: 120).rotationEffect(.degrees(-90))
-                
                 Text("X").font(.system(size: 50, weight: .bold)).foregroundColor(.white)
             }
             .padding(.bottom, 20)
-            
             Text("zadaDMA").font(.headline).foregroundColor(.white)
             Text(state.deviceModel).font(.caption).foregroundColor(.gray)
             Text(state.deviceiOS).font(.caption).foregroundColor(.gray)
             
             Spacer()
             
-            // Music Prompt
             VStack(spacing: 12) {
                 Text("Want to listen to music?").font(.subheadline.bold()).foregroundColor(.white)
                 HStack(spacing: 12) {
@@ -34,9 +30,7 @@ struct SplashView: View {
             }
             .padding(16).background(Color.appCard).cornerRadius(16).padding(.horizontal)
             
-            Button {
-                // Action
-            } label: {
+            Button { } label: {
                 HStack {
                     Image(systemName: "square.and.arrow.up").foregroundColor(.appOrange)
                     Text("Install profile").foregroundColor(.gray).font(.subheadline)
