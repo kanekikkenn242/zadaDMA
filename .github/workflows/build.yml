@@ -36,7 +36,8 @@ jobs:
           git clone --depth 1 https://github.com/jkcoxson/idevice.git vendor/idevice
           cd vendor/idevice/ffi
           cargo build --release --target aarch64-apple-ios
-          cp target/aarch64-apple-ios/release/libidevice_ffi.a ../../Motor/
+          # RREGULLIMI: Shtuar nje "../" me teper per te shkuar ne rrënjë
+          cp target/aarch64-apple-ios/release/libidevice_ffi.a ../../../Motor/
           
       - name: Install XcodeGen
         run: brew install xcodegen
