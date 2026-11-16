@@ -47,7 +47,7 @@ class AppState: ObservableObject {
                 patchLog.append("✅ Pairing iOS duke sukses...")
                 
                 // Attempt kexploit
-                patchLog.append("✅ \(fileName) u injektua me kexploit.")
+                patchLog.append("✅ injektimi me kexploit i suksesshëm.")
             } else {
                 // FIX: patchLog now in scope
                 patchLog.append("⚠️ kexploit dështoi. Duke provuar Airlift...")

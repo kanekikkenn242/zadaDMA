@@ -225,13 +225,13 @@ class PairingController: ObservableObject {
         let fullRemotePath = "\(remoteDir)/\(filename)"
         // FIX: properly create C string from the path
         if let rp = fullRemotePath.cString(using: .utf8) {
-            // FIX: use withUnsafeBytes properly for the data
+            // FIX: use withUnsafeBytes properly for the data, unwrap optional pointer
             let dataC = localData.withUnsafeBytes { bytes in
-                // Assuming the bytes are CChar (which they may not be, so we need to handle this)
-                let ptr = bytes.baseAddress?.assumingMemoryBound(to: CChar.self)
-                return ptr
+                bytes.baseAddress?.assumingMemoryBound(to: CChar.self)
             }
-            write(client, rp, dataC)
+            if let dataC = dataC {
+                write(client, rp, dataC)
+            }
         }
         
         if let close = closeFn { _ = close(client) }
