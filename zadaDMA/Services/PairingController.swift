@@ -1,21 +1,20 @@
 import Foundation
 import UIKit
-
-// Funksionet e librarise Rust "idevice" (FFI)
-// Nese emrat ndryshojne, shiko vendor/idevice/ffi/examples/
-@_silgen_name("idevice_afc_connect_with_pairing_file")
-func idevice_afc_connect_with_pairing_file(_ pairingPath: UnsafePointer<CChar>, _ host: UnsafePointer<CChar>, _ port: UInt16) -> Int32
-
-@_silgen_name("idevice_afc_write_file")
-func idevice_afc_write_file(_ client: Int32, _ remotePath: UnsafePointer<CChar>, _ localPath: UnsafePointer<CChar>) -> Int32
-
-@_silgen_name("idevice_afc_close")
-func idevice_afc_close(_ client: Int32) -> Int32
+import Darwin
 
 class PairingController: ObservableObject {
     static let shared = PairingController()
     
     @Published var hasPairingFile: Bool = false
+    
+    // Pointerat e funksioneve (te gjetur ne runtime me dlsym)
+    private typealias ConnectFn = @convention(c) (UnsafePointer<CChar>, UnsafePointer<CChar>, UInt16) -> Int32
+    private typealias WriteFn = @convention(c) (Int32, UnsafePointer<CChar>, UnsafePointer<CChar>) -> Int32
+    private typealias CloseFn = @convention(c) (Int32) -> Int32
+    
+    private var connectFn: ConnectFn?
+    private var writeFn: WriteFn?
+    private var closeFn: CloseFn?
     
     private var pairingFilePath: String {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -24,6 +23,56 @@ class PairingController: ObservableObject {
     
     init() {
         hasPairingFile = FileManager.default.fileExists(atPath: pairingFilePath)
+        loadSymbols()
+    }
+    
+    private func loadSymbols() {
+        // Provojme disa emra te mundshem per funksionet e FFI
+        let connectNames = [
+            "idevice_afc_connect_with_pairing_file",
+            "idevice_connect_with_pairing_file",
+            "idevice_connect",
+            "afc_connect",
+            "idevice_afc_connect"
+        ]
+        let writeNames = [
+            "idevice_afc_write_file",
+            "idevice_afc_write",
+            "afc_write_file",
+            "idevice_write_file"
+        ]
+        let closeNames = [
+            "idevice_afc_close",
+            "idevice_close",
+            "afc_close"
+        ]
+        
+        for name in connectNames {
+            if let ptr = dlsym(UnsafeMutableRawPointer(bitPattern: -2), name) {
+                connectFn = unsafeBitCast(ptr, to: ConnectFn.self)
+                print("[Airlift] Gjeta funksionin e lidhjes: \(name)")
+                break
+            }
+        }
+        for name in writeNames {
+            if let ptr = dlsym(UnsafeMutableRawPointer(bitPattern: -2), name) {
+                writeFn = unsafeBitCast(ptr, to: WriteFn.self)
+                print("[Airlift] Gjeta funksionin e shkrimit: \(name)")
+                break
+            }
+        }
+        for name in closeNames {
+            if let ptr = dlsym(UnsafeMutableRawPointer(bitPattern: -2), name) {
+                closeFn = unsafeBitCast(ptr, to: CloseFn.self)
+                print("[Airlift] Gjeta funksionin e mbylljes: \(name)")
+                break
+            }
+        }
+        
+        if connectFn == nil || writeFn == nil {
+            print("[Airlift] [-] Nuk u gjeten funksionet FFI te idevice.")
+            print("[Airlift] Kontrollo emrat real me: nm libidevice_ffi.a | grep idevice")
+        }
     }
     
     func importPairingFile(url: URL) -> Bool {
@@ -34,7 +83,6 @@ class PairingController: ObservableObject {
             }
             try FileManager.default.copyItem(at: url, to: dest)
             hasPairingFile = true
-            print("[Airlift] Pairing file u ruajt: \(pairingFilePath)")
             return true
         } catch {
             print("[-] Gabim: \(error)")
@@ -47,11 +95,14 @@ class PairingController: ObservableObject {
             print("[-] Pairing file mungon")
             return false
         }
+        guard let connect = connectFn, let write = writeFn else {
+            print("[-] Funksionet Airlift nuk u gjeten. Kontrollo librarine idevice.")
+            return false
+        }
         
-        print("[Airlift] Duke u lidhur me 127.0.0.1:49152...")
         let client = pairingFilePath.withCString { pp in
             "127.0.0.1".withCString { hp in
-                idevice_afc_connect_with_pairing_file(pp, hp, 49152)
+                connect(pp, hp, 49152)
             }
         }
         
@@ -60,21 +111,13 @@ class PairingController: ObservableObject {
             return false
         }
         
-        print("[Airlift] Duke derguar: \(localPath) -> \(remotePath)")
         let result = localPath.withCString { lp in
             remotePath.withCString { rp in
-                idevice_afc_write_file(client, rp, lp)
+                write(client, rp, lp)
             }
         }
         
-        _ = idevice_afc_close(client)
-        
-        if result == 0 {
-            print("[Airlift] Sukses!")
-            return true
-        } else {
-            print("[-] Dergimi deshtoi")
-            return false
-        }
+        if let close = closeFn { _ = close(client) }
+        return result == 0
     }
 }
