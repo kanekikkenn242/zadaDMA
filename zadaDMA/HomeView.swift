@@ -1,8 +1,10 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct HomeView: View {
     @EnvironmentObject var state: AppState
     @ObservedObject private var pairing = PairingController.shared
+    @State private var showImporter = false
     
     var body: some View {
         NavigationView {
@@ -67,14 +69,13 @@ struct HomeView: View {
                             .cornerRadius(10)
                         }
                         
-                        // Button 2: start pairing
+                        // Button 2: import pairing.plist
                         Button {
-                            let pin = pairing.currentPin.isEmpty ? pairing.generatePin() : pairing.currentPin
-                            pairing.startPairing(pin: pin) { _ in }
+                            showImporter = true
                         } label: {
                             HStack {
-                                Image(systemName: "link")
-                                Text("Pair on this iPhone")
+                                Image(systemName: "square.and.arrow.down")
+                                Text("Import pairing.plist")
                             }
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white)
@@ -85,7 +86,7 @@ struct HomeView: View {
                             .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.appOrange.opacity(0.5), lineWidth: 1))
                         }
                         
-                        Text("Settings → Privacy & Security → Developer Mode → Pair with this app → enter the PIN above.")
+                        Text("Developer Mode nuk liston aplikacione. Pairing bëhet nga PC/Mac (Xcode ose pymobiledevice3), pastaj importo pairing.plist këtu.")
                             .font(.system(size: 10))
                             .foregroundColor(.gray)
 
@@ -141,6 +142,18 @@ struct HomeView: View {
             }
             .background(Color.black.ignoresSafeArea())
             .navigationBarHidden(true)
+            .fileImporter(isPresented: $showImporter,
+                          allowedContentTypes: [.propertyList, .xml, .data],
+                          allowsMultipleSelection: false) { result in
+                switch result {
+                case .success(let urls):
+                    if let url = urls.first {
+                        _ = pairing.importPairingFile(url: url)
+                    }
+                case .failure(let error):
+                    print("[-] Import gabim: \(error)")
+                }
+            }
         }
     }
 }

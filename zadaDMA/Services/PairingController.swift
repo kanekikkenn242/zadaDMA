@@ -186,6 +186,8 @@ class PairingController: ObservableObject {
     }
 
     func importPairingFile(url: URL) -> Bool {
+        let access = url.startAccessingSecurityScopedResource()
+        defer { if access { url.stopAccessingSecurityScopedResource() } }
         do {
             let dest = URL(fileURLWithPath: pairingFilePath)
             if FileManager.default.fileExists(atPath: pairingFilePath) {
@@ -193,9 +195,11 @@ class PairingController: ObservableObject {
             }
             try FileManager.default.copyItem(at: url, to: dest)
             hasPairingFile = true
+            pairingStatus = "Pairing file imported"
             return true
         } catch {
             print("[-] Gabim: \(error)")
+            pairingStatus = "Import failed"
             return false
         }
     }
