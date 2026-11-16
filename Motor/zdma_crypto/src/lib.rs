@@ -81,14 +81,12 @@ pub unsafe extern "C" fn zdma_generate_pin(out: *mut u8, out_len: usize) -> i32 
     if getentropy(rng_buf.as_mut_ptr(), 4) != 0 { return -1; }
     let pin_value = u32::from_le_bytes(rng_buf) % 1000000;
     let pin_str = format!("{:06}", pin_value);
-    // Write exactly 6 bytes to the output buffer
+    // Write exactly 6 bytes to the output buffer using slice operations
     let pin_bytes = pin_str.as_bytes();
-    if out_len >= 6 {
-        for i in 0..6 { out[i] = pin_bytes[i]; }
-    } else {
-        // Buffer too small, write what we can
-        let write_len = std::cmp::min(out_len, pin_bytes.len());
-        for i in 0..write_len { out[i] = pin_bytes[i]; }
+    let write_len = std::cmp::min(6, out_len);
+    if write_len > 0 {
+        let out_slice = std::slice::from_raw_parts_mut(out, write_len);
+        out_slice.copy_from_slice(&pin_bytes[..write_len]);
     }
     0
 }
