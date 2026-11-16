@@ -43,6 +43,13 @@ jobs:
             -sdk iphoneos -destination 'generic/platform=iOS' \
             -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
             
+      - name: Verify Info.plist keys
+        run: |
+          APP=$(find build/Build/Products/Release-iphoneos -name "*.app" | head -n 1)
+          echo "Checking $APP/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :NSBonjourServices" "$APP/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :NSLocalNetworkUsageDescription" "$APP/Info.plist"
+            
       - name: Force Copy Patches and Sounds
         run: |
           APP=$(find build/Build/Products/Release-iphoneos -name "*.app" | head -n 1)
