@@ -1,4 +1,4 @@
-import SwiftUI
+.import SwiftUI
 
 @MainActor
 final class AppState: ObservableObject {
