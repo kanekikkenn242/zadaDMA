@@ -7,7 +7,6 @@ class PairingController: ObservableObject {
     
     @Published var hasPairingFile: Bool = false
     
-    // Pointerat e funksioneve
     private typealias ConnectFn = @convention(c) (UnsafePointer<CChar>, UnsafePointer<CChar>, UInt16) -> Int32
     private typealias WriteFn = @convention(c) (Int32, UnsafePointer<CChar>, UnsafePointer<CChar>) -> Int32
     private typealias CloseFn = @convention(c) (Int32) -> Int32
@@ -29,7 +28,6 @@ class PairingController: ObservableObject {
     }
     
     private func loadSymbols() {
-        // Funksionet e Airlift
         let connectNames = ["idevice_afc_connect_with_pairing_file", "idevice_connect_with_pairing_file", "idevice_connect"]
         let writeNames = ["idevice_afc_write_file", "idevice_afc_write", "idevice_write_file"]
         let closeNames = ["idevice_afc_close", "idevice_close"]
@@ -52,33 +50,13 @@ class PairingController: ObservableObject {
         }
         for name in containerNames {
             if let ptr = dlsym(UnsafeMutableRawPointer(bitPattern: -2), name) {
-                getContainerFn = unsafeBitCast(ptr, to: GetContainerFn.self)
-                print("[Airlift] Gjeta funksionin per container: \(name)")
-                break
+                getContainerFn = unsafeBitCast(ptr, to: GetContainerFn.self); break
             }
         }
     }
     
-    // Kthen path-in e container-it te app-it duke perdorur Airlift
-    func getContainerPath(bundleID: String) -> String? {
-        guard let getContainer = getContainerFn else {
-            print("[-] Funksioni per container nuk u gjet.")
-            return nil
-        }
-        guard hasPairingFile else { return nil }
-        
-        var outPath: UnsafeMutablePointer<CChar>? = nil
-        let result = pairingFilePath.withCString { pp in
-            bundleID.withCString { bp in
-                getContainer(pp, bp, &outPath)
-            }
-        }
-        if result == 0, let pathPtr = outPath {
-            let path = String(cString: pathPtr)
-            free(pathPtr)
-            return path
-        }
-        return nil
+    func reloadPairingFile() {
+        hasPairingFile = FileManager.default.fileExists(atPath: pairingFilePath)
     }
     
     func importPairingFile(url: URL) -> Bool {
@@ -96,19 +74,30 @@ class PairingController: ObservableObject {
         }
     }
     
-    func injectFile(localPath: String, remotePath: String) -> Bool {
-        guard hasPairingFile, let connect = connectFn, let write = writeFn else {
-            print("[-] Funksionet Airlift mungojne")
-            return false
+    func getContainerPath(bundleID: String) -> String? {
+        guard hasPairingFile, let getContainer = getContainerFn else { return nil }
+        var outPath: UnsafeMutablePointer<CChar>? = nil
+        let result = pairingFilePath.withCString { pp in
+            bundleID.withCString { bp in
+                getContainer(pp, bp, &outPath)
+            }
         }
-        
+        if result == 0, let pathPtr = outPath {
+            let path = String(cString: pathPtr)
+            free(pathPtr)
+            return path
+        }
+        return nil
+    }
+    
+    func injectFile(localPath: String, remotePath: String) -> Bool {
+        guard hasPairingFile, let connect = connectFn, let write = writeFn else { return false }
         let client = pairingFilePath.withCString { pp in
             "127.0.0.1".withCString { hp in
                 connect(pp, hp, 49152)
             }
         }
         if client < 0 { return false }
-        
         let result = localPath.withCString { lp in
             remotePath.withCString { rp in
                 write(client, rp, lp)
