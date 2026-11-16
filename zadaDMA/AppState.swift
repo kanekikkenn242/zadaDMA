@@ -70,7 +70,7 @@ final class AppState: ObservableObject {
         }
         
         // Marrim container-in e Free Fire permes DevicePatchService
-        let container = MotorBridge.containerPathForBundleID("com.dts.freefireth")
+        let container = MotorBridge.containerPath(forBundleID: "com.dts.freefireth")
         if container.isEmpty {
             patchLog.append("❌ Container-i i Free Fire nuk u gjet")
             return
