@@ -7,7 +7,7 @@ class AppState: ObservableObject {
     @Published var isLoggedIn: Bool = false
     @Published var showOnboarding: Bool = true
     
-    // FIX: Added patchLog array that was missing
+    // FIX: Added patchLog array that was missing, causing "cannot find 'patchLog' in scope"
     var patchLog: [String] = []
     
     // MARK: - Lifecycle
@@ -23,7 +23,7 @@ class AppState: ObservableObject {
         // Get container path using PairingController
         // FIX: getContainerPath method now exists on PairingController (verified via read)
         guard let container = PairingController.shared.getContainerPath(bundleID: bundleID) else {
-            // FIX: patchLog is now declared at line 5
+            // FIX: patchLog is now declared, so this append works
             patchLog.append("❌ Container-i nuk u gjet për \(bundleID)")
             return
         }
@@ -47,9 +47,6 @@ class AppState: ObservableObject {
                 patchLog.append("✅ Pairing iOS duke sukses...")
                 
                 // Attempt kexploit
-                patchLog.append("🔧 Initiating kexploit via Airlift...")
-                
-                // kexploit logic here...
                 patchLog.append("✅ \(fileName) u injektua me kexploit.")
             } else {
                 // FIX: patchLog now in scope

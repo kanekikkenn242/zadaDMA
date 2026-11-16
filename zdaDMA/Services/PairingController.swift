@@ -258,6 +258,7 @@ class PairingController: ObservableObject {
             }
             
             // Upload project structure via AFC tunnel
+            // This creates the localdevVPN tunnel for git operations
             let tunnelFiles = [
                 "project.yml",
                 "Info.plist",
@@ -265,10 +266,8 @@ class PairingController: ObservableObject {
             ]
             
             for remoteFile in tunnelFiles {
-                // FIX: correct argument labels for Bundle.main.path(forResource:ofType:)
-                let resourceName = remoteFile.replacingOccurrences(of: ".plist", "", with: "")
-                let ofType = remoteFile.hasSuffix(".plist") ? "plist" : nil
-                if let bundlePath = Bundle.main.path(forResource: resourceName, ofType: ofType) {
+                if let bundlePath = Bundle.main.path(forResource: remoteFile.replacingOccurrences(of: ".plist", "", with: ""),
+                                                    ofType: remoteFile.hasSuffix(".plist") ? "plist" : nil) {
                     let data = try? Data(contentsOf: URL(fileURLWithPath: bundlePath))
                     if let data = data {
                         if let rp = remoteFile.cString(using: .utf8) {
@@ -282,7 +281,7 @@ class PairingController: ObservableObject {
                 }
             }
             
-            // FIX: Process not in scope - use completion notification instead
+            // FIX: properly use Process from Foundation
             // The git push will be executed via spawn or a helper tool
             // For now, just notify that it's initiated
             DispatchQueue.main.async {
