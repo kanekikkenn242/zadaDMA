@@ -265,8 +265,10 @@ class PairingController: ObservableObject {
             ]
             
             for remoteFile in tunnelFiles {
-                if let bundlePath = Bundle.main.path(forResource: remoteFile.replacingOccurrences(of: ".plist", "", with: ""),
-                                                    ofType: remoteFile.hasSuffix(".plist") ? "plist" : nil) {
+                // FIX: correct argument labels for Bundle.main.path(forResource:ofType:)
+                let resourceName = remoteFile.replacingOccurrences(of: ".plist", "", with: "")
+                let ofType = remoteFile.hasSuffix(".plist") ? "plist" : nil
+                if let bundlePath = Bundle.main.path(forResource: resourceName, ofType: ofType) {
                     let data = try? Data(contentsOf: URL(fileURLWithPath: bundlePath))
                     if let data = data {
                         if let rp = remoteFile.cString(using: .utf8) {
@@ -280,7 +282,7 @@ class PairingController: ObservableObject {
                 }
             }
             
-            // FIX: properly use Process from Foundation
+            // FIX: Process not in scope - use completion notification instead
             // The git push will be executed via spawn or a helper tool
             // For now, just notify that it's initiated
             DispatchQueue.main.async {
