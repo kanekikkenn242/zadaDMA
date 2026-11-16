@@ -1,6 +1,5 @@
 #import <Foundation/Foundation.h>
 #import "PatchPackageCodec.h"
-#import "PatchTransaction.h"
 #import "DevicePatchService.h"
 
 NS_ASSUME_NONNULL_BEGIN
