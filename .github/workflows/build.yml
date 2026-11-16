@@ -58,10 +58,12 @@ jobs:
         run: |
           APP=build/Build/Products/Release-iphoneos/zadaDMA.app
           
+          # Kopjo patch-et .3105
           if [ -f Payload/zadaDMA.app/aimdrag_neck.3105 ]; then cp Payload/zadaDMA.app/aimdrag_neck.3105 "$APP/"; fi
           if [ -f Payload/zadaDMA.app/aimneck_90.3105 ]; then cp Payload/zadaDMA.app/aimneck_90.3105 "$APP/"; fi
           if [ -f Payload/zadaDMA.app/aimbot_drag.3105 ]; then cp Payload/zadaDMA.app/aimbot_drag.3105 "$APP/"; fi
           
+          # Kopjo skedaret .wav qe te luajne zerin
           if [ -f Payload/zadaDMA.app/welcome.wav ]; then cp Payload/zadaDMA.app/welcome.wav "$APP/"; fi
           if [ -f Payload/zadaDMA.app/activar.wav ]; then cp Payload/zadaDMA.app/activar.wav "$APP/"; fi
           if [ -f Payload/zadaDMA.app/desactivar.wav ]; then cp Payload/zadaDMA.app/desactivar.wav "$APP/"; fi
