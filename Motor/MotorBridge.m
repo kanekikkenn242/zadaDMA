@@ -1,19 +1,12 @@
 #import "MotorBridge.h"
 #import "SandboxEscape.h"
-#import <dlfcn.h>
-
-extern int kexploit_run(void);
 
 @implementation MotorBridge
 
 + (BOOL)bootstrap {
-    int kfd_status = kexploit_run();
-    if (kfd_status != 0) {
-        NSLog(@"[MotorBridge] Kernel Exploit failed (iOS 27).");
-        return NO;
-    }
-    NSLog(@"[MotorBridge] Kernel R/W active.");
-    return YES;
+    // Ne iOS 27 kfd nuk punon, prandaj kthejme NO qe te kaloje te Airlift
+    NSLog(@"[MotorBridge] Kernel Exploit nuk suportohet ne iOS 27. Duke kaluar te Airlift.");
+    return NO;
 }
 
 + (void)ensureSandbox:(void(^)(BOOL ok, NSError * _Nullable err))done {
