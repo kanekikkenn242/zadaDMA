@@ -65,22 +65,22 @@ final class AppState: ObservableObject {
             patchLog.append("✅ \(fileName) u injektua me kexploit.")
             return
         }
-        patchLog.append("⚠️ kexploit dështoi. Duke provuar Airlift...")
+        patchLog.append("⚠️ kexploit dështoi. Duke provuar tunelin RPPairing…")
 
         guard let localPath = Bundle.main.path(forResource: fileName, ofType: "3105") else {
             patchLog.append("❌ Skedari \(fileName).3105 mungon.")
             return
         }
-        guard let container = PairingController.shared.getContainerPath(bundleID: "com.dts.freefireth") else {
-            patchLog.append("❌ Container-i i Free Fire nuk u gjet (Airlift).")
-            return
-        }
-        let remotePath = container + "/Data/Raw/ios/gameassetbundles/avatar/assetindexer.tdn~2F53YNFWXQZyPdFl8HWBBwtXk~3D"
+        // Rrënja e AFC është ose container-i ose Documents; Rust provon të dyja.
+        let remotePath = "Data/Raw/ios/gameassetbundles/avatar/assetindexer.tdn~2F53YNFWXQZyPdFl8HWBBwtXk~3D"
 
-        if PairingController.shared.injectFile(localPath: localPath, remotePath: remotePath) {
-            patchLog.append("✅ \(fileName) u injektua me Airlift.")
-        } else {
-            patchLog.append("❌ Airlift dështoi. A është LocalDevVPN aktiv?")
+        PairingController.shared.injectFile(localPath: localPath, remotePath: remotePath) { [weak self] success, message in
+            guard let self else { return }
+            if success {
+                self.patchLog.append("✅ \(fileName) u injektua: \(message)")
+            } else {
+                self.patchLog.append("❌ \(message)")
+            }
         }
     }
 }

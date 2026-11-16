@@ -22,45 +22,14 @@ jobs:
             cargo build --release --target aarch64-apple-ios
           fi
           
-      - name: Download and Build idevice (Airlift)
+      - name: Build zdma_pairing (RPPairing + RSD + House Arrest + AFC)
         env:
-          IPHONEOS_DEPLOYMENT_TARGET: "13.0"
+          IPHONEOS_DEPLOYMENT_TARGET: "16.0"
           MACOSX_DEPLOYMENT_TARGET: "13.0"
-          CFLAGS: "-miphoneos-version-min=13.0"
-          CXXFLAGS: "-miphoneos-version-min=13.0"
-          RUSTFLAGS: "-C link-arg=-miphoneos-version-min=13.0"
-          CMAKE_OSX_DEPLOYMENT_TARGET: "13.0"
-          CMAKE_C_FLAGS: "-miphoneos-version-min=13.0"
-          CMAKE_CXX_FLAGS: "-miphoneos-version-min=13.0"
-          CMAKE_SYSTEM_NAME: "iOS"
-          CMAKE_OSX_ARCHITECTURES: "arm64"
         run: |
-          ROOT="$GITHUB_WORKSPACE"
-          mkdir -p "$ROOT/Motor"
-          LIB_PATH=""
-          rm -rf vendor/idevice
-          if git clone --depth 1 https://github.com/jkcoxson/idevice.git vendor/idevice; then
-            cd vendor/idevice
-            cargo build --release --target aarch64-apple-ios 2>&1 | tail -20 || true
-            if [ -d "ffi" ]; then
-              cd ffi
-              cargo build --release --target aarch64-apple-ios 2>&1 | tail -20 || true
-              cd ..
-            fi
-            LIB_PATH=$(find . -name "libidevice*.a" -type f 2>/dev/null | head -n 1)
-          else
-            echo "[-] Clone i idevice deshtoi - vazhdoj me stub."
-          fi
-          if [ -z "$LIB_PATH" ]; then
-            echo "[-] libidevice*.a nuk u gjet. Krijoj stub qe linking te mos deshtoje."
-            echo 'void __idevice_ffi_stub(void) {}' > /tmp/idevice_stub.c
-            xcrun --sdk iphoneos clang -arch arm64 -c /tmp/idevice_stub.c -o /tmp/idevice_stub.o
-            libtool -static -o "$ROOT/Motor/libidevice_ffi.a" /tmp/idevice_stub.o
-          else
-            echo "[+] Libraria u gjet: $LIB_PATH"
-            cp "$LIB_PATH" "$ROOT/Motor/libidevice_ffi.a"
-          fi
-          ls -la "$ROOT/Motor/libidevice_ffi.a"
+          cd Motor/zdma_pairing
+          cargo build --release --target aarch64-apple-ios
+          ls -la target/aarch64-apple-ios/release/libzdma_pairing.a
           
       - name: Install XcodeGen
         run: brew install xcodegen

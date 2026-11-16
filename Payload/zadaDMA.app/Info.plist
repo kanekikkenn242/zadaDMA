@@ -16,7 +16,11 @@
   <dict><key>NSAllowsArbitraryLoads</key><true/></dict>
   <key>NSLocalNetworkUsageDescription</key> <string>Pairing tunnel.</string>
   <key>NSBonjourServices</key>
-  <array><string>_remotepairing-pairable-host._tcp</string></array>
+  <array>
+    <string>_remotepairing-pairable-host._tcp</string>
+    <string>_remotepairing._tcp</string>
+    <string>_remoted._tcp</string>
+  </array>
   <key>UIFileSharingEnabled</key>       <true/>
   <key>LSSupportsOpeningDocumentsInPlace</key><true/>
 </dict></plist>

@@ -55,29 +55,33 @@ struct HomeView: View {
                                 .foregroundColor(pairing.currentPin.isEmpty ? .gray : .appOrange)
                         }
                         
-                        // Button 1: generate PIN
+                        // Button 1: start / stop pairing host
                         Button {
-                            _ = pairing.generatePin()
+                            if pairing.isPairing {
+                                pairing.stopPairing()
+                            } else {
+                                pairing.startPairing { _ in }
+                            }
                         } label: {
                             HStack {
-                                Image(systemName: "number")
-                                Text("Generate 6-digit PIN")
+                                Image(systemName: pairing.isPairing ? "stop.circle" : "person.badge.key")
+                                Text(pairing.isPairing ? "Stop Pairing" : "Start Pairing (Developer Mode)")
                             }
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
-                            .background(Color.appOrange)
+                            .background(pairing.isPairing ? Color.red.opacity(0.85) : Color.appOrange)
                             .cornerRadius(10)
                         }
                         
-                        // Button 2: import pairing.plist
+                        // Button 2: import RPPairing file
                         Button {
                             showImporter = true
                         } label: {
                             HStack {
                                 Image(systemName: "square.and.arrow.down")
-                                Text("Import pairing.plist")
+                                Text("Import RPPairing file")
                             }
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white)
@@ -88,7 +92,7 @@ struct HomeView: View {
                             .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.appOrange.opacity(0.5), lineWidth: 1))
                         }
                         
-                        Text("Developer Mode nuk liston aplikacione. Pairing bëhet nga PC/Mac (Xcode ose pymobiledevice3), pastaj importo pairing.plist këtu.")
+                        Text("1) Start Pairing.  2) Settings → Privacy & Security → Developer Mode → Pair with \"zadaDMA\".  3) Shkruaj PIN-in që shfaqet këtu. LocalDevVPN nuk nevojitet për këtë tunel.")
                             .font(.system(size: 10))
                             .foregroundColor(.gray)
 
@@ -152,7 +156,7 @@ struct HomeView: View {
                     guard let url = urls.first else { return }
                     let ok = pairing.importPairingFile(url: url)
                     importMessage = ok
-                        ? "✅ pairing.plist u importua. Statusi: \(pairing.pairingStatus)"
+                        ? "✅ RPPairing u importua. Statusi: \(pairing.pairingStatus)"
                         : "❌ Import dështoi.\n\(pairing.pairingStatus)"
                     importAlert = true
                 case .failure(let error):
@@ -160,7 +164,7 @@ struct HomeView: View {
                     importAlert = true
                 }
             }
-            .alert("Import pairing.plist", isPresented: $importAlert) {
+            .alert("Import RPPairing", isPresented: $importAlert) {
                 Button("OK") { }
             } message: {
                 Text(importMessage)

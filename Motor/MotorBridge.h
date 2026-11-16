@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import "PatchPackageCodec.h"
 #import "DevicePatchService.h"
+#import "IdeviceBridge.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
