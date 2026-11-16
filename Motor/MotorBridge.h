@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import "PatchPackageCodec.h"
+#import "PatchTransaction.h"
 #import "DevicePatchService.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -10,6 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (BOOL)applyPackageData:(NSData *)data passphrase:(NSString *)pass bundleID:(NSString *)bundleID;
 + (nullable NSArray<NSString *> *)appContainers;
 + (BOOL)applyPatch:(NSString *)patchName;
++ (NSString *)containerPathForBundleID:(NSString *)bundleID;
 @end
 
 NS_ASSUME_NONNULL_END
