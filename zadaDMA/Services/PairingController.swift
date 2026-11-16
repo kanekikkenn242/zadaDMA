@@ -189,17 +189,25 @@ class PairingController: ObservableObject {
         let access = url.startAccessingSecurityScopedResource()
         defer { if access { url.stopAccessingSecurityScopedResource() } }
         do {
+            let data = try Data(contentsOf: url)
+            guard !data.isEmpty else {
+                pairingStatus = "Import failed: file empty"
+                return false
+            }
+            // Valido qe eshte plist i vertete
+            _ = try PropertyListSerialization.propertyList(from: data, options: [], format: nil)
+
             let dest = URL(fileURLWithPath: pairingFilePath)
             if FileManager.default.fileExists(atPath: pairingFilePath) {
                 try FileManager.default.removeItem(at: dest)
             }
-            try FileManager.default.copyItem(at: url, to: dest)
+            try data.write(to: dest, options: .atomic)
             hasPairingFile = true
             pairingStatus = "Pairing file imported"
             return true
         } catch {
             print("[-] Gabim: \(error)")
-            pairingStatus = "Import failed"
+            pairingStatus = "Import failed: \(error.localizedDescription)"
             return false
         }
     }

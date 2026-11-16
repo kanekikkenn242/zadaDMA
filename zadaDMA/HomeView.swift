@@ -5,6 +5,8 @@ struct HomeView: View {
     @EnvironmentObject var state: AppState
     @ObservedObject private var pairing = PairingController.shared
     @State private var showImporter = false
+    @State private var importAlert = false
+    @State private var importMessage = ""
     
     var body: some View {
         NavigationView {
@@ -143,16 +145,25 @@ struct HomeView: View {
             .background(Color.black.ignoresSafeArea())
             .navigationBarHidden(true)
             .fileImporter(isPresented: $showImporter,
-                          allowedContentTypes: [.propertyList, .xml, .data],
+                          allowedContentTypes: [.item],
                           allowsMultipleSelection: false) { result in
                 switch result {
                 case .success(let urls):
-                    if let url = urls.first {
-                        _ = pairing.importPairingFile(url: url)
-                    }
+                    guard let url = urls.first else { return }
+                    let ok = pairing.importPairingFile(url: url)
+                    importMessage = ok
+                        ? "✅ pairing.plist u importua. Statusi: \(pairing.pairingStatus)"
+                        : "❌ Import dështoi.\n\(pairing.pairingStatus)"
+                    importAlert = true
                 case .failure(let error):
-                    print("[-] Import gabim: \(error)")
+                    importMessage = "❌ Zgjedhja e file-it dështoi.\n\(error.localizedDescription)"
+                    importAlert = true
                 }
+            }
+            .alert("Import pairing.plist", isPresented: $importAlert) {
+                Button("OK") { }
+            } message: {
+                Text(importMessage)
             }
         }
     }
