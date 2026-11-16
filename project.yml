@@ -1,6 +1,6 @@
 name: zadaDMA
 options:
-  bundleIdPrefix: com.apple.mobile
+  bundleIdPrefix: com.apple
   deploymentTarget: { iOS: "16.0" }
   createIntermediateGroups: true
 
