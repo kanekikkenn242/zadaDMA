@@ -1,24 +1,27 @@
 name: build-ipa
+
 on:
-  push: { branches: [ main ] }
+  push:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: macos-latest
     timeout-minutes: 45
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
-        with: 
+        with:
           targets: aarch64-apple-ios
-          
+
       - name: Build Rust Crypto
         working-directory: Motor/zdma_crypto
         run: cargo build --release --target aarch64-apple-ios
-        
+
       - name: Download and Build idevice (Airlift)
         env:
           IPHONEOS_DEPLOYMENT_TARGET: "13.0"
@@ -31,41 +34,78 @@ jobs:
           CMAKE_CXX_FLAGS: "-miphoneos-version-min=13.0"
           CMAKE_SYSTEM_NAME: "iOS"
           CMAKE_OSX_ARCHITECTURES: "arm64"
+
         run: |
           rm -rf vendor/idevice
-          git clone --depth 1 https://github.com/jkcoxson/idevice.git vendor/idevice
-          cd vendor/idevice/ffi
-          cargo build --release --target aarch64-apple-ios
-          # RREGULLIMI: Shtuar nje "../" me teper per te shkuar ne rrënjë
-          cp target/aarch64-apple-ios/release/libidevice_ffi.a ../../../Motor/
-          
+
+          git clone --depth 1 --recurse-submodules https://github.com/jkcoxson/idevice.git vendor/idevice
+
+          cd vendor/idevice
+
+          echo "=== Duke listuar strukturat ==="
+          ls -la
+
+          # Provojme kompilimin nga rrenja (workspace)
+          cargo build --release --target aarch64-apple-ios 2>&1 | tail -30 || true
+
+          # Nese ffi nuk u kompilua, hyjme ne folderin ffi
+          if [ -d "ffi" ]; then
+            echo "=== Duke hyre ne ffi ==="
+            cd ffi
+            cargo build --release --target aarch64-apple-ios 2>&1 | tail -30 || true
+            cd ..
+          fi
+
+          echo "=== Duke gjetur librarine .a ==="
+          find . -name "libidevice*.a" -type f 2>/dev/null
+
+          # Marrim rrugen e sakte te skedarit
+          LIB_PATH=$(find . -name "libidevice*.a" -type f 2>/dev/null | head -n 1)
+
+          if [ -z "$LIB_PATH" ]; then
+            echo "[-] GABIM: Nuk u gjet asnje skedar libidevice*.a"
+            echo "=== Duke kerkuar te gjitha .a ==="
+            find . -name "*.a" -type f | head -20
+            exit 1
+          fi
+
+          echo "[+] Libraria u gjet: $LIB_PATH"
+
+          cp "$LIB_PATH" ../../Motor/
+
+          echo "[+] Libraria u kopjua te Motor/"
+          ls -la ../../Motor/
+
       - name: Install XcodeGen
         run: brew install xcodegen
-        
+
       - name: Generate Project
         run: xcodegen generate --spec project.yml
-        
+
       - name: Build iOS App
         run: |
           xcodebuild -project zadaDMA.xcodeproj -scheme zadaDMA -configuration Release \
             -sdk iphoneos -destination 'generic/platform=iOS' \
             -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
-            
+
       - name: Force Copy Patches and Sounds
         run: |
           APP=build/Build/Products/Release-iphoneos/zadaDMA.app
+
           if [ -f Payload/zadaDMA.app/aimdrag_neck.3105 ]; then cp Payload/zadaDMA.app/aimdrag_neck.3105 "$APP/"; fi
           if [ -f Payload/zadaDMA.app/aimneck_90.3105 ]; then cp Payload/zadaDMA.app/aimneck_90.3105 "$APP/"; fi
           if [ -f Payload/zadaDMA.app/welcome.wav ]; then cp Payload/zadaDMA.app/welcome.wav "$APP/"; fi
           if [ -f Payload/zadaDMA.app/activar.wav ]; then cp Payload/zadaDMA.app/activar.wav "$APP/"; fi
           if [ -f Payload/zadaDMA.app/desactivar.wav ]; then cp Payload/zadaDMA.app/desactivar.wav "$APP/"; fi
-          
+
       - name: Package IPA
         run: |
           rm -rf pkg && mkdir -p pkg/Payload
+
           cp -R build/Build/Products/Release-iphoneos/zadaDMA.app pkg/Payload/
+
           (cd pkg && zip -ry ../zadaDMA-unsigned.ipa Payload)
-          
+
       - uses: actions/upload-artifact@v4
         with:
           name: zadaDMA-ipa
