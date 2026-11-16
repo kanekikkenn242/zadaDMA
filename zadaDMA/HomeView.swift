@@ -2,38 +2,167 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject var state: AppState
-    @State private var showSettings = false
+    @ObservedObject private var pairing = PairingController.shared
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                HStack {
-                    Text(state.t("home")).font(.title.bold()).foregroundColor(.white)
-                    Spacer()
-                    Image(systemName: "terminal").foregroundColor(.appOrange).font(.title2)
-                    Image(systemName: "gearshape").foregroundColor(.appOrange).font(.title2).onTapGesture { showSettings = true }
-                }.padding(.horizontal)
-                
-                HStack {
-                    Image(systemName: "xmark").foregroundColor(.black).padding(12).background(Color.appOrange).cornerRadius(12)
-                    VStack(alignment: .leading) {
-                        Text("zadaDMA").font(.headline).foregroundColor(.white)
-                        Text("Your iPhone, ready.").font(.caption).foregroundColor(.gray)
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // MARK: Header
+                    VStack(spacing: 8) {
+                        Image(systemName: "shield.lefthalf.filled")
+                            .font(.system(size: 54))
+                            .foregroundColor(.appOrange)
+                        Text("zadaDMA")
+                            .font(.system(size: 26, weight: .heavy))
+                            .foregroundColor(.white)
+                        Text(state.deviceModel + " · iOS " + state.deviceiOS)
+                            .font(.caption)
+                            .foregroundColor(.gray)
                     }
-                    Spacer()
-                    Text(state.t("supported")).font(.caption).foregroundColor(.green).padding(6).background(Color.green.opacity(0.1)).cornerRadius(8)
-                }.cardStyle().padding(.horizontal)
-                
-                VStack(alignment: .leading, spacing: 16) {
-                    Text(state.t("device_status")).font(.headline).foregroundColor(.white)
-                    HStack { Text(state.t("hardware")).foregroundColor(.gray); Spacer(); Text(state.deviceModel).foregroundColor(.white) }
-                    Divider().background(Color.gray.opacity(0.3))
-                    HStack { Text(state.t("ios")).foregroundColor(.gray); Spacer(); Text(state.deviceiOS).foregroundColor(.white) }
-                    Divider().background(Color.gray.opacity(0.3))
-                    HStack { Text(state.t("exploit")).foregroundColor(.gray); Spacer(); Text(state.t("supported")).foregroundColor(.green) }
-                }.cardStyle().padding(.horizontal)
-            }.padding(.top, 20)
+                    .padding(.top, 20)
+                    
+                    // MARK: Pairing card
+                    VStack(alignment: .leading, spacing: 14) {
+                        HStack {
+                            Image(systemName: "iphone.radiowaves.left.and.right")
+                                .foregroundColor(.appOrange)
+                            Text("Developer Mode Pairing")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.white)
+                            Spacer()
+                            Text(pairing.hasPairingFile ? "READY" : "NOT PAIRED")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(pairing.hasPairingFile ? .green : .gray)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background((pairing.hasPairingFile ? Color.green : Color.gray).opacity(0.15))
+                                .cornerRadius(6)
+                        }
+                        
+                        // PIN display
+                        HStack {
+                            Text("PIN")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.gray)
+                            Spacer()
+                            Text(pairing.currentPin.isEmpty ? "— — — — — —" : pairing.currentPin)
+                                .font(.system(size: 24, weight: .heavy, design: .monospaced))
+                                .foregroundColor(pairing.currentPin.isEmpty ? .gray : .appOrange)
+                        }
+                        
+                        // Button 1: generate PIN
+                        Button {
+                            _ = pairing.generatePin()
+                        } label: {
+                            HStack {
+                                Image(systemName: "number")
+                                Text("Generate 6-digit PIN")
+                            }
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color.appOrange)
+                            .cornerRadius(10)
+                        }
+                        
+                        // Button 2: start pairing
+                        Button {
+                            let pin = pairing.currentPin.isEmpty ? pairing.generatePin() : pairing.currentPin
+                            pairing.startPairing(pin: pin) { _ in }
+                        } label: {
+                            HStack {
+                                Image(systemName: "link")
+                                Text("Pair on this iPhone")
+                            }
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color.appCard)
+                            .cornerRadius(10)
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.appOrange.opacity(0.5), lineWidth: 1))
+                        }
+                        
+                        Text("Settings → Privacy & Security → Developer Mode → Pair with this app → enter the PIN above.")
+                            .font(.system(size: 10))
+                            .foregroundColor(.gray)
+
+                        HStack(spacing: 6) {
+                            Image(systemName: pairing.pairingStatus == "Paired" ? "checkmark.circle.fill" : "info.circle")
+                                .font(.system(size: 10))
+                                .foregroundColor(pairing.pairingStatus == "Paired" ? .green : .gray)
+                            Text(pairing.pairingStatus)
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(.gray)
+                        }
+                    }
+                    .padding(16)
+                    .background(Color(white: 0.07))
+                    .cornerRadius(16)
+                    .padding(.horizontal)
+                    
+                    // MARK: Status card
+                    VStack(alignment: .leading, spacing: 10) {
+                        StatusRow(icon: "network", title: "Tunnel", value: pairing.hasPairingFile ? "Connected" : "Not connected", ok: pairing.hasPairingFile)
+                        StatusRow(icon: "checkmark.shield", title: "Pairing file", value: pairing.hasPairingFile ? "Loaded" : "Missing", ok: pairing.hasPairingFile)
+                        StatusRow(icon: "bolt.fill", title: "Exploit", value: "Tap Game tab to patch", ok: true)
+                    }
+                    .padding(16)
+                    .background(Color(white: 0.07))
+                    .cornerRadius(16)
+                    .padding(.horizontal)
+                    
+                    // MARK: Log
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Activity")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        ForEach(state.patchLog.suffix(4), id: \.self) { line in
+                            Text(line)
+                                .font(.system(size: 10, design: .monospaced))
+                                .foregroundColor(.green)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        if state.patchLog.isEmpty {
+                            Text("No activity yet.")
+                                .font(.system(size: 10, design: .monospaced))
+                                .foregroundColor(.gray)
+                        }
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.black)
+                    .cornerRadius(16)
+                    .padding(.horizontal)
+                }
+                .padding(.bottom, 30)
+            }
+            .background(Color.black.ignoresSafeArea())
+            .navigationBarHidden(true)
         }
-        .sheet(isPresented: $showSettings) { SettingsView() }
+    }
+}
+
+struct StatusRow: View {
+    let icon: String
+    let title: String
+    let value: String
+    let ok: Bool
+    
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .foregroundColor(ok ? .green : .gray)
+                .frame(width: 20)
+            Text(title)
+                .font(.system(size: 13))
+                .foregroundColor(.gray)
+            Spacer()
+            Text(value)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(ok ? .white : .gray)
+        }
     }
 }

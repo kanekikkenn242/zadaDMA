@@ -3,18 +3,6 @@ use aes_gcm::{aead::{Aead, KeyInit}, Aes256Gcm, Key, Nonce};
 use pbkdf2::pbkdf2_hmac;
 use sha2::{Digest, Sha256};
 use std::slice;
-use std::os::raw::{c_char, c_void};
-
-extern "C" {
-    // idevice_ffi FFI functions - these are provided by libidevice_ffi
-    pub fn idevice_new(device: *mut *mut c_void) -> i32;
-    pub fn idevice_free(device: *mut c_void);
-    pub fn idevice_get_usbmuxd_socket() -> *mut c_void;
-    pub fn idevice_start_pairing_host(pairing_file: *const c_char, pin: *const c_char) -> i32;
-    pub fn idevice_afc_connect_with_pairing_file(pairing_file: *const c_char, host: *const c_char, port: u16) -> i32;
-    pub fn idevice_afc_write(client: *mut c_void, remote_path: *const c_char, local_data: *const c_char) -> i32;
-    pub fn idevice_afc_close(client: *mut c_void) -> i32;
-}
 
 // Core crypto functions
 
@@ -91,28 +79,4 @@ pub unsafe extern "C" fn zdma_generate_pin(out: *mut u8, out_len: usize) -> i32 
     0
 }
 
-// NEW: Start pairing host session (idevice_ffi integration)
-#[no_mangle]
-pub unsafe extern "C" fn zdma_start_pairing_host(pairing_file: *const c_char, pin: *const c_char) -> i32 {
-    // Call the idevice_ffi function to start host pairing
-    // This will prompt the iOS device for PIN verification
-    idevice_start_pairing_host(pairing_file, pin)
-}
-
-// NEW: Connect AFC with pairing file (creates LocalDevVPN tunnel)
-#[no_mangle]
-pub unsafe extern "C" fn zdma_afc_connect_with_pairing_file(pairing_file: *const c_char, host: *const c_char, port: u16) -> i32 {
-    idevice_afc_connect_with_pairing_file(pairing_file, host, port)
-}
-
-// NEW: Write file via AFC (for .3105 aim configs, etc.)
-#[no_mangle]
-pub unsafe extern "C" fn zdma_afc_write(client: *mut c_void, remote_path: *const c_char, local_data: *const c_char) -> i32 {
-    idevice_afc_write(client, remote_path, local_data)
-}
-
-// NEW: Close AFC client
-#[no_mangle]
-pub unsafe extern "C" fn zdma_afc_close(client: *mut c_void) -> i32 {
-    idevice_afc_close(client)
-}
+// Pairing/AFC is handled in Swift via dlsym against libidevice_ffi.

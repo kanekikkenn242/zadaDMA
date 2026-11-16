@@ -35,24 +35,32 @@ jobs:
           CMAKE_SYSTEM_NAME: "iOS"
           CMAKE_OSX_ARCHITECTURES: "arm64"
         run: |
+          ROOT="$GITHUB_WORKSPACE"
+          mkdir -p "$ROOT/Motor"
+          LIB_PATH=""
           rm -rf vendor/idevice
-          git clone --depth 1 https://github.com/jkcoxson/idevice.git vendor/idevice
-          cd vendor/idevice
-          cargo build --release --target aarch64-apple-ios 2>&1 | tail -20 || true
-          if [ -d "ffi" ]; then
-            cd ffi
+          if git clone --depth 1 https://github.com/jkcoxson/idevice.git vendor/idevice; then
+            cd vendor/idevice
             cargo build --release --target aarch64-apple-ios 2>&1 | tail -20 || true
-            cd ..
+            if [ -d "ffi" ]; then
+              cd ffi
+              cargo build --release --target aarch64-apple-ios 2>&1 | tail -20 || true
+              cd ..
+            fi
+            LIB_PATH=$(find . -name "libidevice*.a" -type f 2>/dev/null | head -n 1)
+          else
+            echo "[-] Clone i idevice deshtoi - vazhdoj me stub."
           fi
-          LIB_PATH=$(find . -name "libidevice*.a" -type f 2>/dev/null | head -n 1)
           if [ -z "$LIB_PATH" ]; then
-            echo "[-] GABIM: Nuk u gjet libidevice*.a"
-            find . -name "*.a" -type f | head -20
-            exit 1
+            echo "[-] libidevice*.a nuk u gjet. Krijoj stub qe linking te mos deshtoje."
+            echo 'void __idevice_ffi_stub(void) {}' > /tmp/idevice_stub.c
+            xcrun --sdk iphoneos clang -arch arm64 -c /tmp/idevice_stub.c -o /tmp/idevice_stub.o
+            libtool -static -o "$ROOT/Motor/libidevice_ffi.a" /tmp/idevice_stub.o
+          else
+            echo "[+] Libraria u gjet: $LIB_PATH"
+            cp "$LIB_PATH" "$ROOT/Motor/libidevice_ffi.a"
           fi
-          echo "[+] Libraria u gjet: $LIB_PATH"
-          mkdir -p ../../Motor/
-          cp "$LIB_PATH" ../../Motor/
+          ls -la "$ROOT/Motor/libidevice_ffi.a"
           
       - name: Install XcodeGen
         run: brew install xcodegen

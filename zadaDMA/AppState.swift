@@ -3,11 +3,22 @@ import Foundation
 
 @MainActor
 final class AppState: ObservableObject {
-    @AppStorage("v2_hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
-    @AppStorage("appLanguage") var language: String = "English"
-    @AppStorage("appAppearance") var appearance: String = "System"
-    @AppStorage("selectedGame") var selectedGame: String = "Free Fire"
-    @AppStorage("isActivated") var isActivated: Bool = false
+    // MARK: - Persisted settings (reactive)
+    @Published var hasCompletedOnboarding: Bool = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") {
+        didSet { UserDefaults.standard.set(hasCompletedOnboarding, forKey: "hasCompletedOnboarding") }
+    }
+    @Published var language: String = UserDefaults.standard.string(forKey: "appLanguage") ?? "English" {
+        didSet { UserDefaults.standard.set(language, forKey: "appLanguage") }
+    }
+    @Published var appearance: String = UserDefaults.standard.string(forKey: "appAppearance") ?? "System" {
+        didSet { UserDefaults.standard.set(appearance, forKey: "appAppearance") }
+    }
+    @Published var selectedGame: String = UserDefaults.standard.string(forKey: "selectedGame") ?? "Free Fire" {
+        didSet { UserDefaults.standard.set(selectedGame, forKey: "selectedGame") }
+    }
+    @Published var isActivated: Bool = UserDefaults.standard.bool(forKey: "isActivated") {
+        didSet { UserDefaults.standard.set(isActivated, forKey: "isActivated") }
+    }
 
     @Published var licenseKey: String = ""
     @Published var deviceModel: String = ""
@@ -25,9 +36,7 @@ final class AppState: ObservableObject {
         let info = DeviceInfo()
         self.deviceModel = info.modelName
         self.deviceiOS = info.systemVersion
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            SoundManager.shared.play(sound: "welcome")
-        }
+        SoundManager.shared.play(sound: "welcome")
     }
 
     var colorScheme: ColorScheme? {
@@ -59,7 +68,7 @@ final class AppState: ObservableObject {
         patchLog.append("⚠️ kexploit dështoi. Duke provuar Airlift...")
 
         guard let localPath = Bundle.main.path(forResource: fileName, ofType: "3105") else {
-            patchLog.append("❌ Skedari .3105 mungon.")
+            patchLog.append("❌ Skedari \(fileName).3105 mungon.")
             return
         }
         guard let container = PairingController.shared.getContainerPath(bundleID: "com.dts.freefireth") else {

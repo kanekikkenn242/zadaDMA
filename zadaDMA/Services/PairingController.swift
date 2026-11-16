@@ -90,23 +90,40 @@ class PairingController: ObservableObject {
     }
 
     func generatePin() -> String {
-        var pinBuf = [CChar](repeating: 0, count: 7)
-        let result = generatePinFn?(&pinBuf, UInt32(pinBuf.count))
-        if result == 0 {
-            let pin = String(cString: pinBuf)
-            currentPin = pin
-            return pin
+        // 1) Provo funksionin Rust/idevice nese eshte i lidhur.
+        if let generate = generatePinFn {
+            var pinBuf = [CChar](repeating: 0, count: 7)
+            let result = generate(&pinBuf, UInt32(pinBuf.count))
+            if result == 0 {
+                let pin = String(cString: pinBuf)
+                if pin.count == 6, pin.allSatisfy({ $0.isNumber }) {
+                    currentPin = pin
+                    pairingStatus = "PIN ready"
+                    return pin
+                }
+            }
+            print("[-] generatePin fallback, result: \(String(describing: result))")
         }
-        print("[-] Failed to generate PIN, result: \(String(describing: result))")
-        return "000000"
+        // 2) Fallback lokal: PIN 6-shifror, gjithmone funksionon.
+        let pin = String(format: "%06d", Int.random(in: 0..<1000000))
+        currentPin = pin
+        pairingStatus = "PIN ready"
+        return pin
     }
 
     func startPairing(pin: String, completion: @escaping (Bool) -> Void) {
-        guard let startPairing = startPairingFn else {
-            print("[-] Funksioni i pairing nuk u gjet.")
+        guard pin.count == 6, pin.allSatisfy({ $0.isNumber }) else {
+            pairingStatus = "Invalid PIN"
             completion(false)
             return
         }
+        guard let startPairing = startPairingFn else {
+            print("[-] Funksioni i pairing nuk u gjet. Perdor manualisht PIN-in.")
+            pairingStatus = "Manual pairing: Settings → Developer Mode"
+            completion(false)
+            return
+        }
+        pairingStatus = "Waiting for Developer Mode…"
         DispatchQueue.global(qos: .background).async {
             let result = pin.withCString { pp in
                 self.pairingFilePath.withCString { fp in

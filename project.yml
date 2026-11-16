@@ -20,7 +20,7 @@ targets:
     sources:
       - path: zadaDMA
       - path: Motor
-        excludes: ["zdma_crypto/**", "kexploit/kfd/**"]
+        excludes: ["zdma_crypto/**", "kexploit/kfd/**", "libidevice_ffi.a"]
       - path: Payload/zadaDMA.app
         excludes: ["Info.plist", "zadaDMA", "Assets.car"]
         buildPhase: resources
