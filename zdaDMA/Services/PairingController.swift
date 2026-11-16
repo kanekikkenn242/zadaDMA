@@ -1,102 +1,97 @@
 import Foundation
 import UIKit
+import Combine
 import Darwin
 
 class PairingController: ObservableObject {
     static let shared = PairingController()
-    
+
     @Published var hasPairingFile: Bool = false
     @Published var pairingStatus: String = "Idle"
     @Published var currentPin: String = ""
-    
-    // Deklarimi i tipeve te funksioneve (C ABI)
-    private typealias ConnectFn = @convention(c) (UnsafePointer<CChar>, UnsafePointer<CChar>, UInt16) -> Int32
-    private typealias WriteFn = @convention(c) (Int32, UnsafePointer<CChar>, UnsafePointer<CChar>) -> Int32
-    private typealias CloseFn = @convention(c) (Int32) -> Int32
-    private typealias StartPairingFn = @convention(c) (UnsafePointer<CChar>, UnsafePointer<CChar>) -> Int32
-    private typealias GeneratePinFn = @convention(c) (UnsafeMutablePointer<CChar>, UInt32) -> Int32
-    private typealias GetContainerFn = @convention(c) (UnsafePointer<CChar>, UnsafePointer<CChar>, UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>) -> Int32
-    
+
+    // MARK: - C ABI typealiases
+    private typealias ConnectFn       = @convention(c) (UnsafePointer<CChar>, UnsafePointer<CChar>, UInt16) -> Int32
+    private typealias WriteFn         = @convention(c) (Int32, UnsafePointer<CChar>, UnsafePointer<CChar>) -> Int32
+    private typealias CloseFn         = @convention(c) (Int32) -> Int32
+    private typealias StartPairingFn  = @convention(c) (UnsafePointer<CChar>, UnsafePointer<CChar>) -> Int32
+    private typealias GeneratePinFn   = @convention(c) (UnsafeMutablePointer<CChar>, UInt32) -> Int32
+    private typealias GetContainerFn  = @convention(c) (UnsafePointer<CChar>,
+                                                       UnsafePointer<CChar>,
+                                                       UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>) -> Int32
+
     private var connectFn: ConnectFn?
     private var writeFn: WriteFn?
     private var closeFn: CloseFn?
     private var startPairingFn: StartPairingFn?
     private var generatePinFn: GeneratePinFn?
     private var getContainerFn: GetContainerFn?
-    
+
     private var pairingFilePath: String {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         return docs.appendingPathComponent("pairing.plist").path
     }
-    
+
     init() {
         hasPairingFile = FileManager.default.fileExists(atPath: pairingFilePath)
         loadSymbols()
     }
-    
+
+    // MARK: - Symbol loading
     private func loadSymbols() {
-        // Connect functions
-        let connectNames = ["idevice_afc_connect_with_pairing_file", "idevice_connect_with_pairing_file", "idevice_connect"]
-        for name in connectNames {
-            if let ptr = dlsym(UnsafeMutableRawPointer(bitPattern: -2), name) {
+        let rtldDefault = UnsafeMutableRawPointer(bitPattern: -2)
+
+        for name in ["idevice_afc_connect_with_pairing_file",
+                     "idevice_connect_with_pairing_file",
+                     "idevice_connect"] {
+            if let ptr = dlsym(rtldDefault, name) {
                 connectFn = unsafeBitCast(ptr, to: ConnectFn.self)
                 print("[Pairing] Connect: \(name)")
                 break
             }
         }
-        
-        // Write functions
-        let writeNames = ["idevice_afc_write", "idevice_write_file"]
-        for name in writeNames {
-            if let ptr = dlsym(UnsafeMutableRawPointer(bitPattern: -2), name) {
+        for name in ["idevice_afc_write", "idevice_write_file"] {
+            if let ptr = dlsym(rtldDefault, name) {
                 writeFn = unsafeBitCast(ptr, to: WriteFn.self)
                 print("[Pairing] Write: \(name)")
                 break
             }
         }
-        
-        // Close functions
-        let closeNames = ["idevice_afc_close", "idevice_close"]
-        for name in closeNames {
-            if let ptr = dlsym(UnsafeMutableRawPointer(bitPattern: -2), name) {
+        for name in ["idevice_afc_close", "idevice_close"] {
+            if let ptr = dlsym(rtldDefault, name) {
                 closeFn = unsafeBitCast(ptr, to: CloseFn.self)
                 print("[Pairing] Close: \(name)")
                 break
             }
         }
-        
-        // Start pairing host function
-        let pairingNames = ["idevice_start_pairing_host", "idevice_rppairing_start_host", "idevice_pairing_start"]
-        for name in pairingNames {
-            if let ptr = dlsym(UnsafeMutableRawPointer(bitPattern: -2), name) {
+        for name in ["idevice_start_pairing_host",
+                     "idevice_rppairing_start_host",
+                     "idevice_pairing_start"] {
+            if let ptr = dlsym(rtldDefault, name) {
                 startPairingFn = unsafeBitCast(ptr, to: StartPairingFn.self)
                 print("[Pairing] StartPairing: \(name)")
                 break
             }
         }
-        
-        // Generate PIN function
-        let pinNames = ["zdma_generate_pin", "idevice_generate_pin"]
-        for name in pinNames {
-            if let ptr = dlsym(UnsafeMutableRawPointer(bitPattern: -2), name) {
+        for name in ["zdma_generate_pin", "idevice_generate_pin"] {
+            if let ptr = dlsym(rtldDefault, name) {
                 generatePinFn = unsafeBitCast(ptr, to: GeneratePinFn.self)
                 print("[Pairing] GeneratePin: \(name)")
                 break
             }
         }
-        
-        // Get container path function
-        let containerNames = ["idevice_house_arrest_get_container_path", "idevice_get_app_container", "idevice_afc_get_container_path"]
-        for name in containerNames {
-            if let ptr = dlsym(UnsafeMutableRawPointer(bitPattern: -2), name) {
+        for name in ["idevice_house_arrest_get_container_path",
+                     "idevice_get_app_container",
+                     "idevice_afc_get_container_path"] {
+            if let ptr = dlsym(rtldDefault, name) {
                 getContainerFn = unsafeBitCast(ptr, to: GetContainerFn.self)
                 print("[Pairing] Container: \(name)")
                 break
             }
         }
     }
-    
-    // MARK: - PIN Generation
+
+    // MARK: - PIN
     func generatePin() -> String {
         var pinBuf = [CChar](repeating: 0, count: 7)
         let result = generatePinFn?(&pinBuf, UInt32(pinBuf.count))
@@ -105,27 +100,23 @@ class PairingController: ObservableObject {
             currentPin = pin
             return pin
         }
-        // FIX: use String(describing:) to avoid optional interpolation warning
         print("[-] Failed to generate PIN, result: \(String(describing: result))")
         return "000000"
     }
-    
-    // MARK: - Pairing Logic (per t'u dukur si X.app)
+
+    // MARK: - Pairing
     func startPairing(pin: String, completion: @escaping (Bool) -> Void) {
         guard let startPairing = startPairingFn else {
             print("[-] Funksioni i pairing nuk u gjet.")
             completion(false)
             return
         }
-        
         DispatchQueue.global(qos: .background).async {
-            // Therrasim funksionin Rust per te nisur pairing host
             let result = pin.withCString { pp in
                 self.pairingFilePath.withCString { fp in
                     startPairing(fp, pp)
                 }
             }
-            
             DispatchQueue.main.async {
                 self.hasPairingFile = FileManager.default.fileExists(atPath: self.pairingFilePath)
                 self.pairingStatus = result == 0 ? "Paired" : "Failed"
@@ -133,46 +124,43 @@ class PairingController: ObservableObject {
             }
         }
     }
-    
+
     func stopPairing() {
         print("[Pairing] Stopped.")
     }
-    
-    // MARK: - Injection Logic (per t'u perdorur nga AppState)
+
+    // MARK: - Inject (used by AppState)
     func injectFile(localPath: String, remotePath: String) -> Bool {
-        guard hasPairingFile, let connect = connectFn, let write = writeFn else {
+        guard hasPairingFile, let connectC = connectFn, let writeC = writeFn else {
             print("[-] injectFile: funksionet ose pairing file mungon")
             return false
         }
-        
-        // Krijuam tunel LocalDevVPN-like connection
+
         var client: Int32 = -1
-        // FIX: explicitly unwrap the C strings with nil checking
         if let pp = pairingFilePath.cString(using: .utf8),
            let hp = "127.0.0.1".cString(using: .utf8) {
-            client = connect(pp, hp, 49152)
+            client = connectC(pp, hp, 49152)
         }
-        
-        if client < 0 { return false }
-        
-        let result = localPath.cString(using: .utf8).map { lp in
-            remotePath.cString(using: .utf8).map { rp in
-                write(client, rp, lp)
+        guard client >= 0 else { return false }
+
+        // FIX #5: keep the C-string pointers inside their withCString scopes.
+        let success: Bool = localPath.withCString { lp -> Bool in
+            remotePath.withCString { rp -> Bool in
+                writeC(client, rp, lp) == 0
             }
-        } ?? false
-        
-        if let close = closeFn { _ = close(client) }
-        return result == true
+        }
+
+        if let closeC = closeFn { _ = closeC(client) }
+        return success
     }
-    
-    // MARK: - Get Container Path
+
+    // MARK: - Container path
     func getContainerPath(bundleID: String) -> String? {
         guard hasPairingFile, let getContainer = getContainerFn else {
             print("[-] getContainerPath: pairing ose funksion mungon")
             return nil
         }
         var outPath: UnsafeMutablePointer<CChar>? = nil
-        // FIX: properly pass C strings
         if let pp = pairingFilePath.cString(using: .utf8),
            let bp = bundleID.cString(using: .utf8) {
             let result = getContainer(pp, bp, &outPath)
@@ -184,15 +172,14 @@ class PairingController: ObservableObject {
         }
         return nil
     }
-    
-    // MARK: - Extra Helpers
+
+    // MARK: - Helpers
     func reloadPairingFile() {
         hasPairingFile = FileManager.default.fileExists(atPath: pairingFilePath)
     }
-    
+
     func importPairingFile(url: URL) -> Bool {
         do {
-            // FIX: use fileURLWithPath directly
             let dest = URL(fileURLWithPath: pairingFilePath)
             if FileManager.default.fileExists(atPath: pairingFilePath) {
                 try FileManager.default.removeItem(at: dest)
@@ -205,86 +192,92 @@ class PairingController: ObservableObject {
             return false
         }
     }
-    
-    // MARK: - Write .3105 Aim Config Files via AFC
+
+    // MARK: - Write .3105 via AFC
     func writeAimFile(remoteDir: String, filename: String, localData: Data) -> Bool {
-        guard hasPairingFile, let connect = connectFn, let write = writeFn else {
+        guard hasPairingFile, let connectC = connectFn, let writeC = writeFn else {
             print("[-] writeAimFile: funksionet ose pairing file mungon")
             return false
         }
-        
-        // Krijuam tunel LocalDevVPN-like connection
+
         var client: Int32 = -1
         if let pp = pairingFilePath.cString(using: .utf8),
            let hp = "127.0.0.1".cString(using: .utf8) {
-            client = connect(pp, hp, 49152)
+            client = connectC(pp, hp, 49152)
         }
-        
-        if client < 0 { return false }
-        
+        guard client >= 0 else { return false }
+
         let fullRemotePath = "\(remoteDir)/\(filename)"
-        // FIX: properly create C string from the path
+        var success = false
         if let rp = fullRemotePath.cString(using: .utf8) {
-            // FIX: use withUnsafeBytes properly for the data
-            let dataC = localData.withUnsafeBytes { bytes in
-                // Assuming the bytes are CChar (which they may not be, so we need to handle this)
-                let ptr = bytes.baseAddress?.assumingMemoryBound(to: CChar.self)
-                return ptr
+            // FIX #2 + #5: unwrap + keep pointer inside withUnsafeBytes.
+            let writeResult: Int32 = localData.withUnsafeBytes { rawBuf -> Int32 in
+                guard let base = rawBuf.baseAddress else { return -1 }
+                let ptr = base.assumingMemoryBound(to: CChar.self)
+                return writeC(client, rp, ptr)
             }
-            write(client, rp, dataC)
+            success = writeResult == 0
         }
-        
-        if let close = closeFn { _ = close(client) }
-        return true
+
+        if let closeC = closeFn { _ = closeC(client) }
+        return success
     }
-    
-    // MARK: - Git Push Integration
-    func gitPush(to remoteURL: String, branch: String = "main", completion: @escaping (Bool, String) -> Void) {
+
+    // MARK: - AFC "git push" stub
+    // NOTE: `Process` exists only on macOS — it is not available on iOS.
+    // A real git push must be done via a helper binary/service, not in-app.
+    func gitPush(to remoteURL: String, branch: String = "main",
+                 completion: @escaping (Bool, String) -> Void) {
         guard hasPairingFile else {
             completion(false, "Pairing file missing")
             return
         }
-        
+        guard let connectC = connectFn, let writeC = writeFn else {
+            completion(false, "Required symbols missing")
+            return
+        }
+
+        let pairingPath = self.pairingFilePath
+        let closeC      = self.closeFn
+
         DispatchQueue.global(qos: .background).async {
             var client: Int32 = -1
-            if let pp = pairingFilePath.cString(using: .utf8),
+            if let pp = pairingPath.cString(using: .utf8),
                let hp = "127.0.0.1".cString(using: .utf8) {
-                client = connect(pp, hp, 49152)
+                // FIX #3: use the local `connectC`, not the Darwin `connect`.
+                client = connectC(pp, hp, 49152)
             }
-            
-            if client < 0 {
-                completion(false, "Failed to connect")
+
+            guard client >= 0 else {
+                DispatchQueue.main.async { completion(false, "Failed to connect") }
                 return
             }
-            
-            // Upload project structure via AFC tunnel
-            let tunnelFiles = [
-                "project.yml",
-                "Info.plist",
-                "Assets.car"
-            ]
-            
+
+            // FIX #6: close once, after the loop, on every exit path.
+            defer {
+                if let closeC = closeC { _ = closeC(client) }
+            }
+
+            let tunnelFiles = ["project.yml", "Info.plist", "Assets.car"]
+
             for remoteFile in tunnelFiles {
-                if let bundlePath = Bundle.main.path(forResource: remoteFile.replacingOccurrences(of: ".plist", "", with: ""),
-                                                    ofType: remoteFile.hasSuffix(".plist") ? "plist" : nil) {
-                    let data = try? Data(contentsOf: URL(fileURLWithPath: bundlePath))
-                    if let data = data {
-                        if let rp = remoteFile.cString(using: .utf8) {
-                            let dataC = data.withUnsafeBytes { bytes in
-                                bytes.baseAddress?.assumingMemoryBound(to: CChar.self)
-                            }
-                            write(client, rp, dataC)
-                        }
-                        if let close = self.closeFn { _ = close(client); client = -1 }
-                    }
+                let base = remoteFile.replacingOccurrences(of: ".plist", with: "")
+                let type = remoteFile.hasSuffix(".plist") ? "plist" : nil
+
+                guard let bundlePath = Bundle.main.path(forResource: base, ofType: type),
+                      let data = try? Data(contentsOf: URL(fileURLWithPath: bundlePath)),
+                      let rp = remoteFile.cString(using: .utf8) else { continue }
+
+                // FIX #4 + #5: use `writeC` explicitly, keep pointer in scope.
+                _ = data.withUnsafeBytes { rawBuf -> Int32 in
+                    guard let base = rawBuf.baseAddress else { return -1 }
+                    let ptr = base.assumingMemoryBound(to: CChar.self)
+                    return writeC(client, rp, ptr)
                 }
             }
-            
-            // FIX: properly use Process from Foundation
-            // The git push will be executed via spawn or a helper tool
-            // For now, just notify that it's initiated
+
             DispatchQueue.main.async {
-                completion(true, "Git push initiated via AFC tunnel - git binary execution pending")
+                completion(true, "Git push initiated via AFC tunnel — git binary execution pending")
             }
         }
     }
