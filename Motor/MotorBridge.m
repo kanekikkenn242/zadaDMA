@@ -1,11 +1,11 @@
 #import "MotorBridge.h"
 #import "SandboxEscape.h"
+#import <dlfcn.h>
 
 @implementation MotorBridge
 
 + (BOOL)bootstrap {
-    // Ne iOS 27 kfd nuk punon, prandaj kthejme NO qe te kaloje te Airlift
-    NSLog(@"[MotorBridge] Kernel Exploit nuk suportohet ne iOS 27. Duke kaluar te Airlift.");
+    // kfd nuk suportohet ne iOS 27, kthejme NO qe te kaloje te Airlift
     return NO;
 }
 
@@ -17,15 +17,8 @@
 + (BOOL)applyPackageData:(NSData *)data passphrase:(NSString *)pass bundleID:(NSString *)bundleID {
     NSError *err = nil;
     PatchPackage *pkg = [PatchPackageCodec decodeData:data passphrase:pass error:&err];
-    if (!pkg) {
-        NSLog(@"[MotorBridge] Decode failed: %@", err.localizedDescription);
-        return NO;
-    }
-    BOOL ok = [DevicePatchService applyPatch:pkg toBundleID:bundleID error:&err];
-    if (!ok && err) {
-        NSLog(@"[MotorBridge] Apply failed: %@", err.localizedDescription);
-    }
-    return ok;
+    if (!pkg) return NO;
+    return [DevicePatchService applyPatch:pkg toBundleID:bundleID error:&err];
 }
 
 + (NSArray<NSString *> *)appContainers {
