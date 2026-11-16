@@ -41,4 +41,5 @@ targets:
           - "-lc++"
           - "-lzdma_crypto"
           - "-lidevice_ffi"
+          - "-fobjc-link-runtime"
         TARGETED_DEVICE_FAMILY: "1,2"
