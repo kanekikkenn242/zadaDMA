@@ -24,8 +24,6 @@ targets:
       - path: Payload/zadaDMA.app
         excludes: ["Info.plist", "zadaDMA", "Assets.car"]
         buildPhase: resources
-    info:
-      path: Payload/zadaDMA.app/Info.plist
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.apple.mobile.MobileHouseArrest

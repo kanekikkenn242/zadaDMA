@@ -49,6 +49,7 @@ static NSDictionary<NSString *, NSString *> *ZDMAParseTXT(NSData *data) {
 @property (nonatomic, copy, nullable) void (^pinBlock)(NSString *);
 @property (nonatomic, copy, nullable) void (^readyBlock)(NSString *, uint16_t);
 @property (nonatomic, assign) BOOL hostRunning;
+@property (nonatomic, copy, nullable) NSString *publishError;
 
 @property (nonatomic, copy, nullable) void (^writeCompletion)(BOOL, NSString *);
 @property (nonatomic, copy, nullable) NSString *writeLocalPath;
@@ -168,6 +169,7 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
         return;
     }
     self.hostRunning = YES;
+    self.publishError = nil;
     self.hostCompletion = completion;
     self.readyBlock = readyBlock;
     self.pinBlock = pinBlock;
@@ -192,11 +194,19 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
             [strongSelf.hostService stop];
             strongSelf.hostService = nil;
             void (^done)(BOOL, NSString *) = strongSelf.hostCompletion;
+            NSString *publishError = strongSelf.publishError;
             strongSelf.hostCompletion = nil;
             strongSelf.readyBlock = nil;
             strongSelf.pinBlock = nil;
+            strongSelf.publishError = nil;
             if (done) {
-                done(rc == 0, message.length ? message : (rc == 0 ? @"Paired" : @"Pairing failed"));
+                if (rc == 0) {
+                    done(YES, message.length ? message : @"Paired");
+                } else if (publishError.length) {
+                    done(NO, publishError);
+                } else {
+                    done(NO, message.length ? message : @"Pairing failed");
+                }
             }
         });
     });
@@ -213,11 +223,18 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
 #pragma mark - NSNetService delegate (pairable host)
 
 - (void)netServiceDidPublish:(NSNetService *)sender {
+    if (sender != self.hostService || !self.hostRunning) { return; }
     NSLog(@"[IdeviceBridge] pairable host published: %@", sender.name);
 }
 
 - (void)netService:(NSNetService *)sender didNotPublish:(NSDictionary<NSString *, NSNumber *> *)errorDict {
+    if (sender != self.hostService || !self.hostRunning) { return; }
     NSLog(@"[IdeviceBridge] pairable host publish failed: %@", errorDict);
+    NSNumber *code = errorDict[NSNetServicesErrorCode];
+    NSNumber *domain = errorDict[NSNetServicesErrorDomain];
+    self.publishError = [NSString stringWithFormat:
+        @"mDNS publish dështoi (code %@, domain %@). Kontrollo lejen Local Network dhe NSBonjourServices.",
+        code ?: @"?", domain ?: @"?"];
     zdma_pairing_host_cancel();
 }
 

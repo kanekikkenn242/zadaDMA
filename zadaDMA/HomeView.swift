@@ -92,14 +92,14 @@ struct HomeView: View {
                             .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.appOrange.opacity(0.5), lineWidth: 1))
                         }
                         
-                        Text("1) Start Pairing.  2) Settings → Privacy & Security → Developer Mode → Pair with \"zadaDMA\".  3) Shkruaj PIN-in që shfaqet këtu. LocalDevVPN nuk nevojitet për këtë tunel.")
+                        Text("1) Start Pairing.  2) Settings → Privacy & Security → Developer Mode → Pair with \"zadaDMA\".  3) Kthehu shpejt këtu për PIN-in, pastaj në Settings për ta shkruar. LocalDevVPN OFF.")
                             .font(.system(size: 10))
                             .foregroundColor(.gray)
 
                         HStack(spacing: 6) {
-                            Image(systemName: pairing.pairingStatus == "Paired" ? "checkmark.circle.fill" : "info.circle")
+                            Image(systemName: pairing.hasPairingFile ? "checkmark.circle.fill" : "info.circle")
                                 .font(.system(size: 10))
-                                .foregroundColor(pairing.pairingStatus == "Paired" ? .green : .gray)
+                                .foregroundColor(pairing.hasPairingFile ? .green : .gray)
                             Text(pairing.pairingStatus)
                                 .font(.system(size: 10, weight: .semibold))
                                 .foregroundColor(.gray)
