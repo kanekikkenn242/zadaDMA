@@ -41,17 +41,14 @@ jobs:
           git clone --depth 1 https://github.com/jkcoxson/idevice.git vendor/idevice
           cd vendor/idevice
           
-          echo "=== Duke kompiluar nga rrënja ==="
           cargo build --release --target aarch64-apple-ios 2>&1 | tail -30 || true
           
           if [ -d "ffi" ]; then
-            echo "=== Duke kompiluar nga ffi ==="
             cd ffi
             cargo build --release --target aarch64-apple-ios 2>&1 | tail -30 || true
             cd ..
           fi
           
-          # Gjejme librarine
           LIB_PATH=$(find . -name "libidevice*.a" -type f 2>/dev/null | head -n 1)
           
           if [ -z "$LIB_PATH" ]; then
@@ -61,13 +58,8 @@ jobs:
           fi
           
           echo "[+] Libraria u gjet: $LIB_PATH"
-          
-          echo "=== SIMBOLET QE EKZISTOJNE NE LIBRARI ==="
-          nm -gU "$LIB_PATH" 2>/dev/null | grep -i "idevice\|afc" | head -50 || nm "$LIB_PATH" | grep -i "idevice\|afc" | head -50
-          
           mkdir -p ../../Motor/
           cp "$LIB_PATH" ../../Motor/
-          echo "[+] Libraria u kopjua te Motor/"
           
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -77,15 +69,16 @@ jobs:
         
       - name: Build iOS App
         run: |
-          # Perdorim skemen 3105 qe ekziston ne projekt
-          echo "=== Duke ndertuar projektin zadaDMA me skemen 3105 ==="
-          xcodebuild -project zadaDMA.xcodeproj -scheme 3105 -configuration Release \
+          # Tani skema eshte "zadaDMA" (jo me 3105)
+          echo "=== Duke ndertuar projektin zadaDMA me skemen zadaDMA ==="
+          xcodebuild -project zadaDMA.xcodeproj -scheme zadaDMA -configuration Release \
             -sdk iphoneos -destination 'generic/platform=iOS' \
             -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
             
       - name: Force Copy Patches and Sounds
         run: |
-          APP=$(find build/Build/Products/Release-iphoneos -name "*.app" | head -n 1)
+          # Tani app-i quhet zadaDMA.app
+          APP=build/Build/Products/Release-iphoneos/zadaDMA.app
           echo "Duke kopjuar skedaret ne: $APP"
           
           if [ -f Payload/zadaDMA.app/aimdrag_neck.3105 ]; then cp Payload/zadaDMA.app/aimdrag_neck.3105 "$APP/"; fi
