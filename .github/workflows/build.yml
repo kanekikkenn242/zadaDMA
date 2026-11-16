@@ -20,17 +20,23 @@ jobs:
         run: cargo build --release --target aarch64-apple-ios
         
       - name: Download and Build idevice (Airlift)
+        env:
+          IPHONEOS_DEPLOYMENT_TARGET: "13.0"
+          MACOSX_DEPLOYMENT_TARGET: "13.0"
+          CFLAGS: "-miphoneos-version-min=13.0"
+          CXXFLAGS: "-miphoneos-version-min=13.0"
+          RUSTFLAGS: "-C link-arg=-miphoneos-version-min=13.0"
+          CMAKE_OSX_DEPLOYMENT_TARGET: "13.0"
+          CMAKE_C_FLAGS: "-miphoneos-version-min=13.0"
+          CMAKE_CXX_FLAGS: "-miphoneos-version-min=13.0"
+          CMAKE_SYSTEM_NAME: "iOS"
+          CMAKE_OSX_ARCHITECTURES: "arm64"
         run: |
           rm -rf vendor/idevice
           git clone --depth 1 https://github.com/jkcoxson/idevice.git vendor/idevice
           cd vendor/idevice/ffi
           cargo build --release --target aarch64-apple-ios
           cp target/aarch64-apple-ios/release/libidevice_ffi.a ../../Motor/
-          
-      - name: Link idevice to Xcode
-        run: |
-          sed -i '' 's/OTHER_LDFLAGS = (/OTHER_LDFLAGS = (\n\t\t\t\t"-lidevice_ffi",/' zadaDMA.xcodeproj/project.pbxproj
-          sed -i '' 's/LIBRARY_SEARCH_PATHS = (/LIBRARY_SEARCH_PATHS = (\n\t\t\t\t"$(SRCROOT)\/Motor",/' zadaDMA.xcodeproj/project.pbxproj
           
       - name: Install XcodeGen
         run: brew install xcodegen
