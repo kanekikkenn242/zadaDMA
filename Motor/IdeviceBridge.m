@@ -56,6 +56,7 @@ static NSDictionary<NSString *, NSString *> *ZDMAParseTXT(NSData *data) {
 @property (nonatomic, assign) uint16_t port;
 @property (nonatomic, assign) DNSServiceRef resolveRef;
 @property (nonatomic, assign) DNSServiceRef addressRef;
+@property (nonatomic, copy) NSString *ipAddress;
 @end
 
 @implementation ZDMAServiceCandidate
@@ -160,6 +161,7 @@ static void ZDMABrowseReply(DNSServiceRef sdRef,
 
     ZDMAServiceCandidate *candidate = [[ZDMAServiceCandidate alloc] init];
     candidate.bridge = bridge;
+    candidate.ipAddress = nil;  // will be set in ZDMAResolveReply if successful
     DNSServiceRef resolver = NULL;
     DNSServiceErrorType resolveError = DNSServiceResolve(&resolver,
                                                          0,
@@ -224,6 +226,8 @@ static void ZDMAResolveReply(DNSServiceRef sdRef,
     }
     candidate.addressRef = addrRef;
     DNSServiceSetDispatchQueue(addrRef, dispatch_get_main_queue());
+    // Store the IP address for later use in candidate address list
+    candidate.ipAddress = nil;  // will be set in ZDMAAddrInfoReply if successful
 }
 
 static void ZDMAAddrInfoReply(DNSServiceRef sdRef,
@@ -265,6 +269,7 @@ static void ZDMAAddrInfoReply(DNSServiceRef sdRef,
     };
     NSLog(@"[IdeviceBridge] resolved %@ -> %@:%u txt=%@",
           candidate.hostname, resolved[@"ip"], candidate.port, candidate.txt);
+    candidate.ipAddress = [NSString stringWithUTF8String:buffer];
     if (candidate.addressRef) {
         DNSServiceRefDeallocate(candidate.addressRef);
         candidate.addressRef = NULL;
@@ -612,9 +617,9 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
     // 2. IPv6 loopback
     [parts addObject:@"::1"];
 
-    // 3. mDNS-resolved candidates already gathered (IPv4 + IPv6)
+    // 3. mDNS-resolved candidates already gathered (IPv4 and IPv6)
     for (ZDMAServiceCandidate *cand in self.candidates) {
-        NSString *ip = cand[@"ip"];
+        NSString *ip = cand.ipAddress;
         if (!ip) continue;
         // Avoid duplicates
         if (![parts containsObject:ip]) {
@@ -663,8 +668,8 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
 
 - (void)performWriteWithCandidate:(NSDictionary *)candidate {
     if (!self.writeCompletion) { return; }
-    NSString *portStr = candidate[@"port"];
-    uint16_t port = (uint16_t)[portStr unsignedShortValue];
+    NSNumber *portNum = candidate[@"port"];
+    uint16_t port = [portNum uint16Value];
     NSString *localPath = self.writeLocalPath;
     NSString *bundleID = self.writeBundleID;
     NSString *remotePath = self.writeRemotePath;
