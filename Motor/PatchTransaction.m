@@ -149,7 +149,8 @@ static NSData *LoadFileinfo(NSString *container, NSString *bundlePath) {
     return nil;
 }
 
-static BOOL RejectSymlink(NSString *root, NSString *dst) {    NSFileManager *fm=[NSFileManager defaultManager]; 
+static BOOL RejectSymlink(NSString *root, NSString *dst) {
+    NSFileManager *fm=[NSFileManager defaultManager]; 
     NSString *cur=dst;
     while(cur.length>root.length){
         NSDictionary *a=[fm attributesOfItemAtPath:cur error:nil];
