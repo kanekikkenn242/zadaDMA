@@ -46,8 +46,13 @@ impl RpPairingFile {
         let ed25519_private_key = SigningKey::generate(&mut OsRng);
         let ed25519_public_key = VerifyingKey::from(&ed25519_private_key);
 
+        // Apple host identifiers are uppercase UUIDs; iOS compares the identifier string
+        // case-sensitively during pair-verify. A lowercase UUID is stored at pairing time
+        // and then rejected on the later `_remotepairing._tcp` pair-verify.
         let identifier =
-            uuid::Uuid::new_v3(&uuid::Uuid::NAMESPACE_DNS, sending_host.as_bytes()).to_string();
+            uuid::Uuid::new_v3(&uuid::Uuid::NAMESPACE_DNS, sending_host.as_bytes())
+                .to_string()
+                .to_uppercase();
 
         Self {
             e_private_key: ed25519_private_key,

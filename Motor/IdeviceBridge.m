@@ -64,7 +64,6 @@ static NSDictionary<NSString *, NSString *> *ZDMAParseTXT(NSData *data) {
 @property (nonatomic, assign) DNSServiceRef browseRegistration;
 @property (nonatomic, strong) NSMutableArray<ZDMAServiceCandidate *> *candidates;
 @property (nonatomic, strong) NSTimer *browseTimer;
-@property (nonatomic, strong) NSTimer *fallbackTimer;
 
 @property (nonatomic, copy, nullable) void (^hostCompletion)(BOOL, NSString *);
 @property (nonatomic, copy, nullable) void (^pinBlock)(NSString *);
@@ -78,7 +77,6 @@ static NSDictionary<NSString *, NSString *> *ZDMAParseTXT(NSData *data) {
 @property (nonatomic, copy, nullable) NSString *writeRemotePath;
 @property (nonatomic, copy, nullable) NSString *writePairingPath;
 @property (nonatomic, copy, nullable) NSString *writeHostname;
-@property (nonatomic, strong, nullable) NSDictionary *fallbackCandidate;
 
 @property (nonatomic, strong) dispatch_queue_t hostQueue;
 @property (nonatomic, strong) dispatch_queue_t ioQueue;
@@ -515,7 +513,6 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
     self.writeRemotePath = remotePath;
     self.writePairingPath = pairingFilePath;
     self.writeHostname = hostname;
-    self.fallbackCandidate = nil;
 
     dispatch_async(dispatch_get_main_queue(), ^{
         [self startBrowsing];
@@ -544,17 +541,13 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
     NSLog(@"[IdeviceBridge] browsing _remotepairing._tcp (dns_sd)");
 
     __weak typeof(self) weakSelf = self;
-    self.browseTimer = [NSTimer scheduledTimerWithTimeInterval:12.0
+    self.browseTimer = [NSTimer scheduledTimerWithTimeInterval:15.0
                                                        repeats:NO
                                                          block:^(NSTimer *timer) {
         IdeviceBridge *strongSelf = weakSelf;
         if (!strongSelf) { return; }
-        if (strongSelf.fallbackCandidate) {
-            [strongSelf performWriteWithCandidate:strongSelf.fallbackCandidate];
-        } else {
-            [strongSelf finishWrite:NO
-                            message:@"Nuk u gjet _remotepairing._tcp. Kontrollo: Developer Mode ON, i njëjti Wi-Fi, Local Network permission, VPN OFF."];
-        }
+        [strongSelf finishWrite:NO
+                        message:@"Nuk u gjet _remotepairing._tcp me authTag që përputhet me pairing file. Bëj Start Pairing përsëri. Kontrollo: Developer Mode ON, i njëjti Wi-Fi, Local Network permission, VPN OFF."];
     }];
 }
 
@@ -576,35 +569,28 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
     [self.candidates removeAllObjects];
     [self.browseTimer invalidate];
     self.browseTimer = nil;
-    [self.fallbackTimer invalidate];
-    self.fallbackTimer = nil;
 }
 
 - (void)handleResolvedCandidate:(NSDictionary *)candidate {
     if (!self.writeCompletion) { return; }
 
-    int match = 0;
-    if (self.writePairingPath.length && [candidate[@"identifier"] length] && [candidate[@"authTag"] length]) {
-        match = zdma_pairing_file_validate(self.writePairingPath.UTF8String,
-                                           [candidate[@"identifier"] UTF8String],
-                                           [candidate[@"authTag"] UTF8String]);
-    }
-    if (match == 1) {
-        [self performWriteWithCandidate:candidate];
+    if (![candidate[@"identifier"] length] || ![candidate[@"authTag"] length]) {
         return;
     }
-
-    if (!self.fallbackCandidate) {
-        self.fallbackCandidate = candidate;
-        __weak typeof(self) weakSelf = self;
-        self.fallbackTimer = [NSTimer scheduledTimerWithTimeInterval:2.0
-                                                            repeats:NO
-                                                              block:^(NSTimer *timer) {
-            IdeviceBridge *strongSelf = weakSelf;
-            if (!strongSelf || !strongSelf.fallbackCandidate) { return; }
-            [strongSelf performWriteWithCandidate:strongSelf.fallbackCandidate];
-        }];
+    // Only the advertisement whose authTag validates against the peer altIRK in
+    // our pairing file may be contacted. A candidate from an unrelated device (or
+    // a stale pairing) must never receive pair-verify.
+    int match = zdma_pairing_file_validate(self.writePairingPath.UTF8String,
+                                           [candidate[@"identifier"] UTF8String],
+                                           [candidate[@"authTag"] UTF8String]);
+    if (match == -1) {
+        [self finishWrite:NO
+                  message:@"Pairing file nuk lexohet. Bëj Start Pairing përsëri."];
+        return;
     }
+    if (match != 1) { return; }
+
+    [self performWriteWithCandidate:candidate];
 }
 
 - (void)performWriteWithCandidate:(NSDictionary *)candidate {
@@ -626,10 +612,8 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
     self.writeRemotePath = nil;
     self.writePairingPath = nil;
     self.writeHostname = nil;
-    self.fallbackCandidate = nil;
 
     NSLog(@"[IdeviceBridge] writing via %@:%u", ip, port);
-    __weak typeof(self) weakSelf = self;
     dispatch_async(self.ioQueue, ^{
         char err[4096] = {0};
         char out[2048] = {0};
@@ -648,7 +632,6 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
             ? (out[0] ? [NSString stringWithUTF8String:out] : @"OK")
             : (err[0] ? [NSString stringWithUTF8String:err] : @"AFC write failed");
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (weakSelf) { weakSelf.fallbackCandidate = nil; }
             if (done) { done(rc == 0, message); }
         });
     });
@@ -663,7 +646,6 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
     self.writeRemotePath = nil;
     self.writePairingPath = nil;
     self.writeHostname = nil;
-    self.fallbackCandidate = nil;
     [self stopBrowsing];
     if (done) { done(success, message); }
 }

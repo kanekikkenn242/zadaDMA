@@ -38,14 +38,72 @@ final class PairingController: ObservableObject {
         documentsURL.appendingPathComponent("rppairing.plist").path
     }
 
-    private var legacyPairingFilePath: String {
-        documentsURL.appendingPathComponent("pairing.plist").path
+    /// Marks `rppairing.plist` as produced by this build. Pairing files written
+    /// before the uppercase-identifier fix cannot pass pair-verify, so they must
+    /// never be used for injection.
+    private var pairingReadyPath: String {
+        documentsURL.appendingPathComponent("rppairing.ready").path
+    }
+
+    private let pairingFileVersion = 2
+
+    private func plistDictionary(at path: String) -> [String: Any]? {
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)) else { return nil }
+        return (try? PropertyListSerialization.propertyList(from: data, options: [], format: nil)) as? [String: Any]
+    }
+
+    private var isPairingReady: Bool {
+        guard FileManager.default.fileExists(atPath: pairingFilePath),
+              FileManager.default.fileExists(atPath: pairingReadyPath),
+              let pairing = plistDictionary(at: pairingFilePath),
+              let marker = plistDictionary(at: pairingReadyPath),
+              let version = marker["version"] as? Int,
+              version == pairingFileVersion,
+              let markerIdentifier = marker["identifier"] as? String,
+              !markerIdentifier.isEmpty,
+              markerIdentifier == markerIdentifier.uppercased(),
+              let fileIdentifier = pairing["identifier"] as? String,
+              fileIdentifier == markerIdentifier else {
+            return false
+        }
+        return true
+    }
+
+    @discardableResult
+    private func writeReadyMarkerFromPairingFile() -> Bool {
+        guard let pairing = plistDictionary(at: pairingFilePath),
+              let identifier = pairing["identifier"] as? String,
+              !identifier.isEmpty,
+              identifier == identifier.uppercased() else {
+            return false
+        }
+        let marker: [String: Any] = [
+            "version": pairingFileVersion,
+            "identifier": identifier,
+        ]
+        guard let data = try? PropertyListSerialization.data(fromPropertyList: marker, format: .xml, options: 0) else {
+            return false
+        }
+        do {
+            try data.write(to: URL(fileURLWithPath: pairingReadyPath), options: .atomic)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    private func clearPairingFiles() {
+        try? FileManager.default.removeItem(atPath: pairingFilePath)
+        try? FileManager.default.removeItem(atPath: pairingReadyPath)
+        hasPairingFile = false
     }
 
     init() {
-        hasPairingFile = FileManager.default.fileExists(atPath: pairingFilePath)
+        hasPairingFile = isPairingReady
         if hasPairingFile {
             pairingStatus = "Paired (RPPairing)"
+        } else if FileManager.default.fileExists(atPath: pairingFilePath) {
+            pairingStatus = "Pairing i vjetër — bëj Start Pairing përsëri."
         }
     }
 
@@ -61,6 +119,7 @@ final class PairingController: ObservableObject {
         cancelReason = nil
         lastNotifiedPin = nil
         currentPin = ""
+        clearPairingFiles()
         pairingStatus = "Duke hapur pairing host…"
 
         requestNotificationPermission()
@@ -92,14 +151,20 @@ final class PairingController: ObservableObject {
             completion: { [weak self] success, message in
                 guard let self else { return }
                 self.isPairing = false
-                self.hasPairingFile = FileManager.default.fileExists(atPath: self.pairingFilePath)
+                if success {
+                    _ = self.writeReadyMarkerFromPairingFile()
+                }
+                self.hasPairingFile = self.isPairingReady
                 self.endBackgroundExecution(success: success)
                 if let reason = self.cancelReason {
                     self.cancelReason = nil
                     self.pairingStatus = reason
-                } else if success {
+                } else if success && self.hasPairingFile {
                     self.currentPin = ""
                     self.pairingStatus = "Paired (RPPairing)"
+                } else if success {
+                    self.currentPin = ""
+                    self.pairingStatus = "Pairing u krye, por pairing file nuk u verifikua. Bëj Start Pairing përsëri."
                 } else {
                     self.pairingStatus = message.isEmpty ? "Pairing dështoi" : message
                 }
@@ -117,9 +182,14 @@ final class PairingController: ObservableObject {
     }
 
     func reloadPairingFile() {
-        hasPairingFile = FileManager.default.fileExists(atPath: pairingFilePath)
+        if FileManager.default.fileExists(atPath: pairingFilePath) {
+            _ = writeReadyMarkerFromPairingFile()
+        }
+        hasPairingFile = isPairingReady
         if hasPairingFile {
             pairingStatus = "Paired (RPPairing)"
+        } else if FileManager.default.fileExists(atPath: pairingFilePath) {
+            pairingStatus = "Pairing i vjetër — bëj Start Pairing përsëri."
         }
     }
 
@@ -278,6 +348,13 @@ final class PairingController: ObservableObject {
                 try FileManager.default.removeItem(at: dest)
             }
             try data.write(to: dest, options: .atomic)
+            guard writeReadyMarkerFromPairingFile() else {
+                try? FileManager.default.removeItem(at: dest)
+                try? FileManager.default.removeItem(atPath: pairingReadyPath)
+                hasPairingFile = false
+                pairingStatus = "RPPairing file i vjetër (identifier mungon ose është lowercase). Bëj Start Pairing."
+                return false
+            }
             hasPairingFile = true
             pairingStatus = "RPPairing file imported"
             return true
@@ -293,8 +370,10 @@ final class PairingController: ObservableObject {
                     remotePath: String,
                     bundleID: String = "com.dts.freefireth",
                     completion: @escaping (Bool, String) -> Void) {
-        guard hasPairingFile else {
-            completion(false, "Pairing file mungon. Bëj Start Pairing.")
+        let ready = isPairingReady
+        hasPairingFile = ready
+        guard ready else {
+            completion(false, "Pairing file mungon ose është i vjetër. Bëj Start Pairing përsëri.")
             return
         }
         pairingStatus = "Duke u lidhur me iPhone…"

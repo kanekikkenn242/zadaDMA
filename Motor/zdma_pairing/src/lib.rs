@@ -135,8 +135,15 @@ pub unsafe extern "C" fn zdma_pairing_host_accept(
             .port();
 
         let mut pairing_file = RpPairingFile::generate(&name);
+        // Fresh random uppercase UUID per pairing. The device keys the host by this
+        // exact string: it is sent in the handshake `peerDeviceInfo.identifier`, in
+        // the M6 identity TLV, advertised in the pairable-host TXT record, and later
+        // presented during pair-verify on `_remotepairing._tcp`. iOS normalizes UUIDs
+        // to uppercase, so every one of them must use the canonical uppercase form.
+        pairing_file.identifier = uuid::Uuid::new_v4().to_string().to_uppercase();
         let identifier = pairing_file.identifier.clone();
         let mut host_info = PairableHostInfo::generate(&name, &model);
+        host_info.identifier = identifier.clone();
         host_info.allows_pinless_pairing = false;
         let txt = host_info.mdns_txt_records(&identifier);
 
@@ -300,6 +307,16 @@ async fn write_candidate(afc: &mut AfcClient, path: &str, data: &[u8]) -> Result
     Ok(())
 }
 
+fn stage_error(stage: &str, error: idevice::IdeviceError) -> String {
+    // `IdeviceError::Socket` only renders as "device socket io failed", which hid
+    // the real reason (RST, EOF, timeout) during pair-verify. Surface the io kind.
+    let detail = match error {
+        idevice::IdeviceError::Socket(io) => format!("{} ({io})", io.kind()),
+        other => other.to_string(),
+    };
+    format!("{stage}: {detail}")
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn zdma_tunnel_write_file(
     host: *const c_char,
@@ -342,13 +359,49 @@ pub unsafe extern "C" fn zdma_tunnel_write_file(
             .await
             .map_err(|e| format!("Pairing file: {e}"))?;
 
+        // Pairing files written before the uppercase identifier fix can never pass
+        // pair-verify: fail with an explicit re-pair instruction instead of a vague
+        // socket error after the device rejects the signature.
+        if pairing.identifier.chars().any(|c| c.is_ascii_lowercase()) {
+            return Err(
+                "Pairing file i vjetër (identifier jo uppercase). Bëj Start Pairing përsëri."
+                    .into(),
+            );
+        }
+
         let stream = tokio::net::TcpStream::connect(addr)
             .await
             .map_err(|e| format!("TCP {addr}: {e}"))?;
         let mut rpc = RemotePairingClient::new(RpPairingSocket::new(stream), &hostname);
-        rpc.connect(&mut pairing, || async { String::from("000000") })
+
+        // Only pair-verify belongs on `_remotepairing._tcp`. `RemotePairingClient::connect`
+        // falls back to a full pair-setup when verify fails; the device closes that
+        // connection, which surfaced as the misleading "device socket io failed".
+        // Run the stages explicitly so the error says which one broke.
+        tokio::time::timeout(Duration::from_secs(15), rpc.attempt_pair_verify())
             .await
-            .map_err(|e| format!("RPPairing verify: {e}"))?;
+            .map_err(|_| {
+                "RPPairing handshake: timeout 15s. Bëj Start Pairing përsëri.".to_string()
+            })?
+            .map_err(|e| {
+                format!(
+                    "{} — bëj Start Pairing përsëri.",
+                    stage_error("RPPairing handshake", e)
+                )
+            })?;
+
+        tokio::time::timeout(Duration::from_secs(20), rpc.validate_pairing(&mut pairing))
+            .await
+            .map_err(|_| {
+                "RPPairing verify: timeout 20s. Bëj Start Pairing përsëri.".to_string()
+            })?
+            .map_err(|e| {
+                format!(
+                    "{} — pairing file nuk pranohet; bëj Start Pairing përsëri.",
+                    stage_error("RPPairing verify", e)
+                )
+            })?;
+
         let _ = pairing.write_to_file(&pairing_path).await;
 
         let tunnel_port = rpc
