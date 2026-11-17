@@ -252,8 +252,7 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
 
         // Free Fire keeps its hot-updated asset tree under <container>/Documents,
         // while the reference app resolves `.3105` paths from the data-container
-        // root. Probe both roots (read-back canary) and write to every root that
-        // is actually reachable, so the game sees the patch on either layout.
+        // root. Write to both so the game sees the patch on either layout.
         NSMutableArray<NSString *> *candidates = [NSMutableArray array];
         NSString *rel = targetDirectory;
         if ([rel hasPrefix:container]) rel = [rel substringFromIndex:container.length];
@@ -267,32 +266,13 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
             [candidates addObject:targetDirectory];
         }
 
-        NSMutableArray<NSString *> *verified = [NSMutableArray array];
+        // Do not gate writes on a probe: a probe is a separate AirTraffic sync
+        // and a transient probe failure must not hide the working root. Try
+        // every candidate and keep whichever writes actually land.
         NSMutableArray<NSString *> *diagnostics = [NSMutableArray array];
-        for (NSString *candidate in candidates) {
-            [ContainerAccess note:[NSString stringWithFormat:@"tx:probe %@", candidate]];
-            NSError *probeError = nil;
-            BOOL reachable = [AirliftBridge probeDirectory:candidate
-                                                       log:^(NSString *line) {
-                [ContainerAccess note:[NSString stringWithFormat:@"airlift-probe: %@", line]];
-            }
-                                                     error:&probeError];
-            if (reachable) {
-                [verified addObject:candidate];
-                [ContainerAccess note:[NSString stringWithFormat:@"tx:probe-ok %@", candidate]];
-            } else {
-                NSString *reason = probeError.localizedFailureReason ?: probeError.localizedDescription;
-                if (reason.length) {
-                    [diagnostics addObject:[NSString stringWithFormat:@"Probe %@: %@", candidate, reason]];
-                }
-                [ContainerAccess note:[NSString stringWithFormat:@"tx:probe-failed %@", candidate]];
-            }
-        }
-
         NSError *lastError = nil;
-        NSArray<NSString *> *writeTargets = verified.count ? verified : candidates;
         NSMutableArray<NSString *> *written = [NSMutableArray array];
-        for (NSString *candidate in writeTargets) {
+        for (NSString *candidate in candidates) {
             [ContainerAccess note:[NSString stringWithFormat:@"tx:airlift %@", candidate]];
             NSError *writeError = nil;
             BOOL ok = [AirliftBridge writeFiles:files
