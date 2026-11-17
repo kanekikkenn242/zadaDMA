@@ -17,4 +17,11 @@ struct DeviceInfo {
     var buildVersion: String {
         ProcessInfo.processInfo.operatingSystemVersionString
     }
+    var buildNumber: String {
+        let raw = ProcessInfo.processInfo.operatingSystemVersionString
+        guard let open = raw.range(of: "(Build ") else { return "" }
+        let tail = raw[open.upperBound...]
+        guard let close = tail.range(of: ")") else { return "" }
+        return String(tail[..<close.lowerBound])
+    }
 }

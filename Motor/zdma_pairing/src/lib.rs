@@ -570,10 +570,7 @@ pub unsafe extern "C" fn zdma_tunnel_write_file(
                     }
                 }
                 Err(e) => {
-                    // Map device-side installation lookup failure
-                    let txt = e.split("installationlookupfailed")
-                        .next()
-                        .unwrap_or(&e);
+                    let txt = e.to_string();
                     if txt.contains("installationlookupfailed") {
                         failures.push(format!(
                             "Kontainer i/g requesting bundle ID '{}' nuk gjet. \

@@ -5,6 +5,7 @@ struct ProfileView: View {
     @State private var showActivation = false
     @State private var keyInput = ""
     @State private var errorMsg = ""
+    @State private var showSettings = false
     
     var body: some View {
         ScrollView {
@@ -31,6 +32,20 @@ struct ProfileView: View {
                         Image(systemName: "chevron.right").foregroundColor(.gray)
                     }.cardStyle()
                 }.padding(.horizontal)
+
+                Button {
+                    showSettings = true
+                } label: {
+                    HStack {
+                        Image(systemName: "gearshape.fill").foregroundColor(.appOrange).padding(10).background(Color.black).cornerRadius(10)
+                        VStack(alignment: .leading) {
+                            Text("Ajustes").foregroundColor(.white).font(.headline)
+                            Text("Sistema, dispositivo y versiones").foregroundColor(.gray).font(.caption)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right").foregroundColor(.gray)
+                    }.cardStyle()
+                }.padding(.horizontal)
             }
         }
         .sheet(isPresented: $showActivation) {
@@ -51,6 +66,9 @@ struct ProfileView: View {
                 Button(state.t("close")) { showActivation = false }.foregroundColor(.gray)
                 Spacer()
             }.padding().presentationDetents([.height(300)])
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView().environmentObject(state)
         }
     }
 }
