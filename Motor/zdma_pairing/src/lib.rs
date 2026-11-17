@@ -317,6 +317,80 @@ fn stage_error(stage: &str, error: idevice::IdeviceError) -> String {
     format!("{stage}: {detail}")
 }
 
+/// Parses the comma-separated candidate list produced by `IdeviceBridge`.
+///
+/// The order is significant: the bridge puts the loopback/utun paths first,
+/// because a direct connection to the iPhone's own Wi-Fi address is reset by
+/// `remoted`, while the LocalDevVPN loopback path is accepted.
+fn endpoint_list(host: &str, port: u16) -> Result<Vec<SocketAddr>, String> {
+    let mut out: Vec<SocketAddr> = Vec::new();
+    for raw in host.split(',') {
+        let raw = raw.trim();
+        if raw.is_empty() {
+            continue;
+        }
+        let raw = raw.trim_start_matches('[').trim_end_matches(']');
+        let ip: IpAddr = match raw.parse() {
+            Ok(ip) => ip,
+            Err(_) => continue,
+        };
+        let addr = SocketAddr::new(ip, port);
+        if !out.contains(&addr) {
+            out.push(addr);
+        }
+    }
+    if out.is_empty() {
+        return Err(format!("Invalid device address: {host}"));
+    }
+    Ok(out)
+}
+
+type RppStream = RpPairingSocket<tokio::net::TcpStream>;
+
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
+const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(8);
+const VERIFY_TIMEOUT: Duration = Duration::from_secs(12);
+
+/// Runs the handshake + pair-verify against one candidate address.
+///
+/// Returns `(message, fatal)`: `fatal` means the device answered and rejected
+/// the pairing file, so trying another address cannot help.
+async fn verify_endpoint(
+    addr: SocketAddr,
+    hostname: &str,
+    pairing: &mut RpPairingFile,
+) -> Result<RemotePairingClient<RppStream>, (String, bool)> {
+    let stream = match tokio::time::timeout(CONNECT_TIMEOUT, tokio::net::TcpStream::connect(addr))
+        .await
+    {
+        Err(_) => return Err(("TCP: timeout 3s".to_string(), false)),
+        Ok(Err(e)) => return Err((format!("TCP: {e}"), false)),
+        Ok(Ok(stream)) => stream,
+    };
+    let _ = stream.set_nodelay(true);
+    let mut rpc = RemotePairingClient::new(RpPairingSocket::new(stream), hostname);
+
+    match tokio::time::timeout(HANDSHAKE_TIMEOUT, rpc.attempt_pair_verify()).await {
+        Ok(Ok(_)) => {}
+        Ok(Err(e)) => return Err((stage_error("handshake", e), false)),
+        Err(_) => return Err(("handshake: timeout 8s".to_string(), false)),
+    }
+
+    match tokio::time::timeout(VERIFY_TIMEOUT, rpc.validate_pairing(pairing)).await {
+        Ok(Ok(())) => Ok(rpc),
+        Ok(Err(e)) => {
+            let fatal = matches!(
+                e,
+                idevice::IdeviceError::RemotePairing(
+                    idevice::remote_pairing::errors::RemotePairingError::PairVerifyFailed
+                )
+            );
+            Err((stage_error("verify", e), fatal))
+        }
+        Err(_) => Err(("verify: timeout 12s".to_string(), false)),
+    }
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn zdma_tunnel_write_file(
     host: *const c_char,
@@ -352,9 +426,7 @@ pub unsafe extern "C" fn zdma_tunnel_write_file(
     };
 
     let result: Result<String, String> = rt.block_on(async move {
-        let addr: SocketAddr = format!("{host}:{port}")
-            .parse()
-            .map_err(|e| format!("Invalid address {host}:{port}: {e}"))?;
+        let endpoints = endpoint_list(&host, port)?;
         let mut pairing = RpPairingFile::read_from_file(&pairing_path)
             .await
             .map_err(|e| format!("Pairing file: {e}"))?;
@@ -369,38 +441,46 @@ pub unsafe extern "C" fn zdma_tunnel_write_file(
             );
         }
 
-        let stream = tokio::net::TcpStream::connect(addr)
-            .await
-            .map_err(|e| format!("TCP {addr}: {e}"))?;
-        let mut rpc = RemotePairingClient::new(RpPairingSocket::new(stream), &hostname);
-
         // Only pair-verify belongs on `_remotepairing._tcp`. `RemotePairingClient::connect`
         // falls back to a full pair-setup when verify fails; the device closes that
         // connection, which surfaced as the misleading "device socket io failed".
         // Run the stages explicitly so the error says which one broke.
-        tokio::time::timeout(Duration::from_secs(15), rpc.attempt_pair_verify())
-            .await
-            .map_err(|_| {
-                "RPPairing handshake: timeout 15s. Bëj Start Pairing përsëri.".to_string()
-            })?
-            .map_err(|e| {
-                format!(
-                    "{} — bëj Start Pairing përsëri.",
-                    stage_error("RPPairing handshake", e)
-                )
-            })?;
+        //
+        // Try every candidate path: on-device, the iPhone's own Wi-Fi address is
+        // reset by `remoted`; the loopback/utun paths (LocalDevVPN) are the ones
+        // that work. Keep the winner so the tunnel reuses the same address.
+        let mut failures: Vec<String> = Vec::new();
+        let mut winner: Option<(SocketAddr, RemotePairingClient<RppStream>)> = None;
 
-        tokio::time::timeout(Duration::from_secs(20), rpc.validate_pairing(&mut pairing))
-            .await
-            .map_err(|_| {
-                "RPPairing verify: timeout 20s. Bëj Start Pairing përsëri.".to_string()
-            })?
-            .map_err(|e| {
-                format!(
-                    "{} — pairing file nuk pranohet; bëj Start Pairing përsëri.",
-                    stage_error("RPPairing verify", e)
-                )
-            })?;
+        for addr in endpoints.iter().copied() {
+            match verify_endpoint(addr, &hostname, &mut pairing).await {
+                Ok(rpc) => {
+                    winner = Some((addr, rpc));
+                    break;
+                }
+                Err((detail, fatal)) => {
+                    failures.push(format!("{addr}: {detail}"));
+                    if fatal {
+                        return Err(format!(
+                            "{detail} — pairing file nuk pranohet; bëj Start Pairing përsëri."
+                        ));
+                    }
+                }
+            }
+        }
+
+        let (winning_addr, mut rpc) = match winner {
+            Some(v) => v,
+            None => {
+                return Err(format!(
+                    "RPPairing nuk u lidh ({} rrugë). {}. Wi-Fi ON, Developer Mode ON, \
+                     Local Network ON. Nëse përsëritet: instalo \"LocalDevVPN\" nga App Store, \
+                     aktivizo VPN-in dhe provo Inject përsëri — pa Start Pairing.",
+                    endpoints.len(),
+                    failures.join(" | ")
+                ));
+            }
+        };
 
         let _ = pairing.write_to_file(&pairing_path).await;
 
@@ -408,7 +488,7 @@ pub unsafe extern "C" fn zdma_tunnel_write_file(
             .create_tcp_listener()
             .await
             .map_err(|e| format!("Create tunnel listener: {e}"))?;
-        let tunnel_addr = SocketAddr::new(addr.ip(), tunnel_port);
+        let tunnel_addr = SocketAddr::new(winning_addr.ip(), tunnel_port);
         let tunnel_stream = tokio::net::TcpStream::connect(tunnel_addr)
             .await
             .map_err(|e| format!("Tunnel TCP {tunnel_addr}: {e}"))?;
