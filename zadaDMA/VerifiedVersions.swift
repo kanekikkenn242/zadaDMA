@@ -30,8 +30,15 @@ enum VerifiedVersions {
         if major != 27 {
             return [17, 18, 26].contains(major)
         }
+        // 27.0.1 belongs to the "iOS 27.0.1" group; 27.2.0 / 27.0.0 to "iOS 27.2" / "iOS 27.0".
         let minor = parts.count > 1 ? parts[1] : "0"
-        let key = "iOS 27.\(minor)"
+        let patch = parts.count > 2 ? parts[2] : "0"
+        let key: String
+        if let patchInt = Int(patch), patchInt > 0 {
+            key = "iOS 27.\(minor).\(patch)"
+        } else {
+            key = "iOS 27.\(minor)"
+        }
         guard let builds = ios27Groups.first(where: { $0.title == key })?.builds else { return false }
         return !build.isEmpty && builds.contains(build)
     }
