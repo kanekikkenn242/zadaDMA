@@ -56,6 +56,9 @@ static NSDictionary<NSString *, NSString *> *ZDMAParseTXT(NSData *data) {
 @property (nonatomic, assign) DNSServiceRef addressRef;
 @end
 
+@implementation ZDMAServiceCandidate
+@end
+
 @interface IdeviceBridge ()
 @property (nonatomic, assign) DNSServiceRef hostRegistration;
 @property (nonatomic, assign) DNSServiceRef browseRegistration;
