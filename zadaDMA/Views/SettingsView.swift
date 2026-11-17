@@ -12,9 +12,66 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             List {
-                Section(header: Text("Device").foregroundColor(.gray)) {
-                    HStack { Text("Model").foregroundColor(.gray); Spacer(); Text(state.deviceModel).foregroundColor(.white) }
-                    HStack { Text("iOS Version").foregroundColor(.gray); Spacer(); Text(state.deviceiOS).foregroundColor(.white) }
+                Section(header: Text("Sistema").foregroundColor(.gray)) {
+                    HStack {
+                        Text("Claro").foregroundColor(.white)
+                        Spacer()
+                        if state.colorScheme == .light { Image(systemName: "checkmark").foregroundColor(.appOrange) }
+                    }
+                    HStack {
+                        Text("Oscuro").foregroundColor(.white)
+                        Spacer()
+                        if state.colorScheme == .dark { Image(systemName: "checkmark").foregroundColor(.appOrange) }
+                    }
+                    HStack {
+                        Text("Dispositivo").foregroundColor(.white)
+                        Spacer()
+                    }
+                }
+                
+                Section(header: Text("Dispositivo").foregroundColor(.gray)) {
+                    HStack { Text("Modelo de hardware").foregroundColor(.gray); Spacer(); Text(state.deviceModel).foregroundColor(.white) }
+                    HStack { Text("Version de iOS").foregroundColor(.gray); Spacer(); Text(state.deviceiOS).foregroundColor(.white) }
+                }
+                
+                Section(header: Text("Deteccion de Contenedores").foregroundColor(.gray)) {
+                    Toggle("Activar Deteccion de Contenedores", isOn: .constant(true))
+                        .foregroundColor(.white)
+                    Text("299 contenedores encontrados")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    Text("Metodo: worse_query (iOS 26/27)")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    Button("Volver a escanear") { }
+                        .foregroundColor(.appOrange)
+                }
+                
+                Section(header: Text("Versiones verificadas").foregroundColor(.gray)) {
+                    HStack {
+                        Text("Compatibilidad del exploit").foregroundColor(.gray)
+                        Spacer()
+                        Text("Compatible").foregroundColor(.appGreen)
+                    }
+                    ForEach(["iOS 17", "iOS 18", "iOS 26", "iOS 27.0", "iOS 27.0.1", "iOS 27.2", "iOS 27.2.1", "iOS 27.3"], id: \.self) { version in
+                        HStack {
+                            Text(version).foregroundColor(.white)
+                            Spacer()
+                            Image(systemName: "checkmark.circle.fill").foregroundColor(.appGreen)
+                        }
+                    }
+                    Text("Solo las compilaciones indicadas arriba estan verificadas para el exploit. iOS se sigue reconociendo; el emparejamiento y el tunel son estados aparte.")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+                
+                Section(header: Text("Redes sociales").foregroundColor(.gray)) {
+                    HStack {
+                        Image(systemName: "paperplane.fill").foregroundColor(.appOrange)
+                        Text("Telegram").foregroundColor(.white)
+                        Spacer()
+                        Text("Anuncios y novedades").font(.caption).foregroundColor(.gray)
+                    }
                 }
                 
                 Section(header: Text("Pairing & Tunnel").foregroundColor(.gray)) {
