@@ -42,6 +42,13 @@ typedef void (^ZDMAAirliftLogBlock)(NSString *line);
                log:(nullable ZDMAAirliftLogBlock)log
              error:(NSError **)error;
 
+/// Writes a random canary file into `targetDirectory` and reads the exact bytes
+/// back through the same AirTraffic tunnel. Returns YES only when the target
+/// path is actually writable and readable outside the app sandbox.
++ (BOOL)probeDirectory:(NSString *)targetDirectory
+                   log:(nullable ZDMAAirliftLogBlock)log
+                 error:(NSError **)error;
+
 /// Log lines of the last Airlift operation (bounded).
 + (NSArray<NSString *> *)lastLogLines;
 

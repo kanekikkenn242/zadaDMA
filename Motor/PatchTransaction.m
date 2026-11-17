@@ -250,21 +250,49 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
     for (NSString *targetDirectory in groups) {
         NSDictionary<NSString *, NSData *> *files = groups[targetDirectory];
 
-        // Candidate 1: the data-container root (reference-app semantics).
-        // Candidate 2: <container>/Documents (older game layouts).
-        NSMutableArray<NSString *> *candidates = [NSMutableArray arrayWithObject:targetDirectory];
+        // Free Fire keeps its hot-updated asset tree under <container>/Documents,
+        // while the reference app resolves `.3105` paths from the data-container
+        // root. Probe both roots (read-back canary) and write to every root that
+        // is actually reachable, so the game sees the patch on either layout.
+        NSMutableArray<NSString *> *candidates = [NSMutableArray array];
         NSString *rel = targetDirectory;
         if ([rel hasPrefix:container]) rel = [rel substringFromIndex:container.length];
         while ([rel hasPrefix:@"/"]) rel = [rel substringFromIndex:1];
         if (![rel hasPrefix:@"Documents/"] && ![rel hasPrefix:@"Library/"] && ![rel hasPrefix:@"tmp/"]) {
-            [candidates addObject:[[container stringByAppendingPathComponent:@"Documents"]
-                                   stringByAppendingPathComponent:rel]];
+            NSString *documents = [[container stringByAppendingPathComponent:@"Documents"]
+                                   stringByAppendingPathComponent:rel];
+            if (documents.length) [candidates addObject:documents];
+        }
+        if (![candidates containsObject:targetDirectory]) {
+            [candidates addObject:targetDirectory];
         }
 
-        NSString *winner = nil;
-        NSError *lastError = nil;
+        NSMutableArray<NSString *> *verified = [NSMutableArray array];
         NSMutableArray<NSString *> *diagnostics = [NSMutableArray array];
         for (NSString *candidate in candidates) {
+            [ContainerAccess note:[NSString stringWithFormat:@"tx:probe %@", candidate]];
+            NSError *probeError = nil;
+            BOOL reachable = [AirliftBridge probeDirectory:candidate
+                                                       log:^(NSString *line) {
+                [ContainerAccess note:[NSString stringWithFormat:@"airlift-probe: %@", line]];
+            }
+                                                     error:&probeError];
+            if (reachable) {
+                [verified addObject:candidate];
+                [ContainerAccess note:[NSString stringWithFormat:@"tx:probe-ok %@", candidate]];
+            } else {
+                NSString *reason = probeError.localizedFailureReason ?: probeError.localizedDescription;
+                if (reason.length) {
+                    [diagnostics addObject:[NSString stringWithFormat:@"Probe %@: %@", candidate, reason]];
+                }
+                [ContainerAccess note:[NSString stringWithFormat:@"tx:probe-failed %@", candidate]];
+            }
+        }
+
+        NSError *lastError = nil;
+        NSArray<NSString *> *writeTargets = verified.count ? verified : candidates;
+        NSMutableArray<NSString *> *written = [NSMutableArray array];
+        for (NSString *candidate in writeTargets) {
             [ContainerAccess note:[NSString stringWithFormat:@"tx:airlift %@", candidate]];
             NSError *writeError = nil;
             BOOL ok = [AirliftBridge writeFiles:files
@@ -274,8 +302,9 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
             }
                                           error:&writeError];
             if (ok) {
-                winner = candidate;
-                break;
+                [written addObject:candidate];
+                [ContainerAccess note:[NSString stringWithFormat:@"tx:airlift-ok %@", candidate]];
+                continue;
             }
             lastError = writeError;
             NSString *reason = writeError.localizedFailureReason ?: writeError.localizedDescription;
@@ -288,7 +317,7 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
             [ContainerAccess note:@"tx:airlift-failed"];
         }
 
-        if (!winner) {
+        if (written.count == 0) {
             NSMutableDictionary *info = [NSMutableDictionary dictionary];
             info[NSLocalizedDescriptionKey] = @"Airlift write dështoi.";
             NSString *reason = lastError.localizedFailureReason ?: lastError.localizedDescription;
@@ -298,12 +327,14 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
             return NO;
         }
 
-        for (NSString *leaf in files) {
-            NSString *full = [winner stringByAppendingPathComponent:leaf];
-            [gLastResolvedTargets addObject:full];
-            [entries addObject:@{@"dst": full, @"backup": [NSNull null],
-                                 @"sha256": SHA256Hex(files[leaf]), @"ok": @YES,
-                                 @"via": @"airlift"}];
+        for (NSString *dir in written) {
+            for (NSString *leaf in files) {
+                NSString *full = [dir stringByAppendingPathComponent:leaf];
+                [gLastResolvedTargets addObject:full];
+                [entries addObject:@{@"dst": full, @"backup": [NSNull null],
+                                     @"sha256": SHA256Hex(files[leaf]), @"ok": @YES,
+                                     @"via": @"airlift"}];
+            }
         }
         [ContainerAccess note:@"tx:airlift-ok"];
     }

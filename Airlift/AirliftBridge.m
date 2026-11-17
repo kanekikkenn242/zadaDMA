@@ -236,6 +236,48 @@ static void ZDMAAirliftConfigureRoute(void) {
     return nil;
 }
 
++ (BOOL)probeDirectory:(NSString *)targetDirectory
+                   log:(ZDMAAirliftLogBlock)log
+                 error:(NSError **)error {
+    if (targetDirectory.length == 0 || ![targetDirectory hasPrefix:@"/"]) {
+        if (error) *error = ZDMAAirliftError(@"Direktoria e provës nuk është absolute.", nil);
+        return NO;
+    }
+    NSString *pairingPath = [self pairingFilePath];
+    if (!pairingPath) {
+        if (error) *error = ZDMAAirliftError(
+            @"Pairing file (rppairing.plist) mungon. Bëj Start Pairing përsëri.", nil);
+        return NO;
+    }
+
+    ZDMAAirliftConfigureRoute();
+
+    ZDMAAirliftLogSink *sink = [ZDMAAirliftLogSink new];
+    sink.block = log;
+
+    char *outJson = NULL;
+    char *outError = NULL;
+    int32_t rc = al_exploit_run(pairingPath.UTF8String,
+                                targetDirectory.UTF8String,
+                                ZDMAAirliftLogCallback,
+                                (__bridge void *)sink,
+                                &outJson,
+                                &outError);
+
+    NSArray<NSString *> *lines = [sink snapshot];
+    ZDMAAirliftRememberLogs(lines);
+    if (outJson) al_string_free(outJson);
+
+    NSString *reason = ZDMAAirliftConsumeError(outError);
+    if (rc == 0) return YES;
+
+    if (error) {
+        *error = ZDMAAirliftError(reason ?: [NSString stringWithFormat:
+            @"Airlift probe dështoi për %@ (rc=%d).", targetDirectory, rc], lines);
+    }
+    return NO;
+}
+
 + (BOOL)writeFiles:(NSDictionary<NSString *, NSData *> *)files
  toTargetDirectory:(NSString *)targetDirectory
                log:(ZDMAAirliftLogBlock)log
