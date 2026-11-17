@@ -195,6 +195,22 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
         return NO;
     }
 
+    // The shipped asset tree lives inside the installed `.app` bundle. Unity's
+    // streamingAssetsPath on iOS resolves to `<App>.app/Data/Raw`, which is the
+    // root the game reads without consulting any hot-update manifest.
+    NSError *bundleLookupError = nil;
+    NSString *bundlePath = [AirliftBridge bundlePathForBundleID:bundleID
+                                                            log:^(NSString *line) {
+        [ContainerAccess note:[NSString stringWithFormat:@"airlift-bundle: %@", line]];
+    }
+                                                          error:&bundleLookupError];
+    if (bundlePath.length) {
+        [ContainerAccess note:[NSString stringWithFormat:@"tx:bundle %@", bundlePath]];
+    } else if (bundleLookupError) {
+        [ContainerAccess note:[NSString stringWithFormat:@"tx:bundle-failed %@",
+                               bundleLookupError.localizedFailureReason ?: bundleLookupError.localizedDescription]];
+    }
+
     // Group by remote parent directory: al_exploit_write_dir writes a flat set
     // of files into one target directory, one AirTraffic sync per directory.
     NSMutableDictionary<NSString *, NSMutableDictionary<NSString *, NSData *> *> *groups = [NSMutableDictionary dictionary];
@@ -257,6 +273,30 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
         NSString *rel = targetDirectory;
         if ([rel hasPrefix:container]) rel = [rel substringFromIndex:container.length];
         while ([rel hasPrefix:@"/"]) rel = [rel substringFromIndex:1];
+
+        // Patch the shipped app-bundle copy first: the loader reads it through
+        // streamingAssetsPath without checking any hot-update manifest.
+        if (bundlePath.length) {
+            [candidates addObject:[bundlePath stringByAppendingPathComponent:rel]];
+        }
+
+        // Hot-update overrides. Free Fire stores downloaded resources under
+        // `<Documents>/streaming` and `<Documents>/optionallocres`, relative to
+        // `Data/Raw/ios`, so mirror the file there as well.
+        NSString *hotRel = rel;
+        for (NSString *prefix in @[@"Data/Raw/ios/", @"Data/Raw/"]) {
+            if ([hotRel hasPrefix:prefix]) {
+                hotRel = [hotRel substringFromIndex:prefix.length];
+                break;
+            }
+        }
+        if (![hotRel isEqualToString:rel]) {
+            [candidates addObject:[[container stringByAppendingPathComponent:@"Documents/streaming"]
+                                   stringByAppendingPathComponent:hotRel]];
+            [candidates addObject:[[container stringByAppendingPathComponent:@"Documents/optionallocres"]
+                                   stringByAppendingPathComponent:hotRel]];
+        }
+
         if (![rel hasPrefix:@"Documents/"] && ![rel hasPrefix:@"Library/"] && ![rel hasPrefix:@"tmp/"]) {
             NSString *documents = [[container stringByAppendingPathComponent:@"Documents"]
                                    stringByAppendingPathComponent:rel];

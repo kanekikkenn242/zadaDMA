@@ -140,6 +140,15 @@ int32_t al_find_app_container(const char *pairing_path,
                              char **out_container,
                              char **out_error);
 
+// Look up the installed .app bundle directory for a bundle ID.
+// Blocks until resolved or errored. Returns 0 on success, with out_bundle set.
+int32_t al_find_app_bundle(const char *pairing_path,
+                           const char *bundle_id,
+                           ALLogCallback log_cb,
+                           void *ctx,
+                           char **out_bundle,
+                           char **out_error);
+
 // Restart device / respring via Diagnostics Relay over the pairing tunnel.
 // Blocks until sent. Returns 0 on success.
 int32_t al_device_respring(const char *pairing_path,

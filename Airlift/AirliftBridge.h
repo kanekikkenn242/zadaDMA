@@ -35,6 +35,12 @@ typedef void (^ZDMAAirliftLogBlock)(NSString *line);
                                         log:(nullable ZDMAAirliftLogBlock)log
                                       error:(NSError **)error;
 
+/// Resolves the installed `.app` bundle directory via InstallationProxy over
+/// the Airlift tunnel. Returns a `/var/containers/Bundle/...` path or nil.
++ (nullable NSString *)bundlePathForBundleID:(NSString *)bundleID
+                                         log:(nullable ZDMAAirliftLogBlock)log
+                                       error:(NSError **)error;
+
 /// Writes every entry of `files` (leaf name -> bytes) into `targetDirectory`
 /// on the device through the AirTraffic exploit.
 + (BOOL)writeFiles:(NSDictionary<NSString *, NSData *> *)files

@@ -236,6 +236,57 @@ static void ZDMAAirliftConfigureRoute(void) {
     return nil;
 }
 
++ (NSString *)bundlePathForBundleID:(NSString *)bundleID
+                                log:(ZDMAAirliftLogBlock)log
+                              error:(NSError **)error {
+    if (bundleID.length == 0) {
+        if (error) *error = ZDMAAirliftError(@"Bundle ID mungon.", nil);
+        return nil;
+    }
+    NSString *pairingPath = [self pairingFilePath];
+    if (!pairingPath) {
+        if (error) *error = ZDMAAirliftError(
+            @"Pairing file (rppairing.plist) mungon. Bëj Start Pairing përsëri.", nil);
+        return nil;
+    }
+
+    ZDMAAirliftConfigureRoute();
+
+    ZDMAAirliftLogSink *sink = [ZDMAAirliftLogSink new];
+    sink.block = log;
+
+    char *outBundle = NULL;
+    char *outError = NULL;
+    int32_t rc = al_find_app_bundle(pairingPath.UTF8String,
+                                    bundleID.UTF8String,
+                                    ZDMAAirliftLogCallback,
+                                    (__bridge void *)sink,
+                                    &outBundle,
+                                    &outError);
+
+    NSArray<NSString *> *lines = [sink snapshot];
+    ZDMAAirliftRememberLogs(lines);
+
+    NSString *resolved = nil;
+    if (rc == 0 && outBundle != NULL) {
+        resolved = [NSString stringWithUTF8String:outBundle];
+        al_string_free(outBundle);
+    }
+
+    NSString *reason = ZDMAAirliftConsumeError(outError);
+    if (resolved.length) {
+        if (reason.length) NSLog(@"[Airlift] bundle lookup warning: %@", reason);
+        return resolved;
+    }
+
+    if (error) {
+        *error = ZDMAAirliftError(reason ?: [NSString stringWithFormat:
+            @"Airlift nuk e gjeti app bundle për %@ (rc=%d). LocalDevVPN duhet të jetë aktiv.",
+            bundleID, rc], lines);
+    }
+    return nil;
+}
+
 + (BOOL)probeDirectory:(NSString *)targetDirectory
                    log:(ZDMAAirliftLogBlock)log
                  error:(NSError **)error {
