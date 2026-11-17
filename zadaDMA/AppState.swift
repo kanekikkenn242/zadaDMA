@@ -138,6 +138,7 @@ final class AppState: ObservableObject {
         // so keep the whole attempt off the main thread.
         patchInFlight = true
         let bundleIDs = MotorBridge.installedFreeFireBundleIDs()
+        patchLog.append("🎯 Lojë e gjetur: \(bundleIDs.joined(separator: ", "))")
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             MotorBridge.resetInjectionTrace()
             let local = MotorBridge.applyPatchFile(fileName, bundleIDs: bundleIDs)
@@ -172,6 +173,7 @@ final class AppState: ObservableObject {
     private func restorePatchWithFallback(fileName: String, completion: @escaping (Bool) -> Void) {
         patchInFlight = true
         let bundleIDs = MotorBridge.installedFreeFireBundleIDs()
+        patchLog.append("🎯 Rikthim për: \(bundleIDs.joined(separator: ", "))")
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             MotorBridge.resetInjectionTrace()
             let local = MotorBridge.restorePatchFile(fileName, bundleIDs: bundleIDs)

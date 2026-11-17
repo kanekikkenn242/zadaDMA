@@ -65,14 +65,26 @@ static NSString *ResolveTarget(NSString *container, NSString *dst) {
 
 // Free Fire names downloaded bundles by the URL-escaped Base64 of their gzip
 // SHA-1 (`+` -> ~2B, `/` -> ~2F, `=` -> ~3D), so the leaf changes with every
-// game version. Packages use `{gz}` as a placeholder and the fallback name is
-// resolved at runtime from `Data/Raw/ios/fileinfo`.
+// game version. Packages use `{gz}` as a placeholder and the primary source is
+// the device's own `Data/Raw/ios/fileinfo`.
 static NSString *EscapeGzHash(NSString *hash) {
     NSMutableString *s = [hash mutableCopy];
     [s replaceOccurrencesOfString:@"+" withString:@"~2B" options:0 range:NSMakeRange(0, s.length)];
     [s replaceOccurrencesOfString:@"/" withString:@"~2F" options:0 range:NSMakeRange(0, s.length)];
     [s replaceOccurrencesOfString:@"=" withString:@"~3D" options:0 range:NSMakeRange(0, s.length)];
     return s;
+}
+
+// Last-resort leaves for builds whose fileinfo cannot be read from the sandbox
+// (the manifest lives inside the signed `.app`, and some installs never copy it
+// to the data container). Every target is read before it is overwritten, so a
+// stale entry is skipped instead of creating a file that could not be restored.
+static NSArray<NSString *> *KnownGzLeaves(NSString *key) {
+    if ([key isEqualToString:@"cache_res"]) {
+        return @[@"qdAaqZ~2B6EL0nHqjAb8yHSE0GLqQ~3D",   // Free Fire 1.132.1
+                 @"OdVY88vqa9NcdHWx8dKH1EWvhoo~3D"];   // older 2018.4.11 build
+    }
+    return @[];
 }
 
 // fileinfo line: key,rawSHA1B64,rawSize,0,gzSHA1B64,gzSize,True,0
@@ -92,20 +104,36 @@ static NSString *GzHashForKey(NSData *fileinfo, NSString *key) {
     return nil;
 }
 
-// Resolve a `.../gameassetbundles/<key>.{gz}` destination against fileinfo.
-static NSString *ResolveGzDestination(NSString *dst, NSData *fileinfo) {
+// Resolve a `.../gameassetbundles/<key>.{gz}[suffix]` destination. The first
+// entry is always the leaf named by the on-device manifest; when the manifest
+// is unavailable the remaining known leaves are returned as alternatives.
+static NSArray<NSString *> *ResolveGzDestinations(NSString *dst, NSData *fileinfo) {
     NSRange marker = [dst rangeOfString:@"{gz}"];
-    if (marker.location == NSNotFound) return dst;
-    if (marker.location + marker.length != dst.length) return nil;
+    if (marker.location == NSNotFound) return @[dst];
 
+    // `{gz}.raw.tmp` addresses the decompressed cache that the loader may use
+    // instead of re-inflating the bundle.
     NSString *stem = [dst substringToIndex:marker.location];
+    NSString *suffix = [dst substringFromIndex:NSMaxRange(marker)];
     static NSString *const prefix = @"Data/Raw/ios/gameassetbundles/";
-    if (![stem hasSuffix:@"."] || ![stem hasPrefix:prefix]) return nil;
+    if (![stem hasSuffix:@"."] || ![stem hasPrefix:prefix]) return @[];
     stem = [stem substringToIndex:stem.length - 1];
     NSString *key = [stem substringFromIndex:prefix.length];
-    NSString *gz = GzHashForKey(fileinfo, key);
-    if (!gz.length) return nil;
-    return [stem stringByAppendingFormat:@".%@", gz];
+
+    NSMutableArray<NSString *> *out = [NSMutableArray array];
+    NSString *fromManifest = GzHashForKey(fileinfo, key);
+    if (fromManifest.length) {
+        [out addObject:[stem stringByAppendingFormat:@".%@%@", fromManifest, suffix]];
+        return out;
+    }
+    // No manifest: the known leaves are alternatives, not extra targets. Each
+    // one is probed by reading it before the write, so stale entries are
+    // skipped instead of creating files that could never be restored.
+    for (NSString *leaf in KnownGzLeaves(key)) {
+        NSString *candidate = [stem stringByAppendingFormat:@".%@%@", leaf, suffix];
+        if (![out containsObject:candidate]) [out addObject:candidate];
+    }
+    return out;
 }
 
 static NSData *LoadFileinfo(NSString *container, NSString *bundlePath) {
@@ -113,8 +141,10 @@ static NSData *LoadFileinfo(NSString *container, NSString *bundlePath) {
     if (bundlePath.length) {
         [paths addObject:[bundlePath stringByAppendingPathComponent:@"Data/Raw/ios/fileinfo"]];
     }
-    [paths addObject:[[container stringByAppendingPathComponent:@"Documents"]
-                      stringByAppendingPathComponent:@"Data/Raw/ios/fileinfo"]];
+    NSString *documents = [container stringByAppendingPathComponent:@"Documents"];
+    [paths addObject:[documents stringByAppendingPathComponent:@"Data/Raw/ios/fileinfo"]];
+    [paths addObject:[documents stringByAppendingPathComponent:@"Data/Raw/fileinfo"]];
+    [paths addObject:[documents stringByAppendingPathComponent:@"fileinfo"]];
     [paths addObject:[container stringByAppendingPathComponent:@"Data/Raw/ios/fileinfo"]];
 
     NSFileManager *fm = [NSFileManager defaultManager];
@@ -187,6 +217,11 @@ static NSString *GroupStemForDestination(NSString *dst) {
     while ([rel hasPrefix:@"/"]) rel = [rel substringFromIndex:1];
     NSString *parent = [rel stringByDeletingLastPathComponent];
     NSString *leaf = [rel lastPathComponent];
+    // The decompressed cache (`<leaf>.raw.tmp`) belongs to the same original as
+    // the gzip leaf, otherwise toggling off would leave it behind.
+    if ([leaf hasSuffix:@".raw.tmp"]) {
+        leaf = [leaf substringToIndex:leaf.length - (NSUInteger)@".raw.tmp".length];
+    }
     NSRange dot = [leaf rangeOfString:@"." options:NSBackwardsSearch];
     if (dot.location != NSNotFound && dot.location > 0) leaf = [leaf substringToIndex:dot.location];
     return parent.length ? [parent stringByAppendingPathComponent:leaf] : leaf;
@@ -284,17 +319,11 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
         return NO; 
     }
 
-    // `{gz}` leaves are version-dependent and resolved from the device's own
-    // fileinfo through Airlift; the MCM path has no reader for it.
-    for (NSDictionary *r in pkg.rules) {
-        NSString *dst = r[@"dst"];
-        if ([dst isKindOfClass:[NSString class]] && [dst containsString:@"{gz}"]) {
-            [ContainerAccess note:@"tx:mcm-skip-gz"];
-            if (err) *err = [NSError errorWithDomain:@"patch" code:ENOTSUP userInfo:@{
-                NSLocalizedDescriptionKey: @"paketa kërkon fileinfo (Airlift)"}];
-            return NO;
-        }
-    }
+    // `{gz}` leaves are version-dependent. The manifest is read locally (the
+    // MCM lease exposes the container) or through Airlift as a fallback; when
+    // it is unavailable the known build leaves are probed for an existing file.
+    NSData *mcmFileinfo = nil;
+    BOOL mcmFileinfoAttempted = NO;
     
     uint64_t total=0; 
     NSMutableArray<NSDictionary*> *plan=[NSMutableArray array];
@@ -302,6 +331,33 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
     for(NSDictionary *r in pkg.rules){
         NSString *src=r[@"src"], *dst=r[@"dst"];
         if(!src||!dst){ if(err)*err=[NSError errorWithDomain:@"patch" code:EINVAL userInfo:nil]; return NO; }
+        if ([dst containsString:@"{gz}"]) {
+            if (!mcmFileinfoAttempted) {
+                mcmFileinfoAttempted = YES;
+                mcmFileinfo = LoadFileinfo(container, nil);
+                [ContainerAccess note:[NSString stringWithFormat:@"fileinfo:mcm-%@",
+                                       mcmFileinfo.length ? @"loaded" : @"missing"]];
+            }
+            NSArray<NSString *> *candidates = ResolveGzDestinations(dst, mcmFileinfo);
+            NSString *picked = nil;
+            for (NSString *candidate in candidates) {
+                NSString *full = ResolveTarget(container, candidate);
+                if ([fm fileExistsAtPath:full]) { picked = candidate; break; }
+            }
+            if (!picked.length) {
+                if ([dst hasSuffix:@".raw.tmp"]) {
+                    [ContainerAccess note:@"tx:mcm-raw-tmp-absent"];
+                    continue;
+                }
+                [ContainerAccess note:@"tx:mcm-gz-not-found"];
+                if (err) *err = [NSError errorWithDomain:@"patch" code:ENOENT userInfo:@{
+                    NSLocalizedDescriptionKey: [NSString stringWithFormat:
+                        @"cache_res.{gz} nuk u gjet në kontejner (%@)", dst]}];
+                return NO;
+            }
+            [ContainerAccess note:[NSString stringWithFormat:@"tx:mcm-gz %@ -> %@", dst, picked]];
+            dst = picked;
+        }
         NSString *full=ResolveTarget(container,dst);
         [ContainerAccess note:[NSString stringWithFormat:@"tx:target %@", full]];
         if(!UnderRoot(container,full)){ if(err)*err=[NSError errorWithDomain:@"patch" code:EPERM userInfo:@{NSLocalizedDescriptionKey:@"path traversal"}]; return NO; }
@@ -412,6 +468,9 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
             if (err) *err = [NSError errorWithDomain:@"patch" code:EINVAL userInfo:nil];
             return NO;
         }
+
+        NSArray<NSString *> *destinations = @[dst];
+        BOOL gzOptional = NO;
         if ([dst containsString:@"{gz}"]) {
             packageHadGz = YES;
             if (!fileinfoAttempted) {
@@ -420,16 +479,23 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
                 [ContainerAccess note:[NSString stringWithFormat:@"fileinfo:%@",
                                        fileinfo.length ? @"loaded" : @"missing"]];
             }
-            NSString *resolved = ResolveGzDestination(dst, fileinfo);
-            if (!resolved.length) {
+            destinations = ResolveGzDestinations(dst, fileinfo);
+            if (!destinations.count) {
                 if (err) *err = [NSError errorWithDomain:@"patch" code:ENOENT userInfo:@{
                     NSLocalizedDescriptionKey: [NSString stringWithFormat:
                         @"fileinfo nuk e zgjidhi dot %@", dst]}];
                 return NO;
             }
-            [ContainerAccess note:[NSString stringWithFormat:@"tx:gz %@ -> %@", dst, resolved]];
-            dst = resolved;
+            gzOptional = (fileinfo.length == 0) || [dst hasSuffix:@".raw.tmp"];
+            if (gzOptional) {
+                [ContainerAccess note:[NSString stringWithFormat:@"gz:fallback %@",
+                                       [destinations componentsJoinedByString:@" | "]]];
+            }
+            for (NSString *destination in destinations) {
+                [ContainerAccess note:[NSString stringWithFormat:@"tx:gz %@ -> %@", dst, destination]];
+            }
         }
+
         NSData *blob = pkg.files[src];
         if (!blob.length) {
             if (err) *err = [NSError errorWithDomain:@"patch" code:ENOENT userInfo:@{
@@ -443,31 +509,35 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
             return NO;
         }
 
-        NSString *rel = [dst stringByStandardizingPath];
-        while ([rel hasPrefix:@"/"]) rel = [rel substringFromIndex:1];
-        if ([rel hasPrefix:@".."]) {
-            if (err) *err = [NSError errorWithDomain:@"patch" code:EPERM
-                                               userInfo:@{NSLocalizedDescriptionKey: @"path traversal"}];
-            return NO;
-        }
-        // `.3105` paths are relative to the game data-container root, which is
-        // exactly what the reference app resolves. A Documents fallback is
-        // attempted below when the root write fails.
-        NSString *remote = [container stringByAppendingPathComponent:rel];
+        for (NSString *destination in destinations) {
+            NSString *rel = [destination stringByStandardizingPath];
+            while ([rel hasPrefix:@"/"]) rel = [rel substringFromIndex:1];
+            if ([rel hasPrefix:@".."]) {
+                if (err) *err = [NSError errorWithDomain:@"patch" code:EPERM
+                                                   userInfo:@{NSLocalizedDescriptionKey: @"path traversal"}];
+                return NO;
+            }
+            // `.3105` paths are relative to the game data-container root, which is
+            // exactly what the reference app resolves. A Documents fallback is
+            // attempted below when the root write fails.
+            NSString *remote = [container stringByAppendingPathComponent:rel];
 
-        NSString *parent = [remote stringByDeletingLastPathComponent];
-        NSString *leaf = [remote lastPathComponent];
-        if (parent.length == 0 || leaf.length == 0) {
-            if (err) *err = [NSError errorWithDomain:@"patch" code:EINVAL
-                                               userInfo:@{NSLocalizedDescriptionKey: @"empty target"}];
-            return NO;
+            NSString *parent = [remote stringByDeletingLastPathComponent];
+            NSString *leaf = [remote lastPathComponent];
+            if (parent.length == 0 || leaf.length == 0) {
+                if (err) *err = [NSError errorWithDomain:@"patch" code:EINVAL
+                                                   userInfo:@{NSLocalizedDescriptionKey: @"empty target"}];
+                return NO;
+            }
+            NSMutableDictionary<NSString *, NSDictionary *> *files = groups[parent];
+            if (!files) {
+                files = [NSMutableDictionary dictionary];
+                groups[parent] = files;
+            }
+            files[leaf] = @{@"blob": blob,
+                            @"group": GroupStemForDestination(destination),
+                            @"optional": @(gzOptional)};
         }
-        NSMutableDictionary<NSString *, NSDictionary *> *files = groups[parent];
-        if (!files) {
-            files = [NSMutableDictionary dictionary];
-            groups[parent] = files;
-        }
-        files[leaf] = @{@"blob": blob, @"group": GroupStemForDestination(dst)};
     }
 
     for (NSString *targetDirectory in groups) {
@@ -534,6 +604,7 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
                 NSDictionary *file = files[leaf];
                 NSData *blob = file[@"blob"];
                 NSString *group = file[@"group"];
+                BOOL optional = [file[@"optional"] boolValue];
                 NSString *remote = [candidate stringByAppendingPathComponent:leaf];
                 if (OriginalMeta(remote)) {
                     writeFiles[leaf] = blob;
@@ -563,16 +634,20 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
                                   [candidate isEqualToString:bundleTargetDirectory] && packageHadGz);
                 if (mustExist) {
                     NSString *reason = readError.localizedFailureReason ?: readError.localizedDescription;
-                    [ContainerAccess note:[NSString stringWithFormat:@"original:missing %@ (%@)",
+                    [ContainerAccess note:[NSString stringWithFormat:@"original:%@ %@ (%@)",
+                                           optional ? @"optional-missing" : @"missing",
                                            remote, reason ?: @"e panjohur"]];
+                    if (optional) continue;
                     backupMissing = YES;
                     break;
                 }
                 // Never create a fresh target through this path: the pairing
                 // tunnel cannot delete it again, so it could never be restored.
                 NSString *reason = readError.localizedFailureReason ?: readError.localizedDescription;
-                [ContainerAccess note:[NSString stringWithFormat:@"original:not-found %@ (%@)",
+                [ContainerAccess note:[NSString stringWithFormat:@"original:%@ %@ (%@)",
+                                       optional ? @"optional-missing" : @"not-found",
                                        remote, reason ?: @"e panjohur"]];
+                if (optional) continue;
                 candidateSkipped = YES;
                 break;
             }
