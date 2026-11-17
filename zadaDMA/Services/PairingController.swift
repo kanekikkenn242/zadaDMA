@@ -140,10 +140,12 @@ final class PairingController: ObservableObject {
                 self.currentPin = pin
                 self.pairingStatus = "PIN \(pin) — shkruaje në Settings."
                 print("[Pairing] PIN \(pin)")
+#if compiler(>=6.2)
                 if #available(iOS 26.0, *), let task = self.continuedTask as? BGContinuedProcessingTask {
                     task.updateTitle("Kodi \(pin)", subtitle: "Shkruaje në Settings për t'u çiftuar me zadaDMA")
                     task.progress.completedUnitCount = 1
                 }
+#endif
                 if UIApplication.shared.applicationState != .active {
                     self.notifyPin(pin)
                 }
@@ -197,9 +199,11 @@ final class PairingController: ObservableObject {
 
     /// Called from the app entry point so BGTaskScheduler has the handler before launch ends.
     func prepareBackgroundTask() {
+#if compiler(>=6.2)
         if #available(iOS 26.0, *) {
             _ = registerContinuedProcessingIfNeeded()
         }
+#endif
     }
 
     private func beginBackgroundExecution() {
@@ -207,18 +211,24 @@ final class PairingController: ObservableObject {
         graceTask = UIApplication.shared.beginBackgroundTask(withName: "zadaDMA pairing") { [weak self] in
             DispatchQueue.main.async { self?.backgroundExpired() }
         }
+#if compiler(>=6.2)
         if #available(iOS 26.0, *) {
             submitContinuedProcessing()
         } else {
             backgroundLimited = true
         }
+#else
+        backgroundLimited = true
+#endif
     }
 
     private func endBackgroundExecution(success: Bool) {
+#if compiler(>=6.2)
         if #available(iOS 26.0, *), let task = continuedTask as? BGContinuedProcessingTask {
             task.progress.completedUnitCount = task.progress.totalUnitCount
             task.setTaskCompleted(success: success)
         }
+#endif
         continuedTask = nil
         if graceTask != .invalid {
             UIApplication.shared.endBackgroundTask(graceTask)
@@ -241,6 +251,7 @@ final class PairingController: ObservableObject {
         return String(wildcard.dropLast()) + "session"
     }
 
+#if compiler(>=6.2)
     @available(iOS 26.0, *)
     private func registerContinuedProcessingIfNeeded() -> String? {
         guard let identifier = continuedTaskIdentifier else {
@@ -305,6 +316,7 @@ final class PairingController: ObservableObject {
         }
         print("[Pairing] BG continued-processing running")
     }
+#endif
 
     // MARK: - Notifications
 
