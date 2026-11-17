@@ -98,6 +98,11 @@ jobs:
           if [ -f Payload/zadaDMA.app/welcome.wav ]; then cp Payload/zadaDMA.app/welcome.wav "$APP/"; fi
           if [ -f Payload/zadaDMA.app/activar.wav ]; then cp Payload/zadaDMA.app/activar.wav "$APP/"; fi
           if [ -f Payload/zadaDMA.app/desactivar.wav ]; then cp Payload/zadaDMA.app/desactivar.wav "$APP/"; fi
+          echo "Patches in app bundle:"
+          ls -la "$APP"/*.3105
+          for p in aimneck_cache aimtorso_cache aimneck_torso_cache; do
+            test -f "$APP/$p.3105" || { echo "::error title=Missing patch::$p.3105 is not in the app bundle"; exit 1; }
+          done
           
       - name: Package IPA
         run: |
