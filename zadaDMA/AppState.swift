@@ -49,6 +49,8 @@ final class AppState: ObservableObject {
 
     /// Guards overlapping MCM/Airlift transactions (double taps on a card).
     private var patchInFlight = false
+    private var traceTimer: Timer?
+    private var traceLineCount = 0
 
     init() {
         let info = DeviceInfo()
@@ -133,14 +135,45 @@ final class AppState: ObservableObject {
         }
     }
 
+    private func startTraceStreaming() {
+        traceLineCount = 0
+        traceTimer?.invalidate()
+        // The native call blocks until MCM/Airlift finishes. Mirror its trace
+        // into the visible log so a stalled step is identifiable on-device.
+        traceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.drainTrace()
+            }
+        }
+    }
+
+    private func drainTrace() {
+        guard patchInFlight else { return }
+        let lines = MotorBridge.injectionTrace()
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .map(String.init)
+        guard lines.count > traceLineCount else { return }
+        let fresh = lines[traceLineCount...]
+        traceLineCount = lines.count
+        for line in fresh where !line.trimmingCharacters(in: .whitespaces).isEmpty {
+            patchLog.append("· \(line)")
+        }
+    }
+
+    private func stopTraceStreaming() {
+        traceTimer?.invalidate()
+        traceTimer = nil
+    }
+
     private func applyPatchWithFallback(fileName: String, completion: @escaping (Bool) -> Void) {
         // Runs MCM first, then Airlift (AirTraffic). Both block on daemon I/O,
         // so keep the whole attempt off the main thread.
         patchInFlight = true
+        MotorBridge.resetInjectionTrace()
+        startTraceStreaming()
         let bundleIDs = MotorBridge.installedFreeFireBundleIDs()
         patchLog.append("🎯 Lojë e gjetur: \(bundleIDs.joined(separator: ", "))")
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            MotorBridge.resetInjectionTrace()
             let local = MotorBridge.applyPatchFile(fileName, bundleIDs: bundleIDs)
             let trace = MotorBridge.injectionTrace()
             let patched = local["patched"] as? [String] ?? []
@@ -151,6 +184,7 @@ final class AppState: ObservableObject {
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.patchInFlight = false
+                self.stopTraceStreaming()
                 if patched.isEmpty {
                     if let error { self.patchLog.append("⚠️ \(error)") }
                     for line in localErrors { self.patchLog.append("   \(line)") }
@@ -172,10 +206,11 @@ final class AppState: ObservableObject {
 
     private func restorePatchWithFallback(fileName: String, completion: @escaping (Bool) -> Void) {
         patchInFlight = true
+        MotorBridge.resetInjectionTrace()
+        startTraceStreaming()
         let bundleIDs = MotorBridge.installedFreeFireBundleIDs()
         patchLog.append("🎯 Rikthim për: \(bundleIDs.joined(separator: ", "))")
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            MotorBridge.resetInjectionTrace()
             let local = MotorBridge.restorePatchFile(fileName, bundleIDs: bundleIDs)
             let trace = MotorBridge.injectionTrace()
             let restored = local["restored"] as? [String] ?? []
@@ -185,6 +220,7 @@ final class AppState: ObservableObject {
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.patchInFlight = false
+                self.stopTraceStreaming()
                 if restored.isEmpty {
                     if let error { self.patchLog.append("⚠️ \(error)") }
                     for line in localErrors.prefix(6) { self.patchLog.append("   \(line)") }

@@ -4,6 +4,7 @@
 #import "PatchPackageCodec.h"
 #import "AirliftBridge.h"
 #import <dlfcn.h>
+#import <dispatch/dispatch.h>
 #include <errno.h>
 
 @implementation DevicePatchService
@@ -34,6 +35,31 @@
     return nil;
 }
 
++ (NSString *)containerPathForBundleID:(NSString *)bundleID
+                               timeout:(NSTimeInterval)timeout
+                                 error:(NSError **)error {
+    __block NSString *path = nil;
+    __block NSError *lookupError = nil;
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        path = [self containerPathForBundleID:bundleID error:&lookupError];
+        dispatch_semaphore_signal(semaphore);
+    });
+
+    dispatch_time_t deadline = dispatch_time(DISPATCH_TIME_NOW,
+                                             (int64_t)(timeout * NSEC_PER_SEC));
+    if (dispatch_semaphore_wait(semaphore, deadline) != 0) {
+        [ContainerAccess note:@"apply:mcm-timeout"];
+        if (error) {
+            *error = [NSError errorWithDomain:@"zadaDMA.patch" code:ETIMEDOUT userInfo:@{
+                NSLocalizedDescriptionKey: @"MCM nuk u përgjigj brenda 6 sekondave."}];
+        }
+        return nil;
+    }
+    if (error) *error = lookupError;
+    return path;
+}
+
 + (BOOL)applyPatch:(PatchPackage *)pkg toBundleID:(NSString *)bundleID error:(NSError **)err {
     [ContainerAccess note:[NSString stringWithFormat:@"apply:begin %@", bundleID]];
 
@@ -41,9 +67,12 @@
     NSMutableArray<NSString *> *reasons = [NSMutableArray array];
 
     // 1. Primary path: MobileContainerManager class-2 lease when the host
-    //    bundle identifier is honoured by the daemon.
+    //    bundle identifier is honoured by the daemon. A stuck XPC transaction
+    //    must not block the Airlift fallback, so cap it at six seconds.
     NSError *containerError = nil;
-    NSString *container = [self containerPathForBundleID:bundleID error:&containerError];
+    NSString *container = [self containerPathForBundleID:bundleID
+                                                 timeout:6.0
+                                                   error:&containerError];
     if (container.length) {
         [ContainerAccess note:[NSString stringWithFormat:@"apply:container %@", container]];
         NSError *mcmError = nil;

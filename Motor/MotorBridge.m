@@ -166,16 +166,19 @@
 }
 
 + (NSArray<NSString *> *)installedFreeFireBundleIDs {
-    NSArray<NSString *> *all = @[@"com.dts.freefireth", @"com.dts.freefiremax"];
     NSArray<NSString *> *installed = [self appContainers];
-    if (installed.count == 0) return all;
-
     NSSet<NSString *> *present = [NSSet setWithArray:installed];
+
     // The regular game is the target whenever it exists. A leftover Max
     // container must never hide the copy the player actually launched.
     if ([present containsObject:@"com.dts.freefireth"]) return @[@"com.dts.freefireth"];
     if ([present containsObject:@"com.dts.freefiremax"]) return @[@"com.dts.freefiremax"];
-    return all;
+
+    // MCM and LaunchServices can both be empty inside the sandbox. Do not
+    // return both IDs: the second lookup (often the absent Max) blocks the
+    // whole apply for minutes. The installed build here is the regular game.
+    [ContainerAccess note:@"mb:detect-empty"];
+    return @[@"com.dts.freefireth"];
 }
 
 + (BOOL)applyPatch:(NSString *)patchName {
