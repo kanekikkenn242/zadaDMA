@@ -13,5 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface PatchTransaction : NSObject
 + (BOOL)applyPackage:(PatchPackage *)pkg container:(NSString *)containerPath bundleID:(NSString *)bundleID error:(NSError **)err;
 + (BOOL)restoreLedger:(PatchLedgerEntry *)ledger error:(NSError **)err;
++ (NSArray<NSString *> *)lastResolvedTargets;
++ (void)resetResolvedTargets;
 @end
 NS_ASSUME_NONNULL_END

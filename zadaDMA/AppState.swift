@@ -56,6 +56,11 @@ final class AppState: ObservableObject {
 
     func toggleFeature(_ name: String, isOn: Bool, patchFile: String? = nil) {
         if isOn {
+            if let file = patchFile,
+               Bundle.main.path(forResource: file, ofType: "3105") == nil {
+                patchLog.append("⚠️ \(name): patch-i nuk është në këtë build.")
+                return
+            }
             SoundManager.shared.play(sound: "activar")
             patchLog.append("✅ \(name) u aktivizua.")
             if let file = patchFile { applyPatchWithFallback(fileName: file) }
@@ -84,6 +89,9 @@ final class AppState: ObservableObject {
         }
         if !patched.isEmpty {
             patchLog.append("✅ \(fileName) u injektua lokalisht: \(patched.joined(separator: ", "))")
+            if let paths = local["paths"] as? [String], let first = paths.first {
+                patchLog.append("   \(first)")
+            }
             return
         }
         patchLog.append("⚠️ MCM dështoi. Duke provuar tunelin RPPairing…")

@@ -1,5 +1,6 @@
 #import "MotorBridge.h"
 #import "ContainerAccess.h"
+#import "PatchTransaction.h"
 #import "SandboxEscape.h"
 #import <dlfcn.h>
 
@@ -52,6 +53,7 @@
 
     NSMutableArray<NSString *> *patched = [NSMutableArray array];
     NSMutableArray<NSString *> *diagnostics = [NSMutableArray array];
+    [PatchTransaction resetResolvedTargets];
 
     for (NSString *bundleID in bundleIDs) {
         NSError *patchError = nil;
@@ -73,7 +75,8 @@
                              [bundleIDs componentsJoinedByString:@", "]];
         return @{@"patched": @[], @"errors": diagnostics, @"error": summary};
     }
-    return @{@"patched": patched, @"errors": diagnostics};
+    return @{@"patched": patched, @"errors": diagnostics,
+             @"paths": [PatchTransaction lastResolvedTargets] ?: @[]};
 }
 
 + (NSArray<NSString *> *)appContainers {

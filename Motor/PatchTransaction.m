@@ -85,7 +85,15 @@ static BOOL EnoughSpace(NSString *dir, uint64_t need, NSError **err) {
 
 @implementation PatchLedgerEntry @end
 
+static NSMutableArray<NSString *> *gLastResolvedTargets;
+
 @implementation PatchTransaction
++ (NSArray<NSString *> *)lastResolvedTargets {
+    return gLastResolvedTargets ? [gLastResolvedTargets copy] : @[];
+}
++ (void)resetResolvedTargets {
+    gLastResolvedTargets = [NSMutableArray array];
+}
 + (NSString *)ledgerPath {
     NSArray *p=NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory,NSUserDomainMask,YES);
     NSString *dir=[p.firstObject stringByAppendingPathComponent:@"ThreeOneOSFive"];
@@ -119,6 +127,7 @@ static BOOL EnoughSpace(NSString *dir, uint64_t need, NSError **err) {
     
     uint64_t total=0; 
     NSMutableArray<NSDictionary*> *plan=[NSMutableArray array];
+    if(!gLastResolvedTargets) gLastResolvedTargets=[NSMutableArray array];
     for(NSDictionary *r in pkg.rules){
         NSString *src=r[@"src"], *dst=r[@"dst"];
         if(!src||!dst){ if(err)*err=[NSError errorWithDomain:@"patch" code:EINVAL userInfo:nil]; return NO; }
@@ -164,6 +173,7 @@ static BOOL EnoughSpace(NSString *dir, uint64_t need, NSError **err) {
             [self rollback:entries]; return NO;
         }
         [entries addObject:@{@"dst":dst,@"backup":backup?:[NSNull null],@"sha256":dig,@"ok":@YES}];
+        [gLastResolvedTargets addObject:dst];
     }
     ledger.entries=entries; [self appendLedger:ledger]; return YES;
 }
