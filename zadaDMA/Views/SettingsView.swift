@@ -51,6 +51,11 @@ struct SettingsView: View {
                             Text("Hap Settings → Privacy & Security → Developer Mode → Pair with \"zadaDMA\" dhe shkruaj PIN-in.")
                                 .font(.caption)
                                 .foregroundColor(.gray)
+                            if pairing.backgroundLimited {
+                                Text("Kujdes: pa background task, ke ~30s para se iOS ta ndalojë app-in. Shko direkt në Settings.")
+                                    .font(.caption2)
+                                    .foregroundColor(.orange)
+                            }
                             Button("Stop Pairing") {
                                 stopPairing()
                             }

@@ -92,9 +92,15 @@ struct HomeView: View {
                             .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.appOrange.opacity(0.5), lineWidth: 1))
                         }
                         
-                        Text("1) Start Pairing.  2) Settings → Privacy & Security → Developer Mode → Pair with \"zadaDMA\".  3) Kthehu shpejt këtu për PIN-in, pastaj në Settings për ta shkruar. LocalDevVPN OFF.")
+                        Text("1) Start Pairing dhe lejo Local Network.  2) Settings → Privacy & Security → Developer Mode → Pair with \"zadaDMA\".  3) PIN-i shfaqet në notification/banner ose kthehu shpejt në app. VPN OFF.")
                             .font(.system(size: 10))
                             .foregroundColor(.gray)
+
+                        if pairing.backgroundLimited && pairing.isPairing {
+                            Text("Kujdes: iOS mund ta ndalojë app-in pas ~30s në background. Shko direkt në Settings.")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(.orange)
+                        }
 
                         HStack(spacing: 6) {
                             Image(systemName: pairing.hasPairingFile ? "checkmark.circle.fill" : "info.circle")

@@ -2,19 +2,26 @@
 #import "zdma_pairing.h"
 
 #import <arpa/inet.h>
+#import <dns_sd.h>
 #import <netinet/in.h>
 
-static NSData *ZDMATXTData(NSDictionary<NSString *, NSString *> *values) {
-    NSMutableData *data = [NSMutableData data];
-    [values enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSString *value, BOOL *stop) {
-        NSString *entry = [NSString stringWithFormat:@"%@=%@", key, value];
-        NSData *utf8 = [entry dataUsingEncoding:NSUTF8StringEncoding];
-        if (utf8.length == 0 || utf8.length > 255) { return; }
-        uint8_t length = (uint8_t)utf8.length;
-        [data appendBytes:&length length:1];
-        [data appendData:utf8];
-    }];
-    return data;
+static NSString *ZDMADNSServiceErrorText(DNSServiceErrorType error) {
+    switch (error) {
+        case kDNSServiceErr_NoError: return @"OK";
+        case kDNSServiceErr_Unknown: return @"gabim i panjohur";
+        case kDNSServiceErr_NoAuth: return @"pa autorizim";
+        case kDNSServiceErr_NameConflict: return @"emri është në përdorim";
+        case kDNSServiceErr_BadParam: return @"parametër i pavlefshëm";
+        case kDNSServiceErr_BadReference: return @"referencë e pavlefshme";
+        case kDNSServiceErr_Unsupported: return @"i pambështetur";
+        case kDNSServiceErr_NotInitialized: return @"mDNS nuk u inicializua";
+        case kDNSServiceErr_AlreadyRegistered: return @"tashmë i regjistruar";
+        case kDNSServiceErr_BadInterfaceIndex: return @"interface i pavlefshëm";
+        case kDNSServiceErr_ServiceNotRunning: return @"mDNS service nuk punon";
+        case kDNSServiceErr_PolicyDenied: return @"Local Network permission u refuzua";
+        case kDNSServiceErr_Timeout: return @"timeout";
+        default: return @"gabim Bonjour";
+    }
 }
 
 static NSDictionary<NSString *, NSString *> *ZDMAParseTXT(NSData *data) {
@@ -38,10 +45,21 @@ static NSDictionary<NSString *, NSString *> *ZDMAParseTXT(NSData *data) {
     return values;
 }
 
-@interface IdeviceBridge () <NSNetServiceDelegate, NSNetServiceBrowserDelegate>
-@property (nonatomic, strong) NSNetService *hostService;
-@property (nonatomic, strong) NSNetServiceBrowser *browser;
-@property (nonatomic, strong) NSMutableArray<NSNetService *> *resolvingServices;
+@class IdeviceBridge;
+
+@interface ZDMAServiceCandidate : NSObject
+@property (nonatomic, weak) IdeviceBridge *bridge;
+@property (nonatomic, copy) NSString *hostname;
+@property (nonatomic, strong) NSDictionary<NSString *, NSString *> *txt;
+@property (nonatomic, assign) uint16_t port;
+@property (nonatomic, assign) DNSServiceRef resolveRef;
+@property (nonatomic, assign) DNSServiceRef addressRef;
+@end
+
+@interface IdeviceBridge ()
+@property (nonatomic, assign) DNSServiceRef hostRegistration;
+@property (nonatomic, assign) DNSServiceRef browseRegistration;
+@property (nonatomic, strong) NSMutableArray<ZDMAServiceCandidate *> *candidates;
 @property (nonatomic, strong) NSTimer *browseTimer;
 @property (nonatomic, strong) NSTimer *fallbackTimer;
 
@@ -61,7 +79,196 @@ static NSDictionary<NSString *, NSString *> *ZDMAParseTXT(NSData *data) {
 
 @property (nonatomic, strong) dispatch_queue_t hostQueue;
 @property (nonatomic, strong) dispatch_queue_t ioQueue;
+
+- (void)stopHostRegistration;
+- (void)handleHostRegistrationError:(DNSServiceErrorType)error;
+- (void)handleResolvedCandidate:(NSDictionary *)candidate;
+- (void)finishWrite:(BOOL)success message:(NSString *)message;
 @end
+
+static void ZDMABrowseReply(DNSServiceRef sdRef,
+                            DNSServiceFlags flags,
+                            uint32_t interfaceIndex,
+                            DNSServiceErrorType errorCode,
+                            const char *serviceName,
+                            const char *regtype,
+                            const char *replyDomain,
+                            void *context);
+
+static void ZDMAResolveReply(DNSServiceRef sdRef,
+                             DNSServiceFlags flags,
+                             uint32_t interfaceIndex,
+                             DNSServiceErrorType errorCode,
+                             const char *fullname,
+                             const char *hosttarget,
+                             uint16_t port,
+                             uint16_t txtLen,
+                             const unsigned char *txtRecord,
+                             void *context);
+
+static void ZDMAAddrInfoReply(DNSServiceRef sdRef,
+                              DNSServiceFlags flags,
+                              uint32_t interfaceIndex,
+                              DNSServiceErrorType errorCode,
+                              const char *hostname,
+                              const struct sockaddr *address,
+                              uint32_t ttl,
+                              void *context);
+
+static void ZDMAHostRegisterReply(DNSServiceRef sdRef,
+                                  DNSServiceFlags flags,
+                                  DNSServiceErrorType errorCode,
+                                  const char *name,
+                                  const char *regtype,
+                                  const char *domain,
+                                  void *context) {
+    (void)flags;
+    IdeviceBridge *bridge = (__bridge IdeviceBridge *)context;
+    if (errorCode == kDNSServiceErr_NoError) {
+        NSLog(@"[IdeviceBridge] pairable host registered: %s.%s%s",
+              name ?: "", regtype ?: "", domain ?: "");
+        return;
+    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (!bridge.hostRunning || bridge.hostRegistration != sdRef) { return; }
+        [bridge handleHostRegistrationError:errorCode];
+    });
+}
+
+static void ZDMABrowseReply(DNSServiceRef sdRef,
+                            DNSServiceFlags flags,
+                            uint32_t interfaceIndex,
+                            DNSServiceErrorType errorCode,
+                            const char *serviceName,
+                            const char *regtype,
+                            const char *replyDomain,
+                            void *context) {
+    (void)sdRef;
+    IdeviceBridge *bridge = (__bridge IdeviceBridge *)context;
+    if (errorCode != kDNSServiceErr_NoError) {
+        [bridge finishWrite:NO
+                    message:[NSString stringWithFormat:
+                        @"Bonjour browse dështoi (%d: %@). Kontrollo Local Network permission.",
+                        (int)errorCode, ZDMADNSServiceErrorText(errorCode)]];
+        return;
+    }
+    if (!(flags & kDNSServiceFlagsAdd)) { return; }
+    if (!bridge.writeCompletion || !serviceName || !regtype) { return; }
+
+    ZDMAServiceCandidate *candidate = [[ZDMAServiceCandidate alloc] init];
+    candidate.bridge = bridge;
+    DNSServiceRef resolver = NULL;
+    DNSServiceErrorType resolveError = DNSServiceResolve(&resolver,
+                                                         0,
+                                                         interfaceIndex,
+                                                         serviceName,
+                                                         regtype,
+                                                         replyDomain,
+                                                         ZDMAResolveReply,
+                                                         (__bridge void *)candidate);
+    if (resolveError != kDNSServiceErr_NoError || resolver == NULL) {
+        NSLog(@"[IdeviceBridge] resolve setup failed: %d", (int)resolveError);
+        return;
+    }
+    candidate.resolveRef = resolver;
+    [bridge.candidates addObject:candidate];
+    DNSServiceSetDispatchQueue(resolver, dispatch_get_main_queue());
+    NSLog(@"[IdeviceBridge] resolving %s", serviceName);
+}
+
+static void ZDMAResolveReply(DNSServiceRef sdRef,
+                             DNSServiceFlags flags,
+                             uint32_t interfaceIndex,
+                             DNSServiceErrorType errorCode,
+                             const char *fullname,
+                             const char *hosttarget,
+                             uint16_t port,
+                             uint16_t txtLen,
+                             const unsigned char *txtRecord,
+                             void *context) {
+    (void)sdRef;
+    (void)flags;
+    (void)fullname;
+    ZDMAServiceCandidate *candidate = (__bridge ZDMAServiceCandidate *)context;
+    IdeviceBridge *bridge = candidate.bridge;
+    if (!bridge || ![bridge.candidates containsObject:candidate]) { return; }
+    if (candidate.resolveRef) {
+        DNSServiceRefDeallocate(candidate.resolveRef);
+        candidate.resolveRef = NULL;
+    }
+    if (errorCode != kDNSServiceErr_NoError || !hosttarget) {
+        NSLog(@"[IdeviceBridge] resolve failed: %d", (int)errorCode);
+        [bridge.candidates removeObject:candidate];
+        return;
+    }
+    candidate.hostname = [NSString stringWithUTF8String:hosttarget];
+    candidate.port = ntohs(port);
+    candidate.txt = ZDMAParseTXT(txtRecord
+                                 ? [NSData dataWithBytes:txtRecord length:txtLen]
+                                 : [NSData data]);
+    DNSServiceRef addrRef = NULL;
+    DNSServiceErrorType addrError = DNSServiceGetAddrInfo(&addrRef,
+                                                          0,
+                                                          interfaceIndex,
+                                                          kDNSServiceProtocol_IPv4,
+                                                          hosttarget,
+                                                          ZDMAAddrInfoReply,
+                                                          (__bridge void *)candidate);
+    if (addrError != kDNSServiceErr_NoError || addrRef == NULL) {
+        NSLog(@"[IdeviceBridge] getaddrinfo setup failed: %d", (int)addrError);
+        [bridge.candidates removeObject:candidate];
+        return;
+    }
+    candidate.addressRef = addrRef;
+    DNSServiceSetDispatchQueue(addrRef, dispatch_get_main_queue());
+}
+
+static void ZDMAAddrInfoReply(DNSServiceRef sdRef,
+                              DNSServiceFlags flags,
+                              uint32_t interfaceIndex,
+                              DNSServiceErrorType errorCode,
+                              const char *hostname,
+                              const struct sockaddr *address,
+                              uint32_t ttl,
+                              void *context) {
+    (void)sdRef;
+    (void)flags;
+    (void)interfaceIndex;
+    (void)hostname;
+    (void)ttl;
+    ZDMAServiceCandidate *candidate = (__bridge ZDMAServiceCandidate *)context;
+    IdeviceBridge *bridge = candidate.bridge;
+    if (!bridge || ![bridge.candidates containsObject:candidate]) { return; }
+    if (errorCode != kDNSServiceErr_NoError || address == NULL) {
+        if (errorCode != kDNSServiceErr_NoError) {
+            NSLog(@"[IdeviceBridge] addr info failed: %d", (int)errorCode);
+            if (candidate.addressRef) {
+                DNSServiceRefDeallocate(candidate.addressRef);
+                candidate.addressRef = NULL;
+            }
+            [bridge.candidates removeObject:candidate];
+        }
+        return;
+    }
+    if (address->sa_family != AF_INET) { return; }
+    const struct sockaddr_in *sin = (const struct sockaddr_in *)address;
+    char buffer[INET_ADDRSTRLEN] = {0};
+    if (!inet_ntop(AF_INET, &sin->sin_addr, buffer, sizeof(buffer))) { return; }
+    NSDictionary *resolved = @{
+        @"ip": [NSString stringWithUTF8String:buffer],
+        @"port": @(candidate.port),
+        @"identifier": candidate.txt[@"identifier"] ?: @"",
+        @"authTag": candidate.txt[@"authTag"] ?: @"",
+    };
+    NSLog(@"[IdeviceBridge] resolved %@ -> %@:%u txt=%@",
+          candidate.hostname, resolved[@"ip"], candidate.port, candidate.txt);
+    if (candidate.addressRef) {
+        DNSServiceRefDeallocate(candidate.addressRef);
+        candidate.addressRef = NULL;
+    }
+    [bridge.candidates removeObject:candidate];
+    [bridge handleResolvedCandidate:resolved];
+}
 
 @implementation IdeviceBridge
 
@@ -79,7 +286,7 @@ static NSDictionary<NSString *, NSString *> *ZDMAParseTXT(NSData *data) {
     if (self) {
         _hostQueue = dispatch_queue_create("com.zadaDMA.idevice.host", DISPATCH_QUEUE_SERIAL);
         _ioQueue = dispatch_queue_create("com.zadaDMA.idevice.io", DISPATCH_QUEUE_SERIAL);
-        _resolvingServices = [NSMutableArray array];
+        _candidates = [NSMutableArray array];
     }
     return self;
 }
@@ -131,13 +338,9 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
                              port:(uint16_t)port {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (!self.hostRunning) { return; }
-        [self.hostService stop];
-        self.hostService = [[NSNetService alloc] initWithDomain:@"local."
-                                                          type:@"_remotepairing-pairable-host._tcp."
-                                                          name:identifier
-                                                          port:(NSInteger)port];
-        self.hostService.delegate = self;
-        NSDictionary<NSString *, NSString *> *txt = @{
+        [self stopHostRegistration];
+
+        NSDictionary<NSString *, NSString *> *records = @{
             @"name": name,
             @"identifier": identifier,
             @"authTag": authTag,
@@ -146,15 +349,79 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
             @"ver": ver,
             @"minVer": minVer,
         };
-        if (![self.hostService setTXTRecordData:ZDMATXTData(txt)]) {
-            NSLog(@"[IdeviceBridge] setTXTRecordData failed");
+        TXTRecordRef txt;
+        TXTRecordCreate(&txt, 0, NULL);
+        for (NSString *key in records) {
+            NSString *value = records[key];
+            const char *keyBytes = key.UTF8String;
+            const char *valueBytes = value.UTF8String;
+            if (!keyBytes || !valueBytes) { continue; }
+            size_t valueLength = strlen(valueBytes);
+            if (valueLength > 255) { valueLength = 255; }
+            DNSServiceErrorType txtError = TXTRecordSetValue(&txt,
+                                                             keyBytes,
+                                                             (uint8_t)valueLength,
+                                                             valueBytes);
+            if (txtError != kDNSServiceErr_NoError) {
+                NSLog(@"[IdeviceBridge] TXTRecordSetValue %@ failed: %d", key, (int)txtError);
+            }
         }
-        [self.hostService scheduleInRunLoop:[NSRunLoop mainRunLoop]
-                                   forMode:NSRunLoopCommonModes];
-        [self.hostService publish];
-        NSLog(@"[IdeviceBridge] advertising pairable host %@ port %u", name, port);
+
+        DNSServiceRef ref = NULL;
+        DNSServiceErrorType error = DNSServiceRegister(&ref,
+                                                       0,
+                                                       kDNSServiceInterfaceIndexAny,
+                                                       identifier.UTF8String,
+                                                       "_remotepairing-pairable-host._tcp",
+                                                       NULL,
+                                                       NULL,
+                                                       htons(port),
+                                                       TXTRecordGetLength(&txt),
+                                                       TXTRecordGetBytesPtr(&txt),
+                                                       ZDMAHostRegisterReply,
+                                                       (__bridge void *)self);
+        TXTRecordDeallocate(&txt);
+
+        if (error != kDNSServiceErr_NoError || ref == NULL) {
+            if (ref) { DNSServiceRefDeallocate(ref); }
+            [self handleHostRegistrationError:error == kDNSServiceErr_NoError
+                                                  ? kDNSServiceErr_Unknown
+                                                  : error];
+            return;
+        }
+
+        self.hostRegistration = ref;
+        DNSServiceErrorType queueError = DNSServiceSetDispatchQueue(ref, dispatch_get_main_queue());
+        if (queueError != kDNSServiceErr_NoError) {
+            [self stopHostRegistration];
+            [self handleHostRegistrationError:queueError];
+            return;
+        }
+
+        NSLog(@"[IdeviceBridge] advertising pairable host %@ port %u (dns_sd)", name, port);
         if (self.readyBlock) { self.readyBlock(identifier, port); }
     });
+}
+
+- (void)handleHostRegistrationError:(DNSServiceErrorType)error {
+    if (!self.hostRunning) { return; }
+    NSLog(@"[IdeviceBridge] pairable host registration failed: %d (%@)",
+          (int)error, ZDMADNSServiceErrorText(error));
+    if (error == kDNSServiceErr_PolicyDenied) {
+        self.publishError = @"Local Network permission u refuzua. Shko Settings › Apps › zadaDMA › Local Network → ON, pastaj provo përsëri.";
+    } else {
+        self.publishError = [NSString stringWithFormat:
+            @"mDNS publish dështoi (%d: %@). Kontrollo që Wi-Fi është ON, VPN OFF dhe Local Network ON për zadaDMA.",
+            (int)error, ZDMADNSServiceErrorText(error)];
+    }
+    zdma_pairing_host_cancel();
+}
+
+- (void)stopHostRegistration {
+    if (self.hostRegistration) {
+        DNSServiceRefDeallocate(self.hostRegistration);
+        self.hostRegistration = NULL;
+    }
 }
 
 - (void)startPairableHostWithName:(NSString *)name
@@ -191,8 +458,7 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
             IdeviceBridge *strongSelf = weakSelf;
             if (!strongSelf) { return; }
             strongSelf.hostRunning = NO;
-            [strongSelf.hostService stop];
-            strongSelf.hostService = nil;
+            [strongSelf stopHostRegistration];
             void (^done)(BOOL, NSString *) = strongSelf.hostCompletion;
             NSString *publishError = strongSelf.publishError;
             strongSelf.hostCompletion = nil;
@@ -215,27 +481,8 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
 - (void)cancelPairableHost {
     zdma_pairing_host_cancel();
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self.hostService stop];
-        self.hostService = nil;
+        [self stopHostRegistration];
     });
-}
-
-#pragma mark - NSNetService delegate (pairable host)
-
-- (void)netServiceDidPublish:(NSNetService *)sender {
-    if (sender != self.hostService || !self.hostRunning) { return; }
-    NSLog(@"[IdeviceBridge] pairable host published: %@", sender.name);
-}
-
-- (void)netService:(NSNetService *)sender didNotPublish:(NSDictionary<NSString *, NSNumber *> *)errorDict {
-    if (sender != self.hostService || !self.hostRunning) { return; }
-    NSLog(@"[IdeviceBridge] pairable host publish failed: %@", errorDict);
-    NSNumber *code = errorDict[NSNetServicesErrorCode];
-    NSNumber *domain = errorDict[NSNetServicesErrorDomain];
-    self.publishError = [NSString stringWithFormat:
-        @"mDNS publish dështoi (code %@, domain %@). Kontrollo lejen Local Network dhe NSBonjourServices.",
-        code ?: @"?", domain ?: @"?"];
-    zdma_pairing_host_cancel();
 }
 
 #pragma mark - AFC write
@@ -274,11 +521,24 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
 
 - (void)startBrowsing {
     [self stopBrowsing];
-    self.browser = [[NSNetServiceBrowser alloc] init];
-    self.browser.delegate = self;
-    [self.browser scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
-    [self.browser searchForServicesOfType:@"_remotepairing._tcp." inDomain:@"local."];
-    NSLog(@"[IdeviceBridge] browsing _remotepairing._tcp");
+    DNSServiceRef ref = NULL;
+    DNSServiceErrorType error = DNSServiceBrowse(&ref,
+                                                 0,
+                                                 kDNSServiceInterfaceIndexAny,
+                                                 "_remotepairing._tcp",
+                                                 "local.",
+                                                 ZDMABrowseReply,
+                                                 (__bridge void *)self);
+    if (error != kDNSServiceErr_NoError || ref == NULL) {
+        [self finishWrite:NO
+                  message:[NSString stringWithFormat:
+                      @"Bonjour browse nuk nisi (%d: %@). Kontrollo Local Network permission.",
+                      (int)error, ZDMADNSServiceErrorText(error)]];
+        return;
+    }
+    self.browseRegistration = ref;
+    DNSServiceSetDispatchQueue(ref, dispatch_get_main_queue());
+    NSLog(@"[IdeviceBridge] browsing _remotepairing._tcp (dns_sd)");
 
     __weak typeof(self) weakSelf = self;
     self.browseTimer = [NSTimer scheduledTimerWithTimeInterval:12.0
@@ -296,65 +556,29 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
 }
 
 - (void)stopBrowsing {
-    [self.browser stop];
-    self.browser.delegate = nil;
-    self.browser = nil;
+    if (self.browseRegistration) {
+        DNSServiceRefDeallocate(self.browseRegistration);
+        self.browseRegistration = NULL;
+    }
+    for (ZDMAServiceCandidate *candidate in self.candidates) {
+        if (candidate.resolveRef) {
+            DNSServiceRefDeallocate(candidate.resolveRef);
+            candidate.resolveRef = NULL;
+        }
+        if (candidate.addressRef) {
+            DNSServiceRefDeallocate(candidate.addressRef);
+            candidate.addressRef = NULL;
+        }
+    }
+    [self.candidates removeAllObjects];
     [self.browseTimer invalidate];
     self.browseTimer = nil;
     [self.fallbackTimer invalidate];
     self.fallbackTimer = nil;
-    for (NSNetService *service in self.resolvingServices) {
-        service.delegate = nil;
-        [service stop];
-    }
-    [self.resolvingServices removeAllObjects];
 }
 
-- (void)netServiceBrowser:(NSNetServiceBrowser *)browser
-           didFindService:(NSNetService *)service
-               moreComing:(BOOL)moreComing {
-    NSLog(@"[IdeviceBridge] found %@", service.name);
-    service.delegate = self;
-    [service scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
-    [self.resolvingServices addObject:service];
-    [service resolveWithTimeout:5.0];
-}
-
-- (void)netServiceBrowser:(NSNetServiceBrowser *)browser
-         didNotSearch:(NSDictionary<NSString *, NSNumber *> *)errorDict {
-    NSLog(@"[IdeviceBridge] browse failed: %@", errorDict);
-    [self finishWrite:NO message:@"Bonjour browse dështoi. Kontrollo Local Network permission."];
-}
-
-- (void)netServiceDidResolveAddress:(NSNetService *)sender {
-    NSString *ip = nil;
-    uint16_t port = (uint16_t)sender.port;
-    for (NSData *address in sender.addresses) {
-        const struct sockaddr *sa = address.bytes;
-        if (!sa) { continue; }
-        if (sa->sa_family == AF_INET) {
-            const struct sockaddr_in *sin = (const struct sockaddr_in *)sa;
-            char buffer[INET_ADDRSTRLEN] = {0};
-            if (inet_ntop(AF_INET, &sin->sin_addr, buffer, sizeof(buffer))) {
-                ip = [NSString stringWithUTF8String:buffer];
-                if (ntohs(sin->sin_port) != 0) { port = ntohs(sin->sin_port); }
-                break;
-            }
-        }
-    }
-    if (!ip) {
-        NSLog(@"[IdeviceBridge] %@ has no IPv4 address", sender.name);
-        return;
-    }
-
-    NSDictionary<NSString *, NSString *> *txt = ZDMAParseTXT(sender.TXTRecordData ?: [NSData data]);
-    NSDictionary *candidate = @{
-        @"ip": ip,
-        @"port": @(port),
-        @"identifier": txt[@"identifier"] ?: @"",
-        @"authTag": txt[@"authTag"] ?: @"",
-    };
-    NSLog(@"[IdeviceBridge] resolved %@ -> %@:%u txt=%@", sender.name, ip, port, txt);
+- (void)handleResolvedCandidate:(NSDictionary *)candidate {
+    if (!self.writeCompletion) { return; }
 
     int match = 0;
     if (self.writePairingPath.length && [candidate[@"identifier"] length] && [candidate[@"authTag"] length]) {
@@ -378,10 +602,6 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
             [strongSelf performWriteWithCandidate:strongSelf.fallbackCandidate];
         }];
     }
-}
-
-- (void)netService:(NSNetService *)sender didNotResolve:(NSDictionary<NSString *, NSNumber *> *)errorDict {
-    NSLog(@"[IdeviceBridge] resolve failed %@: %@", sender.name, errorDict);
 }
 
 - (void)performWriteWithCandidate:(NSDictionary *)candidate {

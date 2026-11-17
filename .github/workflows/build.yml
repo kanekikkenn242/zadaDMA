@@ -49,6 +49,9 @@ jobs:
           echo "Checking $APP/Info.plist"
           /usr/libexec/PlistBuddy -c "Print :NSBonjourServices" "$APP/Info.plist"
           /usr/libexec/PlistBuddy -c "Print :NSLocalNetworkUsageDescription" "$APP/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :BGTaskSchedulerPermittedIdentifiers" "$APP/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :NSBonjourServices:0" "$APP/Info.plist" | grep -q "_remotepairing-pairable-host._tcp"
+          /usr/libexec/PlistBuddy -c "Print :BGTaskSchedulerPermittedIdentifiers:0" "$APP/Info.plist" | grep -q "\.pairing\."
             
       - name: Force Copy Patches and Sounds
         run: |
