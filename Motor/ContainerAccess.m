@@ -429,14 +429,11 @@ static ZDMAContainerLease *zdma_lease_for_bundle(NSString *bundleID, NSString **
     }
     if (token) free(token);
 
+    // 3105's MCMRetainedLease ignores a false activation result and lets the
+    // open()/write test decide: the MobileHouseArrest sandbox already permits
+    // some container paths, so the lease can still be useful without a token.
     if (!activated && handle < 0) {
-        gAPI.object_free(retained);
-        gAPI.query_free(query);
-        if (failure) *failure = tokenPresent
-            ? @"sandbox extension nuk u aktivizua"
-            : @"MCM object nuk përmban sandbox token";
-        zdma_trace(@"lease:no-extension");
-        return nil;
+        zdma_trace(tokenPresent ? @"lease:extension-failed" : @"lease:no-token");
     }
 
     zdma_trace(@"lease:opening");
@@ -444,7 +441,7 @@ static ZDMAContainerLease *zdma_lease_for_bundle(NSString *bundleID, NSString **
     if (fd < 0) {
         int savedErrno = errno;
         if (handle > 0 && gAPI.ext_release) gAPI.ext_release(handle);
-        if (retained && gAPI.object_free) gAPI.object_free(retained);
+        gAPI.object_free(retained);
         gAPI.query_free(query);
         if (failure) {
             *failure = [NSString stringWithFormat:@"container root open failed errno=%d (%s)",
@@ -454,7 +451,7 @@ static ZDMAContainerLease *zdma_lease_for_bundle(NSString *bundleID, NSString **
         return nil;
     }
     close(fd);
-    zdma_trace(@"lease:ok");
+    zdma_trace(activated || handle > 0 ? @"lease:ok" : @"lease:ok-no-extension");
 
     ZDMAContainerLease *lease = [ZDMAContainerLease new];
     lease.bundleID = bundleID;
