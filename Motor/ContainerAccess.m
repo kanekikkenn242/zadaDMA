@@ -359,7 +359,8 @@ static NSString *zdma_scan_filesystem(NSString *bundleID, NSMutableArray<NSStrin
         for (NSString *name in entries) {
             if (name.length == 0 || [name hasPrefix:@"."]) continue;
             NSString *dir = [root stringByAppendingPathComponent:name];
-            if (![seen addObject:dir]) continue;
+            if ([seen containsObject:dir]) continue;
+            [seen addObject:dir];
             checked++;
             NSString *metadata = [dir stringByAppendingPathComponent:
                                   @".com.apple.mobile_container_manager.metadata.plist"];
