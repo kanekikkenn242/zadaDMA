@@ -173,6 +173,75 @@ static BOOL EnoughSpace(NSString *dir, uint64_t need, NSError **err) {
 
 NSString *const PatchTransactionAirliftContainerKey = @"zadaDMA.airlift.container";
 
+// ---------------------------------------------------------------------------
+// Original-file store
+//
+// Airlift writes happen outside our sandbox, so the only way back to a clean
+// `cache_res` is to capture the exact on-device bytes before the first write
+// and keep them in our own container. Grouping is by destination stem
+// (`.../cache_res`), so neck, torso and combined packages share one backup and
+// a second apply never captures an already-modded file as "original".
+
+static NSString *GroupStemForDestination(NSString *dst) {
+    NSString *rel = dst;
+    while ([rel hasPrefix:@"/"]) rel = [rel substringFromIndex:1];
+    NSString *parent = [rel stringByDeletingLastPathComponent];
+    NSString *leaf = [rel lastPathComponent];
+    NSRange dot = [leaf rangeOfString:@"." options:NSBackwardsSearch];
+    if (dot.location != NSNotFound && dot.location > 0) leaf = [leaf substringToIndex:dot.location];
+    return parent.length ? [parent stringByAppendingPathComponent:leaf] : leaf;
+}
+
+static NSString *OriginalsDirectory(void) {
+    NSArray<NSString *> *paths = NSSearchPathForDirectoriesInDomains(
+        NSApplicationSupportDirectory, NSUserDomainMask, YES);
+    NSString *dir = [paths.firstObject stringByAppendingPathComponent:@"ThreeOneOSFive/originals"];
+    [[NSFileManager defaultManager] createDirectoryAtPath:dir
+                              withIntermediateDirectories:YES attributes:nil error:nil];
+    return dir;
+}
+
+static NSString *OriginalKeyForPath(NSString *path) {
+    NSData *data = [path dataUsingEncoding:NSUTF8StringEncoding];
+    return SHA256Hex(data);
+}
+
+static NSString *OriginalMetaPath(NSString *path) {
+    return [OriginalsDirectory() stringByAppendingPathComponent:
+            [OriginalKeyForPath(path) stringByAppendingPathExtension:@"json"]];
+}
+
+static NSString *OriginalBytesPath(NSString *path) {
+    return [OriginalsDirectory() stringByAppendingPathComponent:
+            [OriginalKeyForPath(path) stringByAppendingPathExtension:@"bin"]];
+}
+
+static NSDictionary *OriginalMeta(NSString *path) {
+    NSData *data = [NSData dataWithContentsOfFile:OriginalMetaPath(path)];
+    if (!data.length) return nil;
+    id obj = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+    return [obj isKindOfClass:[NSDictionary class]] ? obj : nil;
+}
+
+/// `bytes == nil` records that the destination did not exist before the patch.
+static BOOL SaveOriginalMeta(NSString *path, NSData *bytes, NSString *bundleID, NSString *group) {
+    NSMutableDictionary *meta = [NSMutableDictionary dictionary];
+    meta[@"path"] = path;
+    meta[@"bundleID"] = bundleID ?: @"";
+    meta[@"group"] = group ?: @"";
+    meta[@"existed"] = @(bytes.length > 0);
+    meta[@"size"] = @(bytes.length);
+    meta[@"sha256"] = bytes.length ? SHA256Hex(bytes) : @"";
+    meta[@"createdAt"] = @([[NSDate date] timeIntervalSince1970]);
+    if (bytes.length) {
+        if (![bytes writeToFile:OriginalBytesPath(path) options:NSDataWritingAtomic error:nil]) return NO;
+    }
+    NSData *json = [NSJSONSerialization dataWithJSONObject:meta options:0 error:nil];
+    if (!json) return NO;
+    return [json writeToFile:OriginalMetaPath(path) options:NSDataWritingAtomic error:nil];
+}
+
+
 @implementation PatchLedgerEntry @end
 
 static NSMutableArray<NSString *> *gLastResolvedTargets;
@@ -311,12 +380,13 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
 
     // Group by remote parent directory: al_exploit_write_dir writes a flat set
     // of files into one target directory, one AirTraffic sync per directory.
-    NSMutableDictionary<NSString *, NSMutableDictionary<NSString *, NSData *> *> *groups = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSString *, NSMutableDictionary<NSString *, NSDictionary *> *> *groups = [NSMutableDictionary dictionary];
     NSMutableArray<NSDictionary *> *entries = [NSMutableArray array];
     if (!gLastResolvedTargets) gLastResolvedTargets = [NSMutableArray array];
 
     NSData *fileinfo = nil;
     BOOL fileinfoAttempted = NO;
+    BOOL packageHadGz = NO;
 
     for (NSDictionary *r in pkg.rules) {
         NSString *src = r[@"src"], *dst = r[@"dst"];
@@ -325,6 +395,7 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
             return NO;
         }
         if ([dst containsString:@"{gz}"]) {
+            packageHadGz = YES;
             if (!fileinfoAttempted) {
                 fileinfoAttempted = YES;
                 fileinfo = LoadFileinfo(container, bundlePath);
@@ -373,21 +444,22 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
                                                userInfo:@{NSLocalizedDescriptionKey: @"empty target"}];
             return NO;
         }
-        NSMutableDictionary<NSString *, NSData *> *files = groups[parent];
+        NSMutableDictionary<NSString *, NSDictionary *> *files = groups[parent];
         if (!files) {
             files = [NSMutableDictionary dictionary];
             groups[parent] = files;
         }
-        files[leaf] = blob;
+        files[leaf] = @{@"blob": blob, @"group": GroupStemForDestination(dst)};
     }
 
     for (NSString *targetDirectory in groups) {
-        NSDictionary<NSString *, NSData *> *files = groups[targetDirectory];
+        NSDictionary<NSString *, NSDictionary *> *files = groups[targetDirectory];
 
         // Free Fire keeps its hot-updated asset tree under <container>/Documents,
         // while the reference app resolves `.3105` paths from the data-container
         // root. Write to both so the game sees the patch on either layout.
         NSMutableArray<NSString *> *candidates = [NSMutableArray array];
+        NSString *bundleTargetDirectory = nil;
         NSString *rel = targetDirectory;
         if ([rel hasPrefix:container]) rel = [rel substringFromIndex:container.length];
         while ([rel hasPrefix:@"/"]) rel = [rel substringFromIndex:1];
@@ -395,7 +467,8 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
         // Patch the shipped app-bundle copy first: the loader reads it through
         // streamingAssetsPath without checking any hot-update manifest.
         if (bundlePath.length) {
-            [candidates addObject:[bundlePath stringByAppendingPathComponent:rel]];
+            bundleTargetDirectory = [bundlePath stringByAppendingPathComponent:rel];
+            [candidates addObject:bundleTargetDirectory];
         }
 
         // Hot-update overrides. Free Fire stores downloaded resources under
@@ -432,8 +505,71 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
         NSMutableArray<NSString *> *written = [NSMutableArray array];
         for (NSString *candidate in candidates) {
             [ContainerAccess note:[NSString stringWithFormat:@"tx:airlift %@", candidate]];
+
+            // Capture the exact on-device original before the first write into
+            // this path. Without it switching the card off could not remove the
+            // mod, which is what the anti-cheat scans for.
+            NSMutableDictionary<NSString *, NSData *> *writeFiles = [NSMutableDictionary dictionary];
+            BOOL backupMissing = NO;
+            BOOL candidateSkipped = NO;
+            for (NSString *leaf in files) {
+                NSDictionary *file = files[leaf];
+                NSData *blob = file[@"blob"];
+                NSString *group = file[@"group"];
+                NSString *remote = [candidate stringByAppendingPathComponent:leaf];
+                if (OriginalMeta(remote)) {
+                    writeFiles[leaf] = blob;
+                    continue;
+                }
+                NSError *readError = nil;
+                NSData *original = [AirliftBridge readFileAtPath:remote
+                                                             log:^(NSString *line) {
+                    [ContainerAccess note:[NSString stringWithFormat:@"original: %@", line]];
+                }
+                                                           error:&readError];
+                if (original.length) {
+                    if (!SaveOriginalMeta(remote, original, bundleID, group)) {
+                        [ContainerAccess note:@"original:save-failed"];
+                        backupMissing = YES;
+                        break;
+                    }
+                    [ContainerAccess note:[NSString stringWithFormat:@"original:saved %@ (%lu B)",
+                                           remote, (unsigned long)original.length]];
+                    writeFiles[leaf] = blob;
+                    continue;
+                }
+                // A `{gz}` target in the app bundle is guaranteed to exist
+                // (fileinfo resolved it); a read failure there means we cannot
+                // recover it, so skip the write instead of burning the original.
+                BOOL mustExist = (bundleTargetDirectory.length &&
+                                  [candidate isEqualToString:bundleTargetDirectory] && packageHadGz);
+                if (mustExist) {
+                    NSString *reason = readError.localizedFailureReason ?: readError.localizedDescription;
+                    [ContainerAccess note:[NSString stringWithFormat:@"original:missing %@ (%@)",
+                                           remote, reason ?: @"e panjohur"]];
+                    backupMissing = YES;
+                    break;
+                }
+                // Never create a fresh target through this path: the pairing
+                // tunnel cannot delete it again, so it could never be restored.
+                NSString *reason = readError.localizedFailureReason ?: readError.localizedDescription;
+                [ContainerAccess note:[NSString stringWithFormat:@"original:not-found %@ (%@)",
+                                       remote, reason ?: @"e panjohur"]];
+                candidateSkipped = YES;
+                break;
+            }
+            if (backupMissing || candidateSkipped || writeFiles.count == 0) {
+                [ContainerAccess note:@"tx:airlift-skip-no-original"];
+                NSError *backupError = [NSError errorWithDomain:@"patch" code:EIO userInfo:@{
+                    NSLocalizedDescriptionKey: @"originali nuk u ruajt; nuk u shkrua asgjë"}];
+                lastError = backupError;
+                [diagnostics addObject:[NSString stringWithFormat:@"Airlift %@: %@",
+                                        candidate, backupError.localizedDescription]];
+                continue;
+            }
+
             NSError *writeError = nil;
-            BOOL ok = [AirliftBridge writeFiles:files
+            BOOL ok = [AirliftBridge writeFiles:writeFiles
                               toTargetDirectory:candidate
                                             log:^(NSString *line) {
                 [ContainerAccess note:[NSString stringWithFormat:@"airlift: %@", line]];
@@ -469,8 +605,9 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
             for (NSString *leaf in files) {
                 NSString *full = [dir stringByAppendingPathComponent:leaf];
                 [gLastResolvedTargets addObject:full];
-                [entries addObject:@{@"dst": full, @"backup": [NSNull null],
-                                     @"sha256": SHA256Hex(files[leaf]), @"ok": @YES,
+                NSString *saved = OriginalMeta(full) ? OriginalBytesPath(full) : nil;
+                [entries addObject:@{@"dst": full, @"backup": saved ?: [NSNull null],
+                                     @"sha256": SHA256Hex(files[leaf][@"blob"]), @"ok": @YES,
                                      @"via": @"airlift"}];
             }
         }
@@ -486,6 +623,121 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
     [self appendLedger:ledger];
     return YES;
 }
+
++ (NSArray<NSString *> *)groupsForPackage:(PatchPackage *)pkg {
+    NSMutableOrderedSet<NSString *> *groups = [NSMutableOrderedSet orderedSet];
+    for (NSDictionary *rule in pkg.rules) {
+        NSString *dst = rule[@"dst"];
+        if (![dst isKindOfClass:[NSString class]] || !dst.length) continue;
+        NSString *group = GroupStemForDestination(dst);
+        if (group.length) [groups addObject:group];
+    }
+    return groups.array;
+}
+
++ (BOOL)restoreGroup:(NSString *)group bundleID:(NSString *)bundleID error:(NSError **)err {
+    if (!group.length) {
+        if (err) *err = [NSError errorWithDomain:@"patch" code:EINVAL
+                                           userInfo:@{NSLocalizedDescriptionKey: @"grup i pavlefshëm"}];
+        return NO;
+    }
+
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *dir = OriginalsDirectory();
+    NSArray<NSString *> *names = [fm contentsOfDirectoryAtPath:dir error:nil] ?: @[];
+
+    NSMutableDictionary<NSString *, NSMutableDictionary<NSString *, NSData *> *> *plan =
+        [NSMutableDictionary dictionary];
+    NSUInteger already = 0, missing = 0, absent = 0;
+
+    for (NSString *name in names) {
+        if (![name hasSuffix:@".json"]) continue;
+        NSData *data = [NSData dataWithContentsOfFile:[dir stringByAppendingPathComponent:name]];
+        if (!data.length) continue;
+        id obj = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+        if (![obj isKindOfClass:[NSDictionary class]]) continue;
+        NSDictionary *meta = obj;
+        if (![meta[@"group"] isEqual:group]) continue;
+        if (bundleID.length && ![meta[@"bundleID"] isEqual:bundleID]) continue;
+
+        NSString *path = meta[@"path"];
+        if (![path isKindOfClass:[NSString class]] || !path.length) continue;
+        if (![meta[@"existed"] boolValue]) {
+            absent++;
+            [ContainerAccess note:[NSString stringWithFormat:@"restore:absent %@", path]];
+            continue;
+        }
+        NSData *original = [NSData dataWithContentsOfFile:OriginalBytesPath(path)];
+        if (!original.length || ![SHA256Hex(original) isEqualToString:meta[@"sha256"]]) {
+            [ContainerAccess note:[NSString stringWithFormat:@"restore:backup-corrupt %@", path]];
+            continue;
+        }
+        NSError *readError = nil;
+        NSData *current = [AirliftBridge readFileAtPath:path
+                                                    log:^(NSString *line) {
+            [ContainerAccess note:[NSString stringWithFormat:@"restore-read: %@", line]];
+        }
+                                                  error:&readError];
+        if (!current.length) {
+            missing++;
+            [ContainerAccess note:[NSString stringWithFormat:@"restore:missing %@", path]];
+            continue;
+        }
+        if ([SHA256Hex(current) isEqualToString:meta[@"sha256"]]) {
+            already++;
+            [ContainerAccess note:[NSString stringWithFormat:@"restore:already-original %@", path]];
+            continue;
+        }
+
+        NSString *parent = [path stringByDeletingLastPathComponent];
+        NSString *leaf = [path lastPathComponent];
+        NSMutableDictionary<NSString *, NSData *> *files = plan[parent];
+        if (!files) {
+            files = [NSMutableDictionary dictionary];
+            plan[parent] = files;
+        }
+        files[leaf] = original;
+    }
+
+    NSUInteger restored = 0;
+    for (NSString *parent in plan) {
+        [ContainerAccess note:[NSString stringWithFormat:@"restore:airlift %@", parent]];
+        NSError *writeError = nil;
+        BOOL ok = [AirliftBridge writeFiles:plan[parent]
+                          toTargetDirectory:parent
+                                        log:^(NSString *line) {
+            [ContainerAccess note:[NSString stringWithFormat:@"restore-airlift: %@", line]];
+        }
+                                      error:&writeError];
+        if (!ok) {
+            if (err) {
+                NSString *reason = writeError.localizedFailureReason ?: writeError.localizedDescription;
+                *err = [NSError errorWithDomain:@"patch" code:EIO userInfo:@{
+                    NSLocalizedDescriptionKey: @"originali nuk u shkrua dot",
+                    NSLocalizedFailureReasonErrorKey: reason ?: @"Airlift"}];
+            }
+            return NO;
+        }
+        restored += plan[parent].count;
+    }
+
+    if (missing > 0) {
+        if (err) *err = [NSError errorWithDomain:@"patch" code:EIO userInfo:@{
+            NSLocalizedDescriptionKey: @"disa skedarë nuk u lexuan dot nga pajisja"}];
+        return NO;
+    }
+    if (restored + already + absent == 0) {
+        if (err) *err = [NSError errorWithDomain:@"patch" code:ENOENT userInfo:@{
+            NSLocalizedDescriptionKey: @"nuk u gjet kopje origjinale për këtë kartë"}];
+        return NO;
+    }
+    [ContainerAccess note:[NSString stringWithFormat:
+        @"restore:done group=%@ restored=%lu already=%lu missing=%lu absent=%lu",
+        group, (unsigned long)restored, (unsigned long)already,
+        (unsigned long)missing, (unsigned long)absent]];
+    return YES;
+}
+
 
 + (void)rollback:(NSArray<NSDictionary*> *)entries {
     NSFileManager *fm=[NSFileManager defaultManager];

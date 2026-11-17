@@ -30,12 +30,25 @@ final class AppState: ObservableObject {
     @Published var deviceiOS: String = ""
 
     @Published var selectedCategory: String = "Aimbot"
-    @Published var aimPeitoEnabled: Bool = false
-    @Published var aimbotDragEnabled: Bool = false
-    @Published var hologramEnabled: Bool = false
-    @Published var skinEnabled: Bool = false
+    // Persisted so a jetsammed app still shows the card as active: the mod may
+    // be on the device even when the UI was killed in the background.
+    @Published var aimPeitoEnabled: Bool = UserDefaults.standard.bool(forKey: "aimPeitoEnabled") {
+        didSet { UserDefaults.standard.set(aimPeitoEnabled, forKey: "aimPeitoEnabled") }
+    }
+    @Published var aimbotDragEnabled: Bool = UserDefaults.standard.bool(forKey: "aimbotDragEnabled") {
+        didSet { UserDefaults.standard.set(aimbotDragEnabled, forKey: "aimbotDragEnabled") }
+    }
+    @Published var hologramEnabled: Bool = UserDefaults.standard.bool(forKey: "hologramEnabled") {
+        didSet { UserDefaults.standard.set(hologramEnabled, forKey: "hologramEnabled") }
+    }
+    @Published var skinEnabled: Bool = UserDefaults.standard.bool(forKey: "skinEnabled") {
+        didSet { UserDefaults.standard.set(skinEnabled, forKey: "skinEnabled") }
+    }
 
     @Published var patchLog: [String] = []
+
+    /// Guards overlapping MCM/Airlift transactions (double taps on a card).
+    private var patchInFlight = false
 
     init() {
         let info = DeviceInfo()
@@ -62,10 +75,34 @@ final class AppState: ObservableObject {
     }
 
     func toggleFeature(_ name: String, isOn: Bool, patchFile: String? = nil) {
+        guard !patchInFlight else {
+            patchLog.append("⏳ Prit derisa veprimi i mëparshëm të përfundojë.")
+            return
+        }
         if !isOn {
             SoundManager.shared.play(sound: "desactivar")
-            setFeature(name, enabled: false)
-            patchLog.append("❌ \(name) u deaktivizua.")
+            guard let file = patchFile else {
+                setFeature(name, enabled: false)
+                patchLog.append("❌ \(name) u deaktivizua.")
+                return
+            }
+            guard Bundle.main.path(forResource: file, ofType: "3105") != nil else {
+                patchLog.append("⚠️ \(name): patch-i nuk është në këtë build.")
+                return
+            }
+            // Anti-cheat flow: the card may only turn off after the exact
+            // original bytes are back on the device.
+            patchLog.append("⏳ \(name): duke kthyer origjinalin…")
+            restorePatchWithFallback(fileName: file) { [weak self] success in
+                guard let self else { return }
+                guard success else {
+                    self.patchLog.append("⚠️ \(name): origjinali nuk u kthye; karta mbeti aktive.")
+                    return
+                }
+                self.setFeature(name, enabled: false)
+                self.patchLog.append("✅ \(name) u deaktivizua; origjinali u kthye.")
+                self.reapplyRemainingAim(after: name)
+            }
             return
         }
         guard let file = patchFile else {
@@ -99,6 +136,7 @@ final class AppState: ObservableObject {
     private func applyPatchWithFallback(fileName: String, completion: @escaping (Bool) -> Void) {
         // Runs MCM first, then Airlift (AirTraffic). Both block on daemon I/O,
         // so keep the whole attempt off the main thread.
+        patchInFlight = true
         let bundleIDs = ["com.dts.freefireth", "com.dts.freefiremax"]
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             MotorBridge.resetInjectionTrace()
@@ -111,6 +149,7 @@ final class AppState: ObservableObject {
 
             DispatchQueue.main.async {
                 guard let self else { return }
+                self.patchInFlight = false
                 if patched.isEmpty {
                     if let error { self.patchLog.append("⚠️ \(error)") }
                     for line in localErrors { self.patchLog.append("   \(line)") }
@@ -127,6 +166,66 @@ final class AppState: ObservableObject {
                 if let first = paths.first { self.patchLog.append("   \(first)") }
                 completion(true)
             }
+        }
+    }
+
+    private func restorePatchWithFallback(fileName: String, completion: @escaping (Bool) -> Void) {
+        patchInFlight = true
+        let bundleIDs = ["com.dts.freefireth", "com.dts.freefiremax"]
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            MotorBridge.resetInjectionTrace()
+            let local = MotorBridge.restorePatchFile(fileName, bundleIDs: bundleIDs)
+            let trace = MotorBridge.injectionTrace()
+            let restored = local["restored"] as? [String] ?? []
+            let localErrors = local["errors"] as? [String] ?? []
+            let error = local["error"] as? String
+
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.patchInFlight = false
+                if restored.isEmpty {
+                    if let error { self.patchLog.append("⚠️ \(error)") }
+                    for line in localErrors.prefix(6) { self.patchLog.append("   \(line)") }
+                    let tail = trace.split(separator: "\n").suffix(8)
+                    if !tail.isEmpty {
+                        self.patchLog.append("ℹ️ Gjurma e fundit:")
+                        for line in tail { self.patchLog.append("   \(line)") }
+                    }
+                    completion(false)
+                    return
+                }
+                self.patchLog.append("✅ Origjinali u kthye: \(restored.joined(separator: ", "))")
+                completion(true)
+            }
+        }
+    }
+
+    /// The two aim cards share one destination (`cache_res`). Restoring the
+    /// original also removed the other card's variant, so write it back alone.
+    private func reapplyRemainingAim(after name: String) {
+        let remaining: String
+        let package: String
+        switch name {
+        case "AIM DRAG":
+            guard aimPeitoEnabled else { return }
+            remaining = "AIM PECHO"
+            package = "aimtorso_cache"
+        case "AIM PECHO":
+            guard aimbotDragEnabled else { return }
+            remaining = "AIM DRAG"
+            package = "aimneck_cache"
+        default:
+            return
+        }
+        patchLog.append("⏳ \(remaining): duke rikthyer variantin e vetëm…")
+        applyPatchWithFallback(fileName: package) { [weak self] success in
+            guard let self else { return }
+            guard success else {
+                self.setFeature(remaining, enabled: false)
+                self.patchLog.append("⚠️ \(remaining): variant i vetëm nuk u shkrua; karta mbeti e fikur.")
+                return
+            }
+            self.patchLog.append("✅ \(remaining) mbetet aktiv (\(package)).")
         }
     }
 }

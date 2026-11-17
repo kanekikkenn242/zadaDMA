@@ -80,6 +80,72 @@
              @"paths": [PatchTransaction lastResolvedTargets] ?: @[]};
 }
 
++ (NSDictionary<NSString *, id> *)restorePatchFile:(NSString *)patchName
+                                         bundleIDs:(NSArray<NSString *> *)bundleIDs {
+    [ContainerAccess note:[NSString stringWithFormat:@"mb:restore %@", patchName]];
+    NSString *path = [[NSBundle mainBundle] pathForResource:patchName ofType:@"3105"];
+    if (!path) {
+        return @{@"restored": @[], @"errors": @[],
+                 @"error": [NSString stringWithFormat:@"Skedari %@.3105 mungon në app.", patchName]};
+    }
+
+    NSError *readError = nil;
+    NSData *data = [NSData dataWithContentsOfFile:path options:0 error:&readError];
+    if (!data.length) {
+        return @{@"restored": @[], @"errors": @[],
+                 @"error": [NSString stringWithFormat:@"%@.3105 nuk lexohet: %@", patchName,
+                            readError.localizedDescription ?: @"e panjohur"]};
+    }
+
+    NSError *decodeError = nil;
+    PatchPackage *pkg = [PatchPackageCodec decodeData:data
+                                           passphrase:@"shared-server-secret"
+                                                error:&decodeError];
+    if (!pkg) {
+        return @{@"restored": @[], @"errors": @[],
+                 @"error": [NSString stringWithFormat:@"%@.3105 nuk dekodohet: %@", patchName,
+                            decodeError.localizedDescription ?: @"format i pavlefshëm"]};
+    }
+
+    NSArray<NSString *> *groups = [PatchTransaction groupsForPackage:pkg];
+    if (groups.count == 0) {
+        return @{@"restored": @[], @"errors": @[], @"groups": @[],
+                 @"error": [NSString stringWithFormat:
+                            @"%@.3105 nuk ka destinacione të lexueshme.", patchName]};
+    }
+
+    NSMutableArray<NSString *> *restored = [NSMutableArray array];
+    NSMutableArray<NSString *> *diagnostics = [NSMutableArray array];
+
+    for (NSString *bundleID in bundleIDs) {
+        BOOL allGroupsOK = YES;
+        for (NSString *group in groups) {
+            NSError *restoreError = nil;
+            if ([DevicePatchService restoreGroup:group forBundleID:bundleID error:&restoreError]) {
+                continue;
+            }
+            allGroupsOK = NO;
+            NSString *message = restoreError.localizedFailureReason
+                ?: restoreError.localizedDescription ?: @"kthimi dështoi";
+            [diagnostics addObject:[NSString stringWithFormat:@"%@: %@", bundleID, message]];
+            for (NSString *detail in restoreError.userInfo[@"ZDMADiagnostics"]) {
+                [diagnostics addObject:[NSString stringWithFormat:@"  %@", detail]];
+            }
+            break;
+        }
+        if (allGroupsOK) [restored addObject:bundleID];
+    }
+
+    if (restored.count == 0) {
+        NSString *summary = [NSString stringWithFormat:
+                             @"Asnjë kopje origjinale nuk u kthye (%@).",
+                             [bundleIDs componentsJoinedByString:@", "]];
+        return @{@"restored": @[], @"errors": diagnostics, @"groups": groups,
+                 @"error": summary};
+    }
+    return @{@"restored": restored, @"errors": diagnostics, @"groups": groups};
+}
+
 + (NSArray<NSString *> *)appContainers {
     NSMutableOrderedSet<NSString *> *identifiers = [NSMutableOrderedSet orderedSet];
     NSArray<NSString *> *mcm = [ContainerAccess enumerateAppContainerIdentifiers:nil];

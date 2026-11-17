@@ -116,4 +116,42 @@
     return NO;
 }
 
++ (BOOL)restoreGroup:(NSString *)group forBundleID:(NSString *)bundleID error:(NSError **)err {
+    [ContainerAccess note:[NSString stringWithFormat:@"restore:begin %@ %@", bundleID, group]];
+
+    if (![AirliftBridge isAvailable]) {
+        if (err) {
+            *err = [NSError errorWithDomain:@"zadaDMA.patch" code:EACCES userInfo:@{
+                NSLocalizedDescriptionKey: @"Pairing-u mungon; origjinali nuk u kthye.",
+                NSLocalizedFailureReasonErrorKey:
+                    @"Importo rppairing.plist para se ta fikësh kartën."}];
+        }
+        [ContainerAccess note:@"restore:no-pairing"];
+        return NO;
+    }
+
+    NSError *restoreError = nil;
+    if ([PatchTransaction restoreGroup:group bundleID:bundleID error:&restoreError]) {
+        [ContainerAccess note:@"restore:done"];
+        return YES;
+    }
+
+    NSMutableArray<NSString *> *diagnostics = [NSMutableArray array];
+    for (NSString *line in [AirliftBridge lastLogLines]) {
+        [diagnostics addObject:[NSString stringWithFormat:@"Airlift: %@", line]];
+    }
+
+    if (err) {
+        NSMutableDictionary *info = [NSMutableDictionary dictionary];
+        info[NSLocalizedDescriptionKey] = [NSString stringWithFormat:
+                                           @"Kthimi i origjinalit për %@ dështoi.", bundleID];
+        NSString *reason = restoreError.localizedFailureReason ?: restoreError.localizedDescription;
+        if (reason.length) info[NSLocalizedFailureReasonErrorKey] = reason;
+        if (diagnostics.count) info[@"ZDMADiagnostics"] = diagnostics;
+        *err = [NSError errorWithDomain:@"zadaDMA.patch" code:EIO userInfo:info];
+    }
+    [ContainerAccess note:@"restore:failed"];
+    return NO;
+}
+
 @end
