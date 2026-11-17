@@ -258,12 +258,27 @@ static NSString *OriginalMetaPath(NSString *path) {
 }
 
 static NSString *OriginalBytesPath(NSString *path) {
-    return [OriginalsDirectory() stringByAppendingPathComponent:
-            [OriginalKeyForPath(path) stringByAppendingPathExtension:@"bin"]];
+    NSString *canonical = [OriginalsDirectory() stringByAppendingPathComponent:
+                           [OriginalKeyForPath(path) stringByAppendingPathExtension:@"bin"]];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:canonical]) return canonical;
+    NSString *legacyKey = SHA256Hex([path dataUsingEncoding:NSUTF8StringEncoding]);
+    NSString *legacy = [OriginalsDirectory() stringByAppendingPathComponent:
+                        [legacyKey stringByAppendingPathExtension:@"bin"]];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:legacy]) return legacy;
+    return canonical;
 }
 
 static NSDictionary *OriginalMeta(NSString *path) {
     NSData *data = [NSData dataWithContentsOfFile:OriginalMetaPath(path)];
+    if (!data.length) {
+        // Backups written before the /private normalization used the exact
+        // path as the key; recognize them so a mod is never captured as the
+        // original on the next apply.
+        NSString *legacyKey = SHA256Hex([path dataUsingEncoding:NSUTF8StringEncoding]);
+        NSString *legacy = [OriginalsDirectory() stringByAppendingPathComponent:
+                            [legacyKey stringByAppendingPathExtension:@"json"]];
+        data = [NSData dataWithContentsOfFile:legacy];
+    }
     if (!data.length) return nil;
     id obj = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
     return [obj isKindOfClass:[NSDictionary class]] ? obj : nil;
@@ -812,7 +827,17 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
             [ContainerAccess note:[NSString stringWithFormat:@"restore:absent %@", path]];
             continue;
         }
-        NSData *original = [NSData dataWithContentsOfFile:OriginalBytesPath(path)];
+        // Older builds hashed the exact path (`/private/var/...`); prefer the
+        // canonical key but fall back to the legacy bytes file so a backup
+        // captured before the /private normalization still restores.
+        NSString *bytesPath = OriginalBytesPath(path);
+        if (![fm fileExistsAtPath:bytesPath]) {
+            NSString *legacyKey = SHA256Hex([path dataUsingEncoding:NSUTF8StringEncoding]);
+            NSString *legacy = [OriginalsDirectory() stringByAppendingPathComponent:
+                                [legacyKey stringByAppendingPathExtension:@"bin"]];
+            if ([fm fileExistsAtPath:legacy]) bytesPath = legacy;
+        }
+        NSData *original = [NSData dataWithContentsOfFile:bytesPath];
         if (!original.length || ![SHA256Hex(original) isEqualToString:meta[@"sha256"]]) {
             [ContainerAccess note:[NSString stringWithFormat:@"restore:backup-corrupt %@", path]];
             continue;
