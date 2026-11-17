@@ -27,6 +27,7 @@
 
 + (NSDictionary<NSString *, id> *)applyPatchFile:(NSString *)patchName
                                        bundleIDs:(NSArray<NSString *> *)bundleIDs {
+    [ContainerAccess note:[NSString stringWithFormat:@"mb:apply %@", patchName]];
     NSString *path = [[NSBundle mainBundle] pathForResource:patchName ofType:@"3105"];
     if (!path) {
         return @{@"patched": @[], @"errors": @[],
