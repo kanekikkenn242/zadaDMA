@@ -472,12 +472,22 @@ pub unsafe extern "C" fn zdma_tunnel_write_file(
         let (winning_addr, mut rpc) = match winner {
             Some(v) => v,
             None => {
+                // Check if any utun/loopback VPN path was available
+                let has_vpn_path = endpoints.iter().any(|a| {
+                    let ip = a.ip().to_string();
+                    ip.starts_with("10.7.") || ip == "127.0.0.1"
+                });
+                let vpn_hint = if has_vpn_path {
+                    "LocalDevVPN është instaluar por nuk funksionon. Restart LocalDevVPN dhe provo përsëri."
+                } else {
+                    "Instalo \"LocalDevVPN\" nga App Store, aktivizo VPN-in dhe provo Inject përsëri — pa Start Pairing."
+                };
                 return Err(format!(
                     "RPPairing nuk u lidh ({} rrugë). {}. Wi-Fi ON, Developer Mode ON, \
-                     Local Network ON. Nëse përsëritet: instalo \"LocalDevVPN\" nga App Store, \
-                     aktivizo VPN-in dhe provo Inject përsëri — pa Start Pairing.",
+                     Local Network ON. {}",
                     endpoints.len(),
-                    failures.join(" | ")
+                    failures.join(" | "),
+                    vpn_hint
                 ));
             }
         };
