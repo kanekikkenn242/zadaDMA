@@ -9,7 +9,9 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macos-latest
+    # Intel runners have far more free capacity than the arm64 macOS pool,
+    # which repeatedly failed to acquire a runner and produced no artifact.
+    runs-on: macos-15-intel
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4

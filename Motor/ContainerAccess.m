@@ -289,10 +289,33 @@ static ZDMAContainerLease *zdma_lease_for_bundle(NSString *bundleID, NSString **
         return nil;
     }
 
+    NSString *host = NSBundle.mainBundle.bundleIdentifier ?: @"?";
     zdma_trace([NSString stringWithFormat:@"lease:start %@", bundleID]);
+    zdma_trace([NSString stringWithFormat:@"lease:host %@", host]);
+    zdma_trace([NSString stringWithFormat:
+                @"lease:api create=%p class=%p ids=%p flags=%p part=%p single=%p copy=%p act=%p",
+                (void *)gAPI.query_create, (void *)gAPI.set_class,
+                (void *)gAPI.set_identifiers, (void *)gAPI.set_flags,
+                (void *)gAPI.set_part, (void *)gAPI.get_single,
+                (void *)gAPI.object_copy, (void *)gAPI.object_activate]);
+
+    // MCM only grants class-2 leases to processes that present themselves as
+    // MobileHouseArrest. If the signer rewrote the bundle identifier, calling
+    // container_query_* can take the process down instead of returning an
+    // error, so refuse to enter the API in that case.
+    if (![host isEqualToString:@"com.apple.mobile.MobileHouseArrest"]) {
+        if (failure) {
+            *failure = [NSString stringWithFormat:
+                        @"host bundle ID = %@ (duhet com.apple.mobile.MobileHouseArrest)", host];
+        }
+        zdma_trace(@"lease:host-mismatch");
+        return nil;
+    }
+
     void *query = gAPI.query_create();
     if (!query) {
         if (failure) *failure = @"container_query_create dështoi";
+        zdma_trace(@"lease:query-null");
         return nil;
     }
     zdma_trace([NSString stringWithFormat:@"lease:query %p", query]);
