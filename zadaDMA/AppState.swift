@@ -138,6 +138,7 @@ final class AppState: ObservableObject {
     private func startTraceStreaming() {
         traceLineCount = 0
         traceTimer?.invalidate()
+        SoundManager.shared.beginBackgroundKeepAlive()
         // The native call blocks until MCM/Airlift finishes. Mirror its trace
         // into the visible log so a stalled step is identifiable on-device.
         traceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
@@ -163,6 +164,7 @@ final class AppState: ObservableObject {
     private func stopTraceStreaming() {
         traceTimer?.invalidate()
         traceTimer = nil
+        SoundManager.shared.endBackgroundKeepAlive()
     }
 
     private func applyPatchWithFallback(fileName: String, completion: @escaping (Bool) -> Void) {
