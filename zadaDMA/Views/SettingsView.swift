@@ -1,76 +1,105 @@
 import SwiftUI
+import UniformTypeIdentifiers
+import UIKit
 
 struct SettingsView: View {
     @EnvironmentObject var state: AppState
     @Environment(\.dismiss) var dismiss
+    @ObservedObject private var pairing = PairingController.shared
 
-    // MARK: - Detección de Contenedores
+    @State private var showImporter = false
+    @State private var importAlert = false
+    @State private var importMessage = ""
+
+    // MARK: - Container detection
     @State private var containerDetectionEnabled = true
     @State private var isScanning = false
     @State private var containersFound: Int? = nil
 
-    // MARK: - Versiones verificadas
+    // MARK: - Verified versions
     @State private var ios27Expanded = true
 
-    private let legacyGroups = ["iOS 17", "iOS 18", "iOS 26"]
-    private let ios27Groups: [(title: String, builds: [String])] = [
-        ("iOS 27.0", [
-            "24A5355q", "24A5370h", "24A5380h", "24A5390f", "24A5408d",
-            "24A5418b", "24A5424a", "24A5430a", "24A435", "24A437"
-        ]),
-        ("iOS 27.0.1", ["24A446"]),
-        ("iOS 27.2", ["24B5084k", "24B5089g", "24B119"]),
-        ("iOS 27.2.1", ["24B156", "24B91034"]),
-        ("iOS 27.3", ["24C5037i"])
-    ]
-
-    private var appearanceBinding: Binding<String> {
-        Binding(get: { state.appearance }, set: { state.appearance = $0 })
-    }
-
-    private var iosVersionText: String {
+    private var deviceIOSVersionText: String {
         let build = DeviceInfo().buildNumber
         return build.isEmpty ? state.deviceiOS : "\(state.deviceiOS) (\(build))"
     }
 
     private var exploitCompatible: Bool {
-        let parts = state.deviceiOS.split(separator: ".").map(String.init)
-        guard let first = parts.first, let major = Int(first) else { return false }
-        if major != 27 { return [17, 18, 26].contains(major) }
-        let minor = parts.count > 1 ? parts[1] : "0"
-        let key = "iOS 27.\(minor)"
-        guard let builds = ios27Groups.first(where: { $0.title == key })?.builds else { return false }
-        let build = DeviceInfo().buildNumber
-        return !build.isEmpty && builds.contains(build)
+        VerifiedVersions.isCompatible(version: state.deviceiOS, build: DeviceInfo().buildNumber)
+    }
+
+    private var appearanceBinding: Binding<String> {
+        Binding(get: { state.appearance }, set: { state.appearance = $0 })
+    }
+
+    private var languageBinding: Binding<String> {
+        Binding(get: { state.language }, set: { state.language = $0 })
     }
 
     var body: some View {
         NavigationView {
             List {
+                // App identity
                 Section {
-                    Picker("Sistema", selection: appearanceBinding) {
-                        Text("Sistema").tag("System")
-                        Text("Claro").tag("Light")
-                        Text("Oscuro").tag("Dark")
+                    HStack(spacing: 14) {
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(Color.appOrange)
+                            .frame(width: 52, height: 52)
+                            .overlay(Text("X").font(.system(size: 24, weight: .heavy)).foregroundColor(.white))
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("X")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(.white)
+                            Text("v\(state.appVersion)")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                            Text(state.t("signed_apple"))
+                                .font(.caption2)
+                                .foregroundColor(.gray)
+                        }
+                        Spacer()
+                    }
+                    .padding(.vertical, 6)
+                }
+
+                // Language
+                Section(header: Text(state.t("language")).textCase(nil)) {
+                    Picker(state.t("language"), selection: languageBinding) {
+                        Text("Español").tag("Español")
+                        Text("English").tag("English")
+                        Text("Português").tag("Português")
                     }
                     .pickerStyle(.segmented)
                     .padding(.vertical, 6)
                 }
 
-                Section(header: Text("Dispositivo").textCase(nil)) {
+                // Appearance
+                Section(header: Text(state.t("appearance")).textCase(nil)) {
+                    Picker(state.t("appearance"), selection: appearanceBinding) {
+                        Text(state.t("system")).tag("System")
+                        Text(state.t("light")).tag("Light")
+                        Text(state.t("dark")).tag("Dark")
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.vertical, 6)
+                }
+
+                // Device
+                Section(header: Text(state.t("device_section")).textCase(nil)) {
                     HStack {
-                        Text("Modelo de hardware")
+                        Text(state.t("hardware_model"))
                         Spacer()
                         Text(state.deviceModel).foregroundColor(.gray)
                     }
                     HStack {
-                        Text("Versión de iOS")
+                        Text(state.t("ios_version"))
                         Spacer()
-                        Text(iosVersionText).foregroundColor(.gray)
+                        Text(deviceIOSVersionText).foregroundColor(.gray)
                     }
                 }
 
-                Section(header: Text("Detección de Contenedores").textCase(nil)) {
+                // Container detection
+                Section(header: Text(state.t("container_detection")).textCase(nil)) {
                     HStack(spacing: 12) {
                         Image(systemName: "cube.fill")
                             .font(.system(size: 14, weight: .bold))
@@ -78,9 +107,8 @@ struct SettingsView: View {
                             .frame(width: 28, height: 28)
                             .background(Color.appOrange.opacity(0.15))
                             .cornerRadius(7)
-                        Text("Activar Detección de Contenedores")
+                        Text(state.t("container_toggle"))
                             .font(.system(size: 15))
-                            .foregroundColor(.white)
                             .fixedSize(horizontal: false, vertical: true)
                         Spacer(minLength: 8)
                         Toggle("", isOn: $containerDetectionEnabled)
@@ -91,50 +119,120 @@ struct SettingsView: View {
                     if isScanning {
                         HStack(spacing: 10) {
                             ProgressView().tint(.appOrange)
-                            Text("Escaneando...")
-                                .foregroundColor(.gray)
+                            Text(state.t("scanning")).foregroundColor(.gray)
                         }
                         HStack(spacing: 10) {
                             Image(systemName: "arrow.clockwise").foregroundColor(.appOrange)
-                            Text("Escaneando...")
-                                .foregroundColor(.gray)
+                            Text(state.t("scanning")).foregroundColor(.gray)
                         }
                     } else {
                         HStack(spacing: 10) {
                             Image(systemName: "checkmark.circle.fill").foregroundColor(.appGreen)
-                            Text("\(containersFound ?? 0) contenedores encontrados")
+                            Text(Localization.shared.format("containers_found", lang: state.language, containersFound ?? 0))
                                 .foregroundColor(.white)
                         }
-                        Text("Método: worse_query (iOS 26/27)")
+                        Text(state.t("method"))
                             .font(.caption)
                             .foregroundColor(.gray)
                         Button(action: startScan) {
                             HStack(spacing: 10) {
                                 Image(systemName: "arrow.clockwise").foregroundColor(.appOrange)
-                                Text("Volver a escanear")
-                                    .foregroundColor(.white)
+                                Text(state.t("rescan")).foregroundColor(.white)
                             }
                         }
                     }
 
-                    Text("Cuando está activado, X escanea los contenedores de aplicaciones instaladas usando el método disponible en este dispositivo. Volver a escanear actualiza la lista.")
+                    Text(state.t("container_desc"))
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
 
-                Section(header: Text("Versiones verificadas").textCase(nil)) {
+                // Pairing & tunnel
+                Section(header: Text(state.t("pairing_tunnel")).textCase(nil)) {
                     HStack {
-                        Text("Compatibilidad del exploit")
+                        Circle()
+                            .fill(pairing.hasPairingFile ? Color.appGreen : Color.appRed)
+                            .frame(width: 8, height: 8)
+                        Text(pairing.hasPairingFile ? state.t("connected") : state.t("not_connected"))
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+
+                    HStack {
+                        Text(state.t("pairing_status"))
                         Spacer()
-                        Text(exploitCompatible ? "Compatible" : "No compatible")
+                        Text(pairing.hasPairingFile ? state.t("pairing_ready") : state.t("not_connected"))
+                            .foregroundColor(pairing.hasPairingFile ? .appGreen : .gray)
+                    }
+
+                    Text(state.t("pairing_desc"))
+                        .font(.caption)
+                        .foregroundColor(.gray)
+
+                    if !pairing.hasPairingFile && !pairing.isPairing {
+                        Button(action: { startPairing() }) {
+                            Text(state.t("start_pairing"))
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(.black)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(Color.appOrange)
+                                .cornerRadius(10)
+                        }
+                    }
+                    if pairing.isPairing {
+                        Button(action: { pairing.stopPairing() }) {
+                            Text(state.t("stop_pairing"))
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(Color.appRed)
+                                .cornerRadius(10)
+                        }
+                        if !pairing.currentPin.isEmpty {
+                            Text("PIN: \(pairing.currentPin)")
+                                .font(.system(size: 18, weight: .bold, design: .monospaced))
+                                .foregroundColor(.appOrange)
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
+
+                    Button(action: openVPN) {
+                        HStack {
+                            Image(systemName: "network").foregroundColor(.appOrange)
+                            Text(state.t("open_vpn")).foregroundColor(.white)
+                            Spacer()
+                            Image(systemName: "arrow.up.right").font(.caption).foregroundColor(.appOrange)
+                        }
+                        .padding(.vertical, 10)
+                    }
+
+                    Button(action: { showImporter = true }) {
+                        HStack {
+                            Image(systemName: "square.and.arrow.down").foregroundColor(.appOrange)
+                            Text(state.t("import_pair")).foregroundColor(.white)
+                            Spacer()
+                            Image(systemName: "arrow.up.right").font(.caption).foregroundColor(.appOrange)
+                        }
+                        .padding(.vertical, 10)
+                    }
+                }
+
+                // Verified versions
+                Section(header: Text(state.t("verified_versions")).textCase(nil)) {
+                    HStack {
+                        Text(state.t("exploit_compat"))
+                        Spacer()
+                        Text(exploitCompatible ? state.t("compatible") : state.t("not_compatible"))
                             .foregroundColor(exploitCompatible ? .appGreen : .appRed)
                     }
 
-                    ForEach(legacyGroups, id: \.self) { group in
+                    ForEach(VerifiedVersions.legacyGroups, id: \.self) { group in
                         HStack {
                             Text(group)
                             Spacer()
-                            Image(systemName: "chevron.right")
+                            Text(Localization.shared.format("exact_builds", lang: state.language, VerifiedVersions.exactBuilds[group] ?? 0))
                                 .font(.caption)
                                 .foregroundColor(.gray)
                         }
@@ -144,6 +242,9 @@ struct SettingsView: View {
                         HStack {
                             Text("iOS 27")
                             Spacer()
+                            Text(Localization.shared.format("exact_builds", lang: state.language, VerifiedVersions.exactBuilds["iOS 27"] ?? 0))
+                                .font(.caption)
+                                .foregroundColor(.gray)
                             Image(systemName: ios27Expanded ? "chevron.down" : "chevron.right")
                                 .font(.caption)
                                 .foregroundColor(.gray)
@@ -152,10 +253,9 @@ struct SettingsView: View {
                     .foregroundColor(.primary)
 
                     if ios27Expanded {
-                        ForEach(ios27Groups, id: \.title) { group in
+                        ForEach(VerifiedVersions.ios27Groups, id: \.title) { group in
                             HStack(alignment: .top) {
-                                Text(group.title)
-                                    .font(.system(size: 15))
+                                Text(group.title).font(.system(size: 15))
                                 Spacer()
                                 Text(group.builds.joined(separator: ", "))
                                     .font(.caption)
@@ -167,14 +267,15 @@ struct SettingsView: View {
                         }
                     }
 
-                    Text("Solo las compilaciones indicadas arriba están verificadas para el exploit. iOS se sigue reconociendo; el emparejamiento y el túnel son estados aparte.")
+                    Text(state.t("footer_verified"))
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
 
-                Section(header: Text("Redes sociales").textCase(nil)) {
-                    SocialRow(icon: "paperplane.fill", title: "Telegram", subtitle: "Anuncios y novedades")
-                    SocialRow(icon: "bubble.left.and.bubble.right.fill", title: "Discord", subtitle: "Soporte y comunidad")
+                // Social networks
+                Section(header: Text(state.t("social_networks")).textCase(nil)) {
+                    SocialRow(icon: "paperplane.fill", title: "Telegram", subtitle: state.t("announcements"))
+                    SocialRow(icon: "bubble.left.and.bubble.right.fill", title: "Discord", subtitle: state.t("community"))
                 }
             }
             .listStyle(.insetGrouped)
@@ -183,11 +284,11 @@ struct SettingsView: View {
             .task(id: containerDetectionEnabled) {
                 if containerDetectionEnabled { startScan() }
             }
-            .navigationTitle("Ajustes")
+            .navigationTitle(state.t("settings"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Hecho") { dismiss() }
+                    Button(state.t("done")) { dismiss() }
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(.appOrange)
                         .padding(.horizontal, 14)
@@ -195,6 +296,23 @@ struct SettingsView: View {
                         .background(Color.appSecondary)
                         .clipShape(Capsule())
                 }
+            }
+            .fileImporter(isPresented: $showImporter, allowedContentTypes: [.item], allowsMultipleSelection: false) { result in
+                switch result {
+                case .success(let urls):
+                    guard let url = urls.first else { return }
+                    let ok = pairing.importPairingFile(url: url)
+                    importMessage = ok ? "✅ \(state.t("pairing_ready"))" : "❌ \(pairing.pairingStatus)"
+                    importAlert = true
+                case .failure(let error):
+                    importMessage = "❌ \(error.localizedDescription)"
+                    importAlert = true
+                }
+            }
+            .alert(state.t("settings"), isPresented: $importAlert) {
+                Button(state.t("ok")) { }
+            } message: {
+                Text(importMessage)
             }
         }
         .preferredColorScheme(.dark)
@@ -207,6 +325,15 @@ struct SettingsView: View {
             isScanning = false
             containersFound = 299
         }
+    }
+
+    private func startPairing() {
+        pairing.startPairing { _ in }
+    }
+
+    private func openVPN() {
+        guard let url = URL(string: "itms-apps://search.itunes.apple.com/WebObjects/MZSearch.woa/wa/search?media=software&term=LocalDevVPN") else { return }
+        UIApplication.shared.open(url, options: [:], completionHandler: nil)
     }
 }
 

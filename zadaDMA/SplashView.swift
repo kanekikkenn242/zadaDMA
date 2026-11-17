@@ -15,17 +15,17 @@ struct SplashView: View {
                 Text("X").font(.system(size: 50, weight: .bold)).foregroundColor(.white)
             }
             .padding(.bottom, 20)
-            Text("zadaDMA").font(.headline).foregroundColor(.white)
+            Text("X").font(.headline).foregroundColor(.white)
             Text(state.deviceModel).font(.caption).foregroundColor(.gray)
             Text(state.deviceiOS).font(.caption).foregroundColor(.gray)
             
             Spacer()
             
             VStack(spacing: 12) {
-                Text("Want to listen to music?").font(.subheadline.bold()).foregroundColor(.white)
+                Text(state.t("music_q")).font(.subheadline.bold()).foregroundColor(.white)
                 HStack(spacing: 12) {
-                    Button("No") { }.buttonStyle(DarkButtonStyle())
-                    Button("Yes") { }.buttonStyle(OrangeButtonStyle())
+                    Button(state.t("no")) { state.musicEnabled = false }.buttonStyle(DarkButtonStyle())
+                    Button(state.t("yes")) { state.musicEnabled = true }.buttonStyle(OrangeButtonStyle())
                 }
             }
             .padding(16).background(Color.appCard).cornerRadius(16).padding(.horizontal)

@@ -1,211 +1,144 @@
 import SwiftUI
-import UniformTypeIdentifiers
 
 struct HomeView: View {
     @EnvironmentObject var state: AppState
     @ObservedObject private var pairing = PairingController.shared
-    @State private var showImporter = false
-    @State private var importAlert = false
-    @State private var importMessage = ""
-    
+    @State private var showSettings = false
+
+    private var deviceIOSVersionText: String {
+        let build = DeviceInfo().buildNumber
+        return build.isEmpty ? state.deviceiOS : "\(state.deviceiOS) (\(build))"
+    }
+
+    private var iosMinorPrefix: String {
+        let parts = state.deviceiOS.split(separator: ".")
+        guard parts.count >= 2 else { return state.deviceiOS }
+        return "\(parts[0]).\(parts[1])"
+    }
+
+    private var exploitCompatible: Bool {
+        VerifiedVersions.isCompatible(version: state.deviceiOS, build: DeviceInfo().buildNumber)
+    }
+
     var body: some View {
-        NavigationView {
+        VStack(spacing: 0) {
             ScrollView {
-                VStack(spacing: 20) {
-                    // MARK: Header
-                    VStack(spacing: 8) {
-                        HStack {
-                            Text("1.40")
-                                .font(.system(size: 12, weight: .bold))
+                VStack(alignment: .leading, spacing: 18) {
+                    // Header
+                    HStack(spacing: 14) {
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(Color.appOrange)
+                            .frame(width: 52, height: 52)
+                            .overlay(
+                                Text("X")
+                                    .font(.system(size: 26, weight: .heavy))
+                                    .foregroundColor(.white)
+                            )
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("X")
+                                .font(.system(size: 19, weight: .bold))
+                                .foregroundColor(.white)
+                            Text(state.deviceModel)
+                                .font(.caption)
                                 .foregroundColor(.gray)
-                            Spacer()
                         }
-                        .padding(.horizontal)
-                        
-                        Image(systemName: "shield.lefthalf.filled")
-                            .font(.system(size: 54))
-                            .foregroundColor(.appOrange)
-                            .shadow(color: .appOrange.opacity(0.5), radius: 10)
-                        Text("zadaDMA")
-                            .font(.system(size: 26, weight: .heavy))
-                            .foregroundColor(.white)
-                        Text(state.deviceModel + " · iOS " + state.deviceiOS)
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                    }
-                    .padding(.top, 20)
-                    
-                    // MARK: Pairing card
-                    VStack(alignment: .leading, spacing: 14) {
-                        HStack {
-                            Image(systemName: "iphone.radiowaves.left.and.right")
+                        Spacer()
+                        Button(action: { showSettings = true }) {
+                            Image(systemName: "gearshape.fill")
+                                .font(.system(size: 20))
                                 .foregroundColor(.appOrange)
-                            Text("Developer Mode Pairing")
-                                .font(.system(size: 15, weight: .bold))
+                        }
+                    }
+                    .padding(.top, 12)
+
+                    // Support badge
+                    HStack {
+                        Spacer()
+                        Text(Localization.shared.format("supports_ios_badge", lang: state.language, iosMinorPrefix))
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(.appGreen)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Color.appGreen.opacity(0.15))
+                            .cornerRadius(8)
+                    }
+
+                    // Device status
+                    VStack(alignment: .leading, spacing: 14) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "cpu")
+                                .foregroundColor(.appOrange)
+                            Text(state.t("device_status"))
+                                .font(.system(size: 17, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+
+                        settingRow(label: state.t("hardware_model"), value: state.deviceModel)
+                        Divider().background(Color.white.opacity(0.08))
+                        settingRow(label: state.t("ios_version"), value: deviceIOSVersionText)
+                        Divider().background(Color.white.opacity(0.08))
+                        HStack {
+                            Text(state.t("exploit_compat"))
+                                .font(.system(size: 15))
                                 .foregroundColor(.white)
                             Spacer()
-                            Text(pairing.hasPairingFile ? "READY" : "NOT PAIRED")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(pairing.hasPairingFile ? .green : .gray)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background((pairing.hasPairingFile ? Color.green : Color.gray).opacity(0.15))
-                                .cornerRadius(6)
+                            Text(exploitCompatible ? state.t("supported") : state.t("not_supported"))
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(exploitCompatible ? .appGreen : .appRed)
                         }
-                        
-                        // PIN display
-                        HStack {
-                            Text("PIN")
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundColor(.gray)
+                    }
+                    .padding(16)
+                    .background(Color.appCard)
+                    .cornerRadius(16)
+
+                    // Pairing / injection shortcut
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 10) {
+                            Image(systemName: pairing.hasPairingFile ? "checkmark.shield.fill" : "exclamationmark.shield")
+                                .foregroundColor(pairing.hasPairingFile ? .appGreen : .appOrange)
+                            Text(state.t("pairing_tunnel"))
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.white)
                             Spacer()
-                            Text(pairing.currentPin.isEmpty ? "— — — — — —" : pairing.currentPin)
-                                .font(.system(size: 24, weight: .heavy, design: .monospaced))
-                                .foregroundColor(pairing.currentPin.isEmpty ? .gray : .appOrange)
+                            Text(pairing.hasPairingFile ? state.t("connected") : state.t("not_connected"))
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(pairing.hasPairingFile ? .appGreen : .gray)
                         }
-                        
-                        // Button 1: start / stop pairing host
-                        Button {
-                            if pairing.isPairing {
-                                pairing.stopPairing()
-                            } else {
-                                pairing.startPairing { _ in }
-                            }
-                        } label: {
-                            HStack {
-                                Image(systemName: pairing.isPairing ? "stop.circle" : "person.badge.key")
-                                Text(pairing.isPairing ? "Stop Pairing" : "Start Pairing (Developer Mode)")
-                            }
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.black)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(pairing.isPairing ? Color.red.opacity(0.85) : Color.appOrange)
-                            .cornerRadius(10)
-                        }
-                        
-                        // Button 2: import RPPairing file
-                        Button {
-                            showImporter = true
-                        } label: {
-                            HStack {
-                                Image(systemName: "square.and.arrow.down")
-                                Text("Import RPPairing file")
-                            }
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(Color.appCard)
-                            .cornerRadius(10)
-                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.appOrange.opacity(0.5), lineWidth: 1))
-                        }
-                        
-                        Text("1) Start Pairing dhe lejo Local Network.  2) Settings → Privacy & Security → Developer Mode → Pair with \"zadaDMA\".  3) PIN-i shfaqet në notification/banner ose kthehu shpejt në app. VPN OFF.")
-                            .font(.system(size: 10))
-                            .foregroundColor(.gray)
-
-                        if pairing.backgroundLimited && pairing.isPairing {
-                            Text("Kujdes: iOS mund ta ndalojë app-in pas ~30s në background. Shko direkt në Settings.")
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundColor(.orange)
-                        }
-
-                        HStack(spacing: 6) {
-                            Image(systemName: pairing.hasPairingFile ? "checkmark.circle.fill" : "info.circle")
-                                .font(.system(size: 10))
-                                .foregroundColor(pairing.hasPairingFile ? .green : .gray)
-                            Text(pairing.pairingStatus)
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundColor(.gray)
-                        }
-                    }
-                    .padding(16)
-                    .background(Color(white: 0.07))
-                    .cornerRadius(16)
-                    .padding(.horizontal)
-                    
-                    // MARK: Status card
-                    VStack(alignment: .leading, spacing: 10) {
-                        StatusRow(icon: "network", title: "Tunnel", value: pairing.hasPairingFile ? "Connected" : "Not connected", ok: pairing.hasPairingFile)
-                        StatusRow(icon: "checkmark.shield", title: "Pairing file", value: pairing.hasPairingFile ? "Loaded" : "Missing", ok: pairing.hasPairingFile)
-                        StatusRow(icon: "bolt.fill", title: "Exploit", value: "Tap Game tab to patch", ok: true)
-                    }
-                    .padding(16)
-                    .background(Color(white: 0.07))
-                    .cornerRadius(16)
-                    .padding(.horizontal)
-                    
-                    // MARK: Log
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Activity")
+                        Text(pairing.pairingStatus)
                             .font(.caption)
                             .foregroundColor(.gray)
-                        ForEach(state.patchLog.suffix(4), id: \.self) { line in
-                            Text(line)
-                                .font(.system(size: 10, design: .monospaced))
-                                .foregroundColor(.green)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        if state.patchLog.isEmpty {
-                            Text("No activity yet.")
-                                .font(.system(size: 10, design: .monospaced))
-                                .foregroundColor(.gray)
-                        }
+                        Button(state.t("settings")) { showSettings = true }
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.appOrange)
                     }
                     .padding(16)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.black)
+                    .background(Color.appCard)
                     .cornerRadius(16)
-                    .padding(.horizontal)
+
+                    Text("v\(state.appVersion)")
+                        .font(.caption2)
+                        .foregroundColor(.gray.opacity(0.6))
+                        .frame(maxWidth: .infinity, alignment: .center)
                 }
-                .padding(.bottom, 30)
-            }
-            .background(Color.black.ignoresSafeArea())
-            .navigationBarHidden(true)
-            .fileImporter(isPresented: $showImporter,
-                          allowedContentTypes: [.item],
-                          allowsMultipleSelection: false) { result in
-                switch result {
-                case .success(let urls):
-                    guard let url = urls.first else { return }
-                    let ok = pairing.importPairingFile(url: url)
-                    importMessage = ok
-                        ? "✅ RPPairing u importua. Statusi: \(pairing.pairingStatus)"
-                        : "❌ Import dështoi.\n\(pairing.pairingStatus)"
-                    importAlert = true
-                case .failure(let error):
-                    importMessage = "❌ Zgjedhja e file-it dështoi.\n\(error.localizedDescription)"
-                    importAlert = true
-                }
-            }
-            .alert("Import RPPairing", isPresented: $importAlert) {
-                Button("OK") { }
-            } message: {
-                Text(importMessage)
+                .padding(.horizontal)
+                .padding(.bottom, 24)
             }
         }
+        .background(Color.black.ignoresSafeArea())
+        .sheet(isPresented: $showSettings) {
+            SettingsView().environmentObject(state)
+        }
     }
-}
 
-struct StatusRow: View {
-    let icon: String
-    let title: String
-    let value: String
-    let ok: Bool
-    
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon)
-                .foregroundColor(ok ? .green : .gray)
-                .frame(width: 20)
-            Text(title)
-                .font(.system(size: 13))
-                .foregroundColor(.gray)
+    private func settingRow(label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .font(.system(size: 15))
+                .foregroundColor(.white)
             Spacer()
             Text(value)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(ok ? .white : .gray)
+                .font(.system(size: 14))
+                .foregroundColor(.gray)
         }
     }
 }

@@ -19,6 +19,11 @@ final class AppState: ObservableObject {
     @Published var isActivated: Bool = UserDefaults.standard.bool(forKey: "isActivated") {
         didSet { UserDefaults.standard.set(isActivated, forKey: "isActivated") }
     }
+    @Published var musicEnabled: Bool = UserDefaults.standard.bool(forKey: "musicEnabled") {
+        didSet { UserDefaults.standard.set(musicEnabled, forKey: "musicEnabled") }
+    }
+
+    let appVersion = "0.2.0"
 
     @Published var licenseKey: String = ""
     @Published var deviceModel: String = ""
