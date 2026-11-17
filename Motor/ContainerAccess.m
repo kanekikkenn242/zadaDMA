@@ -1,8 +1,11 @@
 #import "ContainerAccess.h"
 #import <dlfcn.h>
+#import <dispatch/dispatch.h>
 #import <fcntl.h>
 #import <objc/message.h>
 #import <objc/runtime.h>
+#import <stdbool.h>
+#import <stdint.h>
 #import <sys/stat.h>
 #import <unistd.h>
 #import <errno.h>
@@ -76,6 +79,7 @@ static NSMutableDictionary<NSString *, NSNumber *> *gBadQueryHandles;
 @interface ZDMAContainerLease : NSObject
 @property (nonatomic, copy) NSString *bundleID;
 @property (nonatomic, copy) NSString *rootPath;
+@property (nonatomic) void *query;              // retained container_query_t
 @property (nonatomic) void *object;             // retained container_object_copy
 @property (nonatomic) int64_t extensionHandle;  // consumed sandbox extension
 @end
@@ -87,6 +91,9 @@ static NSMutableDictionary<NSString *, NSNumber *> *gBadQueryHandles;
     }
     if (_object && gAPI.object_free) {
         gAPI.object_free(_object);
+    }
+    if (_query && gAPI.query_free) {
+        gAPI.query_free(_query);
     }
 }
 @end
@@ -305,17 +312,31 @@ static ZDMAContainerLease *zdma_lease_for_bundle(NSString *bundleID, NSString **
         }
     }
 
-    gAPI.query_free(query);
-
     if (!activated && handle < 0) {
         if (retained && gAPI.object_free) gAPI.object_free(retained);
+        gAPI.query_free(query);
         if (failure) *failure = @"sandbox extension nuk u aktivizua";
         return nil;
     }
 
+    int fd = open(path.fileSystemRepresentation, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+    if (fd < 0) {
+        int savedErrno = errno;
+        if (handle > 0 && gAPI.ext_release) gAPI.ext_release(handle);
+        if (retained && gAPI.object_free) gAPI.object_free(retained);
+        gAPI.query_free(query);
+        if (failure) {
+            *failure = [NSString stringWithFormat:@"container root open failed errno=%d (%s)",
+                        savedErrno, strerror(savedErrno)];
+        }
+        return nil;
+    }
+    close(fd);
+
     ZDMAContainerLease *lease = [ZDMAContainerLease new];
     lease.bundleID = bundleID;
     lease.rootPath = path;
+    lease.query = query;
     lease.object = retained;
     lease.extensionHandle = handle;
     return lease;
@@ -361,14 +382,23 @@ static NSString *zdma_launchservices_container(NSString *bundleID) {
         if (handle) dlclose(handle);
         return nil;
     }
-    id workspace = [workspaceClass performSelector:@selector(defaultWorkspace)];
+    id workspace = [workspaceClass respondsToSelector:@selector(defaultWorkspace)]
+        ? [workspaceClass performSelector:@selector(defaultWorkspace)] : nil;
+    if (!workspace || ![workspace respondsToSelector:@selector(allInstalledApplications)]) {
+        if (handle) dlclose(handle);
+        return nil;
+    }
     NSArray *apps = [workspace performSelector:@selector(allInstalledApplications)];
     NSString *result = nil;
     for (id app in apps) {
+        if (![app respondsToSelector:@selector(applicationIdentifier)]) continue;
         NSString *identifier = [app performSelector:@selector(applicationIdentifier)];
         if (![identifier isEqualToString:bundleID]) continue;
-        NSURL *url = [app performSelector:@selector(dataContainerURL)];
-        if (!url) url = [app performSelector:@selector(bundleContainerURL)];
+        NSURL *url = [app respondsToSelector:@selector(dataContainerURL)]
+            ? [app performSelector:@selector(dataContainerURL)] : nil;
+        if (!url && [app respondsToSelector:@selector(bundleContainerURL)]) {
+            url = [app performSelector:@selector(bundleContainerURL)];
+        }
         if (url.path.length) {
             result = zdma_normalize_path(url.path);
             break;
@@ -497,6 +527,7 @@ static NSString *zdma_launchservices_container(NSString *bundleID) {
 
     gAPI.set_class(query, 2);
     gAPI.set_flags(query, 0x100000000ULL);
+    if (gAPI.set_part) gAPI.set_part(query, 0);
 
     NSMutableOrderedSet<NSString *> *identifiers = [NSMutableOrderedSet orderedSet];
     gAPI.iterate(query, ^bool(void *object) {

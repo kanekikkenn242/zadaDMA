@@ -82,11 +82,14 @@
     if (mcm.count) [identifiers addObjectsFromArray:mcm];
 
     Class workspaceClass = NSClassFromString(@"LSApplicationWorkspace");
-    if (workspaceClass) {
+    if (workspaceClass && [workspaceClass respondsToSelector:@selector(defaultWorkspace)]) {
         id workspace = [workspaceClass performSelector:@selector(defaultWorkspace)];
-        for (id app in [workspace performSelector:@selector(allInstalledApplications)]) {
-            NSString *bundleID = [app performSelector:@selector(applicationIdentifier)];
-            if (bundleID.length) [identifiers addObject:bundleID];
+        if ([workspace respondsToSelector:@selector(allInstalledApplications)]) {
+            for (id app in [workspace performSelector:@selector(allInstalledApplications)]) {
+                if (![app respondsToSelector:@selector(applicationIdentifier)]) continue;
+                NSString *bundleID = [app performSelector:@selector(applicationIdentifier)];
+                if (bundleID.length) [identifiers addObject:bundleID];
+            }
         }
     }
     return identifiers.array;

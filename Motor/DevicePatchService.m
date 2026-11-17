@@ -3,6 +3,7 @@
 #import "PatchTransaction.h"
 #import "PatchPackageCodec.h"
 #import <dlfcn.h>
+#include <errno.h>
 
 @implementation DevicePatchService
 

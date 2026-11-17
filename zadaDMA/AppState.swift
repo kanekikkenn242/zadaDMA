@@ -77,8 +77,10 @@ final class AppState: ObservableObject {
         if let error = local["error"] as? String {
             patchLog.append("⚠️ \(error)")
         }
-        for line in localErrors {
-            patchLog.append("   \(line)")
+        if patched.isEmpty {
+            for line in localErrors {
+                patchLog.append("   \(line)")
+            }
         }
         if !patched.isEmpty {
             patchLog.append("✅ \(fileName) u injektua lokalisht: \(patched.joined(separator: ", "))")

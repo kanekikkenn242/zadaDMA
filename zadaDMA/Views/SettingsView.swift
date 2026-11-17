@@ -321,9 +321,12 @@ struct SettingsView: View {
     private func startScan() {
         isScanning = true
         containersFound = nil
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-            isScanning = false
-            containersFound = 299
+        DispatchQueue.global(qos: .userInitiated).async {
+            let count = MotorBridge.appContainers()?.count ?? 0
+            DispatchQueue.main.async {
+                self.isScanning = false
+                self.containersFound = count
+            }
         }
     }
 
