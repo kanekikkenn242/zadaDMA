@@ -669,7 +669,7 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
 - (void)performWriteWithCandidate:(NSDictionary *)candidate {
     if (!self.writeCompletion) { return; }
     NSNumber *portNum = candidate[@"port"];
-    uint16_t port = [portNum uint16Value];
+    uint16_t port = [portNum unsignedShortValue];
     NSString *localPath = self.writeLocalPath;
     NSString *bundleID = self.writeBundleID;
     NSString *remotePath = self.writeRemotePath;
@@ -688,8 +688,46 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
 
     NSLog(@"[IdeviceBridge] writing via candidate list");
     dispatch_async(self.ioQueue, ^{
-        // Gather all addresses to try
-        NSString *addrsList = [self candidateAddressList];
+        // Gather all addresses to try: loopback + current candidate IP + utun addresses
+        NSMutableArray *parts = [NSMutableArray array];
+        [parts addObject:@"127.0.0.1"];
+        [parts addObject:@"::1"];
+        // Add the current candidate's resolved IP
+        NSString *currentIP = candidate[@"ip"];
+        if (currentIP && ![parts containsObject:currentIP]) {
+            [parts addObject:currentIP];
+        }
+        // Add utun interface addresses
+        struct ifaddrs *ifap = NULL;
+        if (getifaddrs(&ifap) == 0) {
+            struct ifaddrs *cur = ifap;
+            while (cur) {
+                if (cur->ifa_addr && cur->ifa_addr->sa_family == AF_INET) {
+                    struct sockaddr_in *sin = (struct sockaddr_in *)cur->ifa_addr;
+                    char ipstr[INET_ADDRSTRLEN];
+                    if (inet_ntop(AF_INET, &sin->sin_addr, ipstr, sizeof(ipstr))) {
+                        NSString *ipStr = [NSString stringWithUTF8String:ipstr];
+                        if ([ipStr compare:@"127.0.0.0"] != NSOrderedSame &&
+                            ![parts containsObject:ipStr]) {
+                            [parts addObject:ipStr];
+                        }
+                    }
+                }
+                if (cur->ifa_addr && cur->ifa_addr->sa_family == AF_INET6) {
+                    struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)cur->ifa_addr;
+                    char ipstr[INET6_ADDRSTRLEN];
+                    if (inet_ntop(AF_INET6, &sin6->sin6_addr, ipstr, sizeof(ipstr))) {
+                        NSString *ipStr = [NSString stringWithUTF8String:ipstr];
+                        if (![ipStr hasPrefix:@"fe80::"] && ![parts containsObject:ipStr]) {
+                            [parts addObject:ipStr];
+                        }
+                    }
+                }
+                cur = cur->ifa_next;
+            }
+            freeifaddrs(ifap);
+        }
+        NSString *addrsList = [parts componentsJoinedByString:@","];
         char err[4096] = {0};
         char out[2048] = {0};
         int rc = zdma_tunnel_write_file(addrsList.UTF8String,
