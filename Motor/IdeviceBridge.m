@@ -692,12 +692,14 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
         NSMutableArray *parts = [NSMutableArray array];
         [parts addObject:@"127.0.0.1"];
         [parts addObject:@"::1"];
+        // LocalDevVPN / loopback VPN peer address (reflected path)
+        [parts addObject:@"10.7.0.1"];
         // Add the current candidate's resolved IP
         NSString *currentIP = candidate[@"ip"];
         if (currentIP && ![parts containsObject:currentIP]) {
             [parts addObject:currentIP];
         }
-        // Add utun interface addresses
+        // Add utun interface addresses and their peers
         struct ifaddrs *ifap = NULL;
         if (getifaddrs(&ifap) == 0) {
             struct ifaddrs *cur = ifap;
@@ -710,6 +712,19 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
                         if ([ipStr compare:@"127.0.0.0"] != NSOrderedSame &&
                             ![parts containsObject:ipStr]) {
                             [parts addObject:ipStr];
+                        }
+                    }
+                    // Also add the peer address (for point-to-point interfaces)
+                    if (cur->ifa_dstaddr && cur->ifa_dstaddr->sa_family == AF_INET) {
+                        struct sockaddr_in *dst = (struct sockaddr_in *)cur->ifa_dstaddr;
+                        char peerStr[INET_ADDRSTRLEN];
+                        if (inet_ntop(AF_INET, &dst->sin_addr, peerStr, sizeof(peerStr))) {
+                            NSString *peer = [NSString stringWithUTF8String:peerStr];
+                            if ([peer compare:@"0.0.0.0"] != NSOrderedSame &&
+                                [peer compare:@"255.255.255.255"] != NSOrderedSame &&
+                                ![parts containsObject:peer]) {
+                                [parts addObject:peer];
+                            }
                         }
                     }
                 }
@@ -726,6 +741,12 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
                 cur = cur->ifa_next;
             }
             freeifaddrs(ifap);
+        }
+        // Also try common loopback VPN addresses
+        for (NSString *vpnAddr in @[@"10.7.0.0", @"10.7.0.2"]) {
+            if (![parts containsObject:vpnAddr]) {
+                [parts addObject:vpnAddr];
+            }
         }
         NSString *addrsList = [parts componentsJoinedByString:@","];
         char err[4096] = {0};
