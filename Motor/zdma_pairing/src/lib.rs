@@ -559,11 +559,31 @@ pub unsafe extern "C" fn zdma_tunnel_write_file(
                                     vend
                                 ));
                             }
-                            Err(e) => failures.push(format!("{vend}:{target}: {e}")),
+                            Err(e) => {
+                                // Translate AFC write errors into Albanian UX
+                                let txt = e.split("installationlookupfailed")
+                                    .next()
+                                    .unwrap_or(&e);
+                                failures.push(format!("{vend}:{target}: {txt}"));
+                            }
                         }
                     }
                 }
-                Err(e) => failures.push(format!("{vend}: {e}")),
+                Err(e) => {
+                    // Map device-side installation lookup failure
+                    let txt = e.split("installationlookupfailed")
+                        .next()
+                        .unwrap_or(&e);
+                    if txt.contains("installationlookupfailed") {
+                        failures.push(format!(
+                            "Kontainer i/g requesting bundle ID '{}' nuk gjet. \
+                             Njavezja: kontrollo versionin e Free Fire, Start Pairing përsëri.",
+                            bundle_id
+                        ));
+                    } else {
+                        failures.push(format!("{vend}: {txt}"));
+                    }
+                }
             }
         }
 
