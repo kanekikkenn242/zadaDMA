@@ -27,9 +27,15 @@ extern NSString *const PatchTransactionAirliftContainerKey;
 + (NSArray<NSString *> *)groupsForPackage:(PatchPackage *)pkg;
 
 /// Writes back every original captured before the first Airlift write of
-/// `group` and verifies the device bytes. Idempotent: paths that already hold
-/// the original are counted as restored.
-+ (BOOL)restoreGroup:(NSString *)group bundleID:(NSString *)bundleID error:(NSError **)err;
+/// `group` and verifies the device bytes. Only paths inside `container` (the
+/// game's current data container) or `bundlePath` are touched; backups from an
+/// older install (different UUID) are ignored. Idempotent: paths that already
+/// hold the original are counted as restored.
++ (BOOL)restoreGroup:(NSString *)group
+            bundleID:(NSString *)bundleID
+           container:(nullable NSString *)container
+          bundlePath:(nullable NSString *)bundlePath
+               error:(NSError **)err;
 + (NSArray<NSString *> *)lastResolvedTargets;
 + (void)resetResolvedTargets;
 @end

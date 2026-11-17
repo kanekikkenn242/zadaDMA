@@ -131,7 +131,32 @@
     }
 
     NSError *restoreError = nil;
-    if ([PatchTransaction restoreGroup:group bundleID:bundleID error:&restoreError]) {
+    NSError *containerError = nil;
+    NSString *remoteContainer = [AirliftBridge containerForBundleID:bundleID
+                                                                log:^(NSString *line) {
+        [ContainerAccess note:[NSString stringWithFormat:@"restore-airlift: %@", line]];
+    }
+                                                              error:&containerError];
+    if (!remoteContainer.length) {
+        [ContainerAccess note:[NSString stringWithFormat:@"restore:no-container %@",
+                               containerError.localizedFailureReason ?: containerError.localizedDescription ?: @""]];
+    }
+    NSError *bundleError = nil;
+    NSString *remoteBundle = [AirliftBridge bundlePathForBundleID:bundleID
+                                                              log:^(NSString *line) {
+        [ContainerAccess note:[NSString stringWithFormat:@"restore-bundle: %@", line]];
+    }
+                                                            error:&bundleError];
+    if (!remoteBundle.length) {
+        [ContainerAccess note:[NSString stringWithFormat:@"restore:no-bundle %@",
+                               bundleError.localizedFailureReason ?: bundleError.localizedDescription ?: @""]];
+    }
+
+    if ([PatchTransaction restoreGroup:group
+                              bundleID:bundleID
+                             container:remoteContainer
+                            bundlePath:remoteBundle
+                                 error:&restoreError]) {
         [ContainerAccess note:@"restore:done"];
         return YES;
     }

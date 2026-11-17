@@ -311,7 +311,8 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
         NSString *want=pkg.digests[src];
         if(want && ![SHA256Hex(blob) isEqualToString:want]){ if(err)*err=[NSError errorWithDomain:@"patch" code:EINVAL userInfo:@{NSLocalizedDescriptionKey:@"pkg digest"}]; return NO; }
         total+=blob.length+4096;
-        [plan addObject:@{@"src":src,@"dst":full,@"blob":blob,@"digest":want?:SHA256Hex(blob)}];
+        [plan addObject:@{@"src":src,@"dst":full,@"blob":blob,@"digest":want?:SHA256Hex(blob),
+                          @"group":GroupStemForDestination(dst)}];
     }
     if(!EnoughSpace(container,total,err)) return NO;
     
@@ -321,7 +322,24 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
     
     for(NSDictionary *p in plan){
         NSString *dst=p[@"dst"]; NSData *blob=p[@"blob"]; NSString *dig=p[@"digest"];
+        NSString *group=p[@"group"];
         NSDictionary *a=[fm attributesOfItemAtPath:dst error:nil];
+
+        // Same recovery guarantee as the Airlift path: keep the exact original
+        // before the first write so turning the card off can restore it.
+        if(!OriginalMeta(dst)){
+            if(a){
+                NSData *original=[NSData dataWithContentsOfFile:dst options:0 error:nil];
+                if(!original.length || !SaveOriginalMeta(dst,original,bundleID,group)){
+                    if(err)*err=[NSError errorWithDomain:@"patch" code:EIO
+                                               userInfo:@{NSLocalizedDescriptionKey:@"originali nuk u ruajt"}];
+                    [self rollback:entries]; return NO;
+                }
+            } else {
+                SaveOriginalMeta(dst,nil,bundleID,group);
+            }
+        }
+
         NSString *backup=nil;
         if(a){
             backup=[dst stringByAppendingFormat:@".3105-displaced-%@",[[NSUUID UUID].UUIDString substringToIndex:8]];
@@ -635,10 +653,19 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
     return groups.array;
 }
 
-+ (BOOL)restoreGroup:(NSString *)group bundleID:(NSString *)bundleID error:(NSError **)err {
++ (BOOL)restoreGroup:(NSString *)group
+            bundleID:(NSString *)bundleID
+           container:(NSString *)container
+          bundlePath:(NSString *)bundlePath
+               error:(NSError **)err {
     if (!group.length) {
         if (err) *err = [NSError errorWithDomain:@"patch" code:EINVAL
                                            userInfo:@{NSLocalizedDescriptionKey: @"grup i pavlefshëm"}];
+        return NO;
+    }
+    if (!container.length && !bundlePath.length) {
+        if (err) *err = [NSError errorWithDomain:@"patch" code:ENOENT
+                                           userInfo:@{NSLocalizedDescriptionKey: @"kontenjeri i lojës nuk u gjet"}];
         return NO;
     }
 
@@ -648,6 +675,8 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
 
     NSMutableDictionary<NSString *, NSMutableDictionary<NSString *, NSData *> *> *plan =
         [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSString *, NSNumber *> *verifiedByParent = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSString *, NSNumber *> *missingByParent = [NSMutableDictionary dictionary];
     NSUInteger already = 0, missing = 0, absent = 0;
 
     for (NSString *name in names) {
@@ -662,6 +691,21 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
 
         NSString *path = meta[@"path"];
         if (![path isKindOfClass:[NSString class]] || !path.length) continue;
+        BOOL currentInstall = NO;
+        if (container.length &&
+            ([path isEqualToString:container] ||
+             [path hasPrefix:[container stringByAppendingString:@"/"]])) {
+            currentInstall = YES;
+        }
+        if (!currentInstall && bundlePath.length &&
+            ([path isEqualToString:bundlePath] ||
+             [path hasPrefix:[bundlePath stringByAppendingString:@"/"]])) {
+            currentInstall = YES;
+        }
+        if (!currentInstall) {
+            [ContainerAccess note:[NSString stringWithFormat:@"restore:stale %@", path]];
+            continue;
+        }
         if (![meta[@"existed"] boolValue]) {
             absent++;
             [ContainerAccess note:[NSString stringWithFormat:@"restore:absent %@", path]];
@@ -680,11 +724,15 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
                                                   error:&readError];
         if (!current.length) {
             missing++;
+            NSString *parent = [path stringByDeletingLastPathComponent];
+            missingByParent[parent] = @(missingByParent[parent].unsignedIntegerValue + 1);
             [ContainerAccess note:[NSString stringWithFormat:@"restore:missing %@", path]];
             continue;
         }
         if ([SHA256Hex(current) isEqualToString:meta[@"sha256"]]) {
             already++;
+            NSString *parent = [path stringByDeletingLastPathComponent];
+            verifiedByParent[parent] = @(verifiedByParent[parent].unsignedIntegerValue + 1);
             [ContainerAccess note:[NSString stringWithFormat:@"restore:already-original %@", path]];
             continue;
         }
@@ -719,9 +767,18 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
             return NO;
         }
         restored += plan[parent].count;
+        verifiedByParent[parent] = @(verifiedByParent[parent].unsignedIntegerValue + plan[parent].count);
     }
 
-    if (missing > 0) {
+    // A missing path in a parent directory that also produced a verified path
+    // is a stale backup from an older gz hash of the same game version; ignore
+    // it. If an entire parent has no verified file, the current install could
+    // not be read and nothing is claimed.
+    NSMutableArray<NSString *> *unverified = [NSMutableArray array];
+    for (NSString *parent in missingByParent) {
+        if (verifiedByParent[parent].unsignedIntegerValue == 0) [unverified addObject:parent];
+    }
+    if (unverified.count > 0) {
         if (err) *err = [NSError errorWithDomain:@"patch" code:EIO userInfo:@{
             NSLocalizedDescriptionKey: @"disa skedarë nuk u lexuan dot nga pajisja"}];
         return NO;
