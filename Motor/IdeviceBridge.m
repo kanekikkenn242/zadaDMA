@@ -749,6 +749,7 @@ static void ZDMAPinTrampoline(const char *pin, void *ctx) {
             }
         }
         NSString *addrsList = [parts componentsJoinedByString:@","];
+        NSLog(@"[IdeviceBridge] trying addresses: %@", addrsList);
         char err[4096] = {0};
         char out[2048] = {0};
         int rc = zdma_tunnel_write_file(addrsList.UTF8String,
