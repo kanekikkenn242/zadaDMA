@@ -17,6 +17,7 @@ struct HomeView: View {
                         Image(systemName: "shield.lefthalf.filled")
                             .font(.system(size: 54))
                             .foregroundColor(.appOrange)
+                            .shadow(color: .appOrange.opacity(0.5), radius: 10)
                         Text("zadaDMA")
                             .font(.system(size: 26, weight: .heavy))
                             .foregroundColor(.white)

@@ -26,6 +26,7 @@ struct MainTabView: View {
             .background(Color.appCard)
             .clipShape(Capsule())
             .padding(.horizontal, 20).padding(.bottom, 10)
+            .shadow(color: .black.opacity(0.3), radius: 10, y: 5)
         }
         .background(Color.black.ignoresSafeArea())
     }
