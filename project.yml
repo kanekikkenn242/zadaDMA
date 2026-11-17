@@ -19,8 +19,9 @@ targets:
     platform: iOS
     sources:
       - path: zadaDMA
+      - path: Airlift
       - path: Motor
-        excludes: ["zdma_crypto/**", "zdma_pairing/**", "vendor/**", "kexploit/kfd/**", "libidevice_ffi.a"]
+        excludes: ["zdma_crypto/**", "zdma_pairing/**", "vendor/**", "airlift/**", "kexploit/kfd/**", "libidevice_ffi.a"]
       - path: Payload/zadaDMA.app
         excludes: ["Info.plist", "zadaDMA", "Assets.car"]
         buildPhase: resources
@@ -30,15 +31,18 @@ targets:
         PRODUCT_NAME: zadaDMA
         INFOPLIST_FILE: Payload/zadaDMA.app/Info.plist
         SWIFT_OBJC_BRIDGING_HEADER: Motor/MotorBridge.h
-        HEADER_SEARCH_PATHS: ["$(SRCROOT)/Motor", "$(SRCROOT)/Motor/zdma_pairing"]
+        HEADER_SEARCH_PATHS: ["$(SRCROOT)/Motor", "$(SRCROOT)/Motor/zdma_pairing", "$(SRCROOT)/Airlift", "$(SRCROOT)/Airlift/include"]
         LIBRARY_SEARCH_PATHS: 
           - "$(SRCROOT)/Motor/zdma_crypto/target/aarch64-apple-ios/release"
           - "$(SRCROOT)/Motor/zdma_pairing/target/aarch64-apple-ios/release"
+          - "$(SRCROOT)/Motor/airlift/rust-core/target/aarch64-apple-ios/release"
           - "$(SRCROOT)/Motor"
         OTHER_LDFLAGS: 
           - "-ObjC"
           - "-lc++"
           - "-lzdma_crypto"
           - "-lzdma_pairing"
+          - "-lairlift_ffi"
+          - "-Wl,-u,_ALGetGrappaToken"
           - "-fobjc-link-runtime"
         TARGETED_DEVICE_FAMILY: "1,2"

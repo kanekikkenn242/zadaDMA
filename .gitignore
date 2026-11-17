@@ -1,6 +1,7 @@
 # Rust build output
 Motor/zdma_crypto/target/
 Motor/zdma_pairing/target/
+Motor/airlift/rust-core/target/
 Motor/vendor/**/target/
 
 # Xcode

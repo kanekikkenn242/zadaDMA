@@ -97,49 +97,36 @@ final class AppState: ObservableObject {
     }
 
     private func applyPatchWithFallback(fileName: String, completion: @escaping (Bool) -> Void) {
-        // Direct, on-device write through the MobileContainerManager lease.
-        // This is the same path the reference app uses and does not need
-        // installation_proxy / House Arrest (which returns
-        // installationlookupfailed for stock App Store apps on iOS 18+).
+        // Runs MCM first, then Airlift (AirTraffic). Both block on daemon I/O,
+        // so keep the whole attempt off the main thread.
         let bundleIDs = ["com.dts.freefireth", "com.dts.freefiremax"]
-        MotorBridge.resetInjectionTrace()
-        let local = MotorBridge.applyPatchFile(fileName, bundleIDs: bundleIDs)
-        let patched = local["patched"] as? [String] ?? []
-        let localErrors = local["errors"] as? [String] ?? []
-        if let error = local["error"] as? String {
-            patchLog.append("⚠️ \(error)")
-        }
-        if patched.isEmpty {
-            for line in localErrors {
-                patchLog.append("   \(line)")
-            }
-        }
-        if !patched.isEmpty {
-            patchLog.append("✅ \(fileName) u injektua lokalisht: \(patched.joined(separator: ", "))")
-            if let paths = local["paths"] as? [String], let first = paths.first {
-                patchLog.append("   \(first)")
-            }
-            completion(true)
-            return
-        }
-        patchLog.append("⚠️ MCM dështoi. Duke provuar tunelin RPPairing…")
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            MotorBridge.resetInjectionTrace()
+            let local = MotorBridge.applyPatchFile(fileName, bundleIDs: bundleIDs)
+            let trace = MotorBridge.injectionTrace()
+            let patched = local["patched"] as? [String] ?? []
+            let localErrors = local["errors"] as? [String] ?? []
+            let paths = local["paths"] as? [String] ?? []
+            let error = local["error"] as? String
 
-        guard let localPath = Bundle.main.path(forResource: fileName, ofType: "3105") else {
-            patchLog.append("❌ Skedari \(fileName).3105 mungon.")
-            completion(false)
-            return
-        }
-        // Rrënja e AFC është ose container-i ose Documents; Rust provon të dyja.
-        let remotePath = "Data/Raw/ios/gameassetbundles/avatar/assetindexer.tdn~2F53YNFWXQZyPdFl8HWBBwtXk~3D"
-
-        PairingController.shared.injectFile(localPath: localPath, remotePath: remotePath) { [weak self] success, message in
-            guard let self else { return }
-            if success {
-                self.patchLog.append("✅ \(fileName) u injektua: \(message)")
-            } else {
-                self.patchLog.append("❌ \(message)")
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if patched.isEmpty {
+                    if let error { self.patchLog.append("⚠️ \(error)") }
+                    for line in localErrors { self.patchLog.append("   \(line)") }
+                    self.patchLog.append("⚠️ MCM dhe Airlift nuk arritën ta shkruajnë skedarin.")
+                    let tail = trace.split(separator: "\n").suffix(10)
+                    if !tail.isEmpty {
+                        self.patchLog.append("ℹ️ Gjurma e fundit:")
+                        for line in tail { self.patchLog.append("   \(line)") }
+                    }
+                    completion(false)
+                    return
+                }
+                self.patchLog.append("✅ \(fileName) u injektua: \(patched.joined(separator: ", "))")
+                if let first = paths.first { self.patchLog.append("   \(first)") }
+                completion(true)
             }
-            completion(success)
         }
     }
 }

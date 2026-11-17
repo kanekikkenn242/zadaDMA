@@ -12,7 +12,7 @@ jobs:
     # Intel runners have far more free capacity than the arm64 macOS pool,
     # which repeatedly failed to acquire a runner and produced no artifact.
     runs-on: macos-15-intel
-    timeout-minutes: 60
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       
@@ -20,6 +20,22 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with: 
           targets: aarch64-apple-ios
+
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            Motor/zdma_crypto -> target
+            Motor/zdma_pairing -> target
+            Motor/airlift/rust-core -> target
+
+      - name: Build Airlift (RPPairing + AirTraffic exploit)
+        env:
+          IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+        run: |
+          cd Motor/airlift/rust-core
+          cargo build --release --target aarch64-apple-ios
+          ls -la target/aarch64-apple-ios/release/libairlift_ffi.a
           
       - name: Build zdma_crypto (Rust)
         run: |

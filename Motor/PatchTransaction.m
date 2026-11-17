@@ -1,6 +1,7 @@
 #import "PatchTransaction.h"
 #import "PatchPackageCodec.h"
 #import "ContainerAccess.h"
+#import "AirliftBridge.h"
 #include <sys/statvfs.h>
 #include <sys/stat.h>
 #include <stdint.h>
@@ -83,6 +84,8 @@ static BOOL EnoughSpace(NSString *dir, uint64_t need, NSError **err) {
     }
     return YES;
 }
+
+NSString *const PatchTransactionAirliftContainerKey = @"zadaDMA.airlift.container";
 
 @implementation PatchLedgerEntry @end
 
@@ -183,6 +186,106 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
         [ContainerAccess note:@"tx:verified"];
     }
     ledger.entries=entries; [self appendLedger:ledger]; return YES;
+}
+
++ (BOOL)applyPackage:(PatchPackage *)pkg viaAirliftToContainer:(NSString *)container bundleID:(NSString *)bundleID error:(NSError **)err {
+    if (container.length == 0) {
+        if (err) *err = [NSError errorWithDomain:@"patch" code:EINVAL
+                                           userInfo:@{NSLocalizedDescriptionKey: @"container i Airlift mungon"}];
+        return NO;
+    }
+
+    // Group by remote parent directory: al_exploit_write_dir writes a flat set
+    // of files into one target directory, one AirTraffic sync per directory.
+    NSMutableDictionary<NSString *, NSMutableDictionary<NSString *, NSData *> *> *groups = [NSMutableDictionary dictionary];
+    NSMutableArray<NSDictionary *> *entries = [NSMutableArray array];
+    if (!gLastResolvedTargets) gLastResolvedTargets = [NSMutableArray array];
+
+    for (NSDictionary *r in pkg.rules) {
+        NSString *src = r[@"src"], *dst = r[@"dst"];
+        if (![src isKindOfClass:[NSString class]] || ![dst isKindOfClass:[NSString class]]) {
+            if (err) *err = [NSError errorWithDomain:@"patch" code:EINVAL userInfo:nil];
+            return NO;
+        }
+        NSData *blob = pkg.files[src];
+        if (!blob.length) {
+            if (err) *err = [NSError errorWithDomain:@"patch" code:ENOENT userInfo:@{
+                NSLocalizedDescriptionKey: [NSString stringWithFormat:@"missing %@", src]}];
+            return NO;
+        }
+        NSString *want = pkg.digests[src];
+        if (want && ![SHA256Hex(blob) isEqualToString:want]) {
+            if (err) *err = [NSError errorWithDomain:@"patch" code:EINVAL
+                                               userInfo:@{NSLocalizedDescriptionKey: @"pkg digest"}];
+            return NO;
+        }
+
+        NSString *rel = [dst stringByStandardizingPath];
+        while ([rel hasPrefix:@"/"]) rel = [rel substringFromIndex:1];
+        if ([rel hasPrefix:@".."]) {
+            if (err) *err = [NSError errorWithDomain:@"patch" code:EPERM
+                                               userInfo:@{NSLocalizedDescriptionKey: @"path traversal"}];
+            return NO;
+        }
+        // Free Fire reads its asset tree from <container>/Documents.
+        NSString *remote = [rel hasPrefix:@"Documents/"] || [rel hasPrefix:@"Library/"]
+            ? [container stringByAppendingPathComponent:rel]
+            : [[container stringByAppendingPathComponent:@"Documents"] stringByAppendingPathComponent:rel];
+
+        NSString *parent = [remote stringByDeletingLastPathComponent];
+        NSString *leaf = [remote lastPathComponent];
+        if (parent.length == 0 || leaf.length == 0) {
+            if (err) *err = [NSError errorWithDomain:@"patch" code:EINVAL
+                                               userInfo:@{NSLocalizedDescriptionKey: @"empty target"}];
+            return NO;
+        }
+        NSMutableDictionary<NSString *, NSData *> *files = groups[parent];
+        if (!files) {
+            files = [NSMutableDictionary dictionary];
+            groups[parent] = files;
+        }
+        files[leaf] = blob;
+        [entries addObject:@{@"dst": remote, @"backup": [NSNull null],
+                             @"sha256": want ?: SHA256Hex(blob), @"ok": @YES,
+                             @"via": @"airlift"}];
+    }
+
+    PatchLedgerEntry *ledger = [PatchLedgerEntry new];
+    ledger.bundleID = bundleID;
+    ledger.containerPath = container;
+    ledger.at = [NSDate date];
+    ledger.entries = entries;
+
+    for (NSString *targetDirectory in groups) {
+        [ContainerAccess note:[NSString stringWithFormat:@"tx:airlift %@", targetDirectory]];
+        NSError *writeError = nil;
+        NSDictionary<NSString *, NSData *> *files = groups[targetDirectory];
+        BOOL ok = [AirliftBridge writeFiles:files
+                          toTargetDirectory:targetDirectory
+                                        log:^(NSString *line) {
+            [ContainerAccess note:[NSString stringWithFormat:@"airlift: %@", line]];
+        }
+                                      error:&writeError];
+        if (!ok) {
+            NSMutableDictionary *info = [NSMutableDictionary dictionary];
+            info[NSLocalizedDescriptionKey] = @"Airlift write dështoi.";
+            NSString *reason = writeError.localizedFailureReason ?: writeError.localizedDescription;
+            if (reason.length) info[NSLocalizedFailureReasonErrorKey] = reason;
+            NSArray *diag = writeError.userInfo[@"ZDMADiagnostics"];
+            if (diag.count) info[@"ZDMADiagnostics"] = diag;
+            if (err) *err = [NSError errorWithDomain:@"patch" code:EIO userInfo:info];
+            [ContainerAccess note:@"tx:airlift-failed"];
+            return NO;
+        }
+        for (NSString *leaf in files) {
+            NSString *full = [targetDirectory stringByAppendingPathComponent:leaf];
+            [gLastResolvedTargets addObject:full];
+        }
+        [ContainerAccess note:@"tx:airlift-ok"];
+    }
+
+    [self appendLedger:ledger];
+    return YES;
 }
 
 + (void)rollback:(NSArray<NSDictionary*> *)entries {
