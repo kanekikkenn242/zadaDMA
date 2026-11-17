@@ -295,11 +295,15 @@ static ZDMAContainerLease *zdma_lease_for_bundle(NSString *bundleID, NSString **
         if (failure) *failure = @"container_query_create dështoi";
         return nil;
     }
-    zdma_trace(@"lease:query");
+    zdma_trace([NSString stringWithFormat:@"lease:query %p", query]);
 
+    zdma_trace(@"lease:set-class");
     gAPI.set_class(query, 2);
+    zdma_trace(@"lease:set-ids");
     gAPI.set_identifiers(query, bundleID.UTF8String);
+    zdma_trace(@"lease:set-flags");
     gAPI.set_flags(query, 0x900000000ULL);
+    zdma_trace(@"lease:set-part");
     if (gAPI.set_part) gAPI.set_part(query, 0);
     zdma_trace(@"lease:configured");
 
