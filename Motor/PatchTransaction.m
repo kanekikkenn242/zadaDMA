@@ -220,7 +220,7 @@ static NSString *GroupStemForDestination(NSString *dst) {
     // The decompressed cache (`<leaf>.raw.tmp`) belongs to the same original as
     // the gzip leaf, otherwise toggling off would leave it behind.
     if ([leaf hasSuffix:@".raw.tmp"]) {
-        leaf = [leaf substringToIndex:leaf.length - (NSUInteger)@".raw.tmp".length];
+        leaf = [leaf substringToIndex:leaf.length - 8];
     }
     NSRange dot = [leaf rangeOfString:@"." options:NSBackwardsSearch];
     if (dot.location != NSNotFound && dot.location > 0) leaf = [leaf substringToIndex:dot.location];
