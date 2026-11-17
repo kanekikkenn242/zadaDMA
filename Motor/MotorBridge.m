@@ -171,13 +171,11 @@
     if (installed.count == 0) return all;
 
     NSSet<NSString *> *present = [NSSet setWithArray:installed];
-    NSMutableArray<NSString *> *matched = [NSMutableArray array];
-    for (NSString *bundleID in all) {
-        if ([present containsObject:bundleID]) [matched addObject:bundleID];
-    }
-    // The sandbox can hide LaunchServices data; only trust the intersection
-    // when it actually names a Free Fire variant.
-    return matched.count ? matched : all;
+    // The regular game is the target whenever it exists. A leftover Max
+    // container must never hide the copy the player actually launched.
+    if ([present containsObject:@"com.dts.freefireth"]) return @[@"com.dts.freefireth"];
+    if ([present containsObject:@"com.dts.freefiremax"]) return @[@"com.dts.freefiremax"];
+    return all;
 }
 
 + (BOOL)applyPatch:(NSString *)patchName {
