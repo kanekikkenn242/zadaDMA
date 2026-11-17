@@ -34,6 +34,16 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSDictionary<NSString *, id> *)restorePatchFile:(NSString *)patchName
                                          bundleIDs:(NSArray<NSString *> *)bundleIDs;
 + (nullable NSArray<NSString *> *)appContainers;
+/**
+ * Free Fire variants that are actually installed on this device.
+ *
+ * The store ships two distinct apps (`com.dts.freefireth` and
+ * `com.dts.freefiremax`); a device normally has only one of them. Attempting
+ * the missing one produces a confusing "apply failed" log even when the
+ * installed game was patched, so callers must only target what is present.
+ * Falls back to both identifiers when the sandbox hides the app catalogue.
+ */
++ (NSArray<NSString *> *)installedFreeFireBundleIDs;
 + (BOOL)applyPatch:(NSString *)patchName;
 + (NSString *)containerPathForBundleID:(NSString *)bundleID;
 + (void)resetInjectionTrace;

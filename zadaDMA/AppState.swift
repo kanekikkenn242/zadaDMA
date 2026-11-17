@@ -137,7 +137,7 @@ final class AppState: ObservableObject {
         // Runs MCM first, then Airlift (AirTraffic). Both block on daemon I/O,
         // so keep the whole attempt off the main thread.
         patchInFlight = true
-        let bundleIDs = ["com.dts.freefireth", "com.dts.freefiremax"]
+        let bundleIDs = MotorBridge.installedFreeFireBundleIDs()
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             MotorBridge.resetInjectionTrace()
             let local = MotorBridge.applyPatchFile(fileName, bundleIDs: bundleIDs)
@@ -171,7 +171,7 @@ final class AppState: ObservableObject {
 
     private func restorePatchWithFallback(fileName: String, completion: @escaping (Bool) -> Void) {
         patchInFlight = true
-        let bundleIDs = ["com.dts.freefireth", "com.dts.freefiremax"]
+        let bundleIDs = MotorBridge.installedFreeFireBundleIDs()
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             MotorBridge.resetInjectionTrace()
             let local = MotorBridge.restorePatchFile(fileName, bundleIDs: bundleIDs)

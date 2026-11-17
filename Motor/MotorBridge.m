@@ -165,9 +165,24 @@
     return identifiers.array;
 }
 
++ (NSArray<NSString *> *)installedFreeFireBundleIDs {
+    NSArray<NSString *> *all = @[@"com.dts.freefireth", @"com.dts.freefiremax"];
+    NSArray<NSString *> *installed = [self appContainers];
+    if (installed.count == 0) return all;
+
+    NSSet<NSString *> *present = [NSSet setWithArray:installed];
+    NSMutableArray<NSString *> *matched = [NSMutableArray array];
+    for (NSString *bundleID in all) {
+        if ([present containsObject:bundleID]) [matched addObject:bundleID];
+    }
+    // The sandbox can hide LaunchServices data; only trust the intersection
+    // when it actually names a Free Fire variant.
+    return matched.count ? matched : all;
+}
+
 + (BOOL)applyPatch:(NSString *)patchName {
     NSDictionary *result = [self applyPatchFile:patchName
-                                      bundleIDs:@[@"com.dts.freefireth", @"com.dts.freefiremax"]];
+                                      bundleIDs:[self installedFreeFireBundleIDs]];
     return [(NSArray *)result[@"patched"] count] > 0;
 }
 
