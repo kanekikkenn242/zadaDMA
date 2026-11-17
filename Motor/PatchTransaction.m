@@ -1,5 +1,6 @@
 #import "PatchTransaction.h"
 #import "PatchPackageCodec.h"
+#import "ContainerAccess.h"
 #include <sys/statvfs.h>
 #include <sys/stat.h>
 #include <stdint.h>
@@ -132,6 +133,7 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
         NSString *src=r[@"src"], *dst=r[@"dst"];
         if(!src||!dst){ if(err)*err=[NSError errorWithDomain:@"patch" code:EINVAL userInfo:nil]; return NO; }
         NSString *full=ResolveTarget(container,dst);
+        [ContainerAccess note:[NSString stringWithFormat:@"tx:target %@", full]];
         if(!UnderRoot(container,full)){ if(err)*err=[NSError errorWithDomain:@"patch" code:EPERM userInfo:@{NSLocalizedDescriptionKey:@"path traversal"}]; return NO; }
         if(RejectSymlink(container,full)){ if(err)*err=[NSError errorWithDomain:@"patch" code:EPERM userInfo:@{NSLocalizedDescriptionKey:@"symlink"}]; return NO; }
         NSData *blob=pkg.files[src];
@@ -153,18 +155,22 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
         NSString *backup=nil;
         if(a){
             backup=[dst stringByAppendingFormat:@".3105-displaced-%@",[[NSUUID UUID].UUIDString substringToIndex:8]];
+            [ContainerAccess note:@"tx:backup"];
             if(![fm copyItemAtPath:dst toPath:backup error:err]){ [self rollback:entries]; return NO; }
         }
         NSString *parent=[dst stringByDeletingLastPathComponent];
         if(![fm fileExistsAtPath:parent]){
+            [ContainerAccess note:@"tx:mkdir"];
             if(![fm createDirectoryAtPath:parent withIntermediateDirectories:YES attributes:nil error:err]){
                 if(backup)[fm removeItemAtPath:backup error:nil]; [self rollback:entries]; return NO; 
             }
         }
+        [ContainerAccess note:@"tx:writing"];
         if(![blob writeToFile:dst options:NSDataWritingAtomic error:err]){
             if(backup)[fm removeItemAtPath:backup error:nil]; [self rollback:entries]; return NO; 
         }
         
+        [ContainerAccess note:@"tx:written"];
         NSData *got=[NSData dataWithContentsOfFile:dst options:0 error:nil];
         if(!got || ![SHA256Hex(got) isEqualToString:dig]){
             if(err)*err=[NSError errorWithDomain:@"patch" code:EIO userInfo:@{NSLocalizedDescriptionKey:@"readback digest"}];
@@ -174,6 +180,7 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
         }
         [entries addObject:@{@"dst":dst,@"backup":backup?:[NSNull null],@"sha256":dig,@"ok":@YES}];
         [gLastResolvedTargets addObject:dst];
+        [ContainerAccess note:@"tx:verified"];
     }
     ledger.entries=entries; [self appendLedger:ledger]; return YES;
 }

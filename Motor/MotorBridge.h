@@ -23,6 +23,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (nullable NSArray<NSString *> *)appContainers;
 + (BOOL)applyPatch:(NSString *)patchName;
 + (NSString *)containerPathForBundleID:(NSString *)bundleID;
++ (void)resetInjectionTrace;
++ (NSString *)injectionTrace;
 @end
 
 NS_ASSUME_NONNULL_END

@@ -148,6 +148,32 @@ static void zdma_load_api(void) {
     });
 }
 
+static NSString *zdma_trace_path(void) {
+    static NSString *path;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        NSString *docs = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,
+                                                            NSUserDomainMask, YES).firstObject;
+        path = [docs stringByAppendingPathComponent:@"zdma-trace.log"];
+    });
+    return path;
+}
+
+/// Durable breadcrumb: written+fsynced before every risky MCM call so a crash
+/// still leaves the last reached step on disk for the next launch.
+static void zdma_trace(NSString *step) {
+    if (step.length == 0) return;
+    NSString *line = [NSString stringWithFormat:@"%.3f %@\n",
+                      [NSDate date].timeIntervalSince1970, step];
+    NSData *data = [line dataUsingEncoding:NSUTF8StringEncoding];
+    const char *path = zdma_trace_path().fileSystemRepresentation;
+    int fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
+    if (fd < 0) return;
+    write(fd, data.bytes, data.length);
+    fsync(fd);
+    close(fd);
+}
+
 static NSError *zdma_error(NSInteger code, NSString *desc, NSString *detail) {
     NSMutableDictionary *u = [NSMutableDictionary dictionary];
     u[NSLocalizedDescriptionKey] = desc.length ? desc : @"Container access failed";
@@ -263,28 +289,34 @@ static ZDMAContainerLease *zdma_lease_for_bundle(NSString *bundleID, NSString **
         return nil;
     }
 
+    zdma_trace([NSString stringWithFormat:@"lease:start %@", bundleID]);
     void *query = gAPI.query_create();
     if (!query) {
         if (failure) *failure = @"container_query_create dështoi";
         return nil;
     }
+    zdma_trace(@"lease:query");
 
     gAPI.set_class(query, 2);
     gAPI.set_identifiers(query, bundleID.UTF8String);
     gAPI.set_flags(query, 0x900000000ULL);
     if (gAPI.set_part) gAPI.set_part(query, 0);
+    zdma_trace(@"lease:configured");
 
     void *result = gAPI.get_single(query);
     if (!result) {
         NSString *detail = zdma_query_error_text(query);
         if (failure) *failure = detail.length ? detail : @"daemon nuk ktheu rezultat";
+        zdma_trace([NSString stringWithFormat:@"lease:no-result %@", detail ?: @""]);
         gAPI.query_free(query);
         return nil;
     }
+    zdma_trace(@"lease:result");
 
     const char *pathC = gAPI.get_path ? gAPI.get_path(result) : NULL;
     if (!pathC || pathC[0] == '\0') {
         if (failure) *failure = @"container_object_get_path ktheu null";
+        zdma_trace(@"lease:no-path");
         gAPI.query_free(query);
         return nil;
     }
@@ -292,22 +324,31 @@ static ZDMAContainerLease *zdma_lease_for_bundle(NSString *bundleID, NSString **
     NSString *path = zdma_normalize_path([NSString stringWithUTF8String:pathC]);
     if (!path.isAbsolutePath) {
         if (failure) *failure = @"rruga e kontejnerit nuk është absolute";
+        zdma_trace(@"lease:relative-path");
         gAPI.query_free(query);
         return nil;
     }
+    zdma_trace([NSString stringWithFormat:@"lease:path %@", path]);
 
     void *retained = gAPI.object_copy ? gAPI.object_copy(result) : NULL;
+    zdma_trace(retained ? @"lease:copied" : @"lease:copy-null");
 
     bool activated = false;
-    if (gAPI.object_activate) {
-        activated = gAPI.object_activate(retained ? retained : result, false);
+    if (gAPI.object_activate && retained) {
+        zdma_trace(@"lease:activating");
+        activated = gAPI.object_activate(retained, false);
+        zdma_trace(activated ? @"lease:activated" : @"lease:activate-false");
     }
 
     int64_t handle = -1;
-    if (!activated && gAPI.copy_token && gAPI.ext_consume) {
-        char *token = gAPI.copy_token(result);
+    if (!activated && retained && gAPI.copy_token && gAPI.ext_consume) {
+        char *token = gAPI.copy_token(retained);
         if (token) {
-            handle = gAPI.ext_consume(token);
+            if (token[0] != '\0') {
+                zdma_trace(@"lease:consuming-token");
+                handle = gAPI.ext_consume(token);
+                zdma_trace([NSString stringWithFormat:@"lease:consumed=%lld", (long long)handle]);
+            }
             free(token);
         }
     }
@@ -316,9 +357,11 @@ static ZDMAContainerLease *zdma_lease_for_bundle(NSString *bundleID, NSString **
         if (retained && gAPI.object_free) gAPI.object_free(retained);
         gAPI.query_free(query);
         if (failure) *failure = @"sandbox extension nuk u aktivizua";
+        zdma_trace(@"lease:no-extension");
         return nil;
     }
 
+    zdma_trace(@"lease:opening");
     int fd = open(path.fileSystemRepresentation, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
     if (fd < 0) {
         int savedErrno = errno;
@@ -329,9 +372,11 @@ static ZDMAContainerLease *zdma_lease_for_bundle(NSString *bundleID, NSString **
             *failure = [NSString stringWithFormat:@"container root open failed errno=%d (%s)",
                         savedErrno, strerror(savedErrno)];
         }
+        zdma_trace([NSString stringWithFormat:@"lease:open-failed errno=%d", savedErrno]);
         return nil;
     }
     close(fd);
+    zdma_trace(@"lease:ok");
 
     ZDMAContainerLease *lease = [ZDMAContainerLease new];
     lease.bundleID = bundleID;
@@ -375,7 +420,8 @@ static NSString *zdma_scan_filesystem(NSString *bundleID, NSMutableArray<NSStrin
     return nil;
 }
 
-static NSString *zdma_launchservices_container(NSString *bundleID) {
+static __attribute__((unused)) NSString *zdma_launchservices_container(NSString *bundleID) {
+    @try {
     void *handle = dlopen("/System/Library/Frameworks/MobileCoreServices.framework/MobileCoreServices",
                           RTLD_LAZY);
     Class workspaceClass = NSClassFromString(@"LSApplicationWorkspace");
@@ -407,10 +453,28 @@ static NSString *zdma_launchservices_container(NSString *bundleID) {
     }
     if (handle) dlclose(handle);
     return result;
+    } @catch (__unused NSException *exception) {
+        return nil;
+    }
 }
 
 // ---------------------------------------------------------------------------
 @implementation ContainerAccess
+
++ (void)resetTrace {
+    [[NSFileManager defaultManager] removeItemAtPath:zdma_trace_path() error:nil];
+}
+
++ (void)note:(NSString *)step {
+    zdma_trace(step);
+}
+
++ (NSString *)traceTail {
+    NSString *text = [NSString stringWithContentsOfFile:zdma_trace_path()
+                                               encoding:NSUTF8StringEncoding
+                                                  error:nil];
+    return text ?: @"";
+}
 
 + (BOOL)isAvailable {
     zdma_load_api();
@@ -437,6 +501,7 @@ static NSString *zdma_launchservices_container(NSString *bundleID) {
     }
 
     NSMutableArray<NSString *> *diag = [NSMutableArray array];
+    zdma_trace([NSString stringWithFormat:@"resolve:begin %@", bundleID]);
 
     if (gAPI.loaded) {
         NSString *failure = nil;
@@ -453,26 +518,13 @@ static NSString *zdma_launchservices_container(NSString *bundleID) {
         [diag addObject:@"MCM: libsystem_containermanager ose simbolet mungojnë"];
     }
 
+    // Fallbacks that rely on the path-traversal grant (bad_query) or private
+    // LaunchServices calls are intentionally disabled in the write path: a
+    // wrong guess kills the process instead of returning an error. The
+    // filesystem scan is kept only as a read-only diagnostic.
     NSString *scanned = zdma_scan_filesystem(bundleID, diag);
     if (scanned.length) {
-        NSError *grantError = nil;
-        if ([self grantAccessToPath:scanned error:&grantError]) {
-            return scanned;
-        }
-        [diag addObject:[NSString stringWithFormat:@"FS lease: %@",
-                         grantError.localizedFailureReason ?: grantError.localizedDescription ?: @"refuzuar"]];
-    }
-
-    NSString *lsPath = zdma_launchservices_container(bundleID);
-    if (lsPath.length) {
-        NSError *grantError = nil;
-        if ([self grantAccessToPath:lsPath error:&grantError]) {
-            return lsPath;
-        }
-        [diag addObject:[NSString stringWithFormat:@"LS lease: %@",
-                         grantError.localizedFailureReason ?: grantError.localizedDescription ?: @"refuzuar"]];
-    } else {
-        [diag addObject:@"LSApplicationWorkspace: pa dataContainerURL"];
+        [diag addObject:[NSString stringWithFormat:@"FS path (pa lease): %@", scanned]];
     }
 
     if (error) {

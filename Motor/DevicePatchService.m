@@ -34,13 +34,18 @@
 }
 
 + (BOOL)applyPatch:(PatchPackage *)pkg toBundleID:(NSString *)bundleID error:(NSError **)err {
+    [ContainerAccess note:[NSString stringWithFormat:@"apply:begin %@", bundleID]];
     NSError *containerError = nil;
     NSString *container = [self containerPathForBundleID:bundleID error:&containerError];
     if (!container) {
+        [ContainerAccess note:@"apply:no-container"];
         if (err) *err = containerError;
         return NO;
     }
-    return [PatchTransaction applyPackage:pkg container:container bundleID:bundleID error:err];
+    [ContainerAccess note:[NSString stringWithFormat:@"apply:container %@", container]];
+    BOOL ok = [PatchTransaction applyPackage:pkg container:container bundleID:bundleID error:err];
+    [ContainerAccess note:ok ? @"apply:done" : @"apply:failed"];
+    return ok;
 }
 
 @end

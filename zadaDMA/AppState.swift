@@ -41,6 +41,13 @@ final class AppState: ObservableObject {
         let info = DeviceInfo()
         self.deviceModel = info.modelName
         self.deviceiOS = info.systemVersion
+        let trace = MotorBridge.injectionTrace()
+        if !trace.isEmpty {
+            patchLog.append("ℹ️ Gjurma e provës së fundit:")
+            for line in trace.split(separator: "\n").suffix(4) {
+                patchLog.append("   \(line)")
+            }
+        }
         SoundManager.shared.play(sound: "welcome")
     }
 
@@ -95,6 +102,7 @@ final class AppState: ObservableObject {
         // installation_proxy / House Arrest (which returns
         // installationlookupfailed for stock App Store apps on iOS 18+).
         let bundleIDs = ["com.dts.freefireth", "com.dts.freefiremax"]
+        MotorBridge.resetInjectionTrace()
         let local = MotorBridge.applyPatchFile(fileName, bundleIDs: bundleIDs)
         let patched = local["patched"] as? [String] ?? []
         let localErrors = local["errors"] as? [String] ?? []

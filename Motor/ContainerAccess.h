@@ -44,6 +44,15 @@ NS_ASSUME_NONNULL_BEGIN
 + (nullable NSArray<NSString *> *)listDirectory:(NSString *)path
                                           error:(NSError **)error;
 
+/// Clears the durable MCM breadcrumb before a new injection attempt.
++ (void)resetTrace;
+
+/// Appends one durable breadcrumb line (used by the patch transaction too).
++ (void)note:(NSString *)step;
+
+/// Last breadcrumb lines written before a crash (or during the last attempt).
++ (NSString *)traceTail;
+
 @end
 
 NS_ASSUME_NONNULL_END

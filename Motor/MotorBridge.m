@@ -108,4 +108,12 @@
     return [DevicePatchService containerPathForBundleID:bundleID] ?: @"";
 }
 
++ (void)resetInjectionTrace {
+    [ContainerAccess resetTrace];
+}
+
++ (NSString *)injectionTrace {
+    return [ContainerAccess traceTail];
+}
+
 @end
