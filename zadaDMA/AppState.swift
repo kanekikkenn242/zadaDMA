@@ -55,22 +55,41 @@ final class AppState: ObservableObject {
     }
 
     func toggleFeature(_ name: String, isOn: Bool, patchFile: String? = nil) {
-        if isOn {
-            if let file = patchFile,
-               Bundle.main.path(forResource: file, ofType: "3105") == nil {
-                patchLog.append("⚠️ \(name): patch-i nuk është në këtë build.")
-                return
-            }
-            SoundManager.shared.play(sound: "activar")
-            patchLog.append("✅ \(name) u aktivizua.")
-            if let file = patchFile { applyPatchWithFallback(fileName: file) }
-        } else {
+        if !isOn {
             SoundManager.shared.play(sound: "desactivar")
+            setFeature(name, enabled: false)
             patchLog.append("❌ \(name) u deaktivizua.")
+            return
+        }
+        guard let file = patchFile else {
+            SoundManager.shared.play(sound: "activar")
+            setFeature(name, enabled: true)
+            patchLog.append("✅ \(name) u aktivizua.")
+            return
+        }
+        guard Bundle.main.path(forResource: file, ofType: "3105") != nil else {
+            patchLog.append("⚠️ \(name): patch-i nuk është në këtë build.")
+            return
+        }
+        SoundManager.shared.play(sound: "activar")
+        patchLog.append("⏳ \(name): duke injektuar…")
+        applyPatchWithFallback(fileName: file) { [weak self] success in
+            guard let self else { return }
+            if success { self.setFeature(name, enabled: true) }
         }
     }
 
-    private func applyPatchWithFallback(fileName: String) {
+    private func setFeature(_ name: String, enabled: Bool) {
+        switch name {
+        case "AIM DRAG": aimbotDragEnabled = enabled
+        case "AIM PECHO": aimPeitoEnabled = enabled
+        case "HOLOGRAMA": hologramEnabled = enabled
+        case "SKIN": skinEnabled = enabled
+        default: break
+        }
+    }
+
+    private func applyPatchWithFallback(fileName: String, completion: @escaping (Bool) -> Void) {
         // Direct, on-device write through the MobileContainerManager lease.
         // This is the same path the reference app uses and does not need
         // installation_proxy / House Arrest (which returns
@@ -92,12 +111,14 @@ final class AppState: ObservableObject {
             if let paths = local["paths"] as? [String], let first = paths.first {
                 patchLog.append("   \(first)")
             }
+            completion(true)
             return
         }
         patchLog.append("⚠️ MCM dështoi. Duke provuar tunelin RPPairing…")
 
         guard let localPath = Bundle.main.path(forResource: fileName, ofType: "3105") else {
             patchLog.append("❌ Skedari \(fileName).3105 mungon.")
+            completion(false)
             return
         }
         // Rrënja e AFC është ose container-i ose Documents; Rust provon të dyja.
@@ -110,6 +131,7 @@ final class AppState: ObservableObject {
             } else {
                 self.patchLog.append("❌ \(message)")
             }
+            completion(success)
         }
     }
 }
