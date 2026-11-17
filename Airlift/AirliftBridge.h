@@ -30,7 +30,7 @@ typedef void (^ZDMAAirliftLogBlock)(NSString *line);
 + (nullable NSString *)pairingFilePath;
 
 /// Resolves the Data container via InstallationProxy over the Airlift tunnel.
-+/// Returns a `/var/mobile/...` path (AirTraffic canonical form) or nil.
+/// Returns a `/var/mobile/...` path (AirTraffic canonical form) or nil.
 + (nullable NSString *)containerForBundleID:(NSString *)bundleID
                                         log:(nullable ZDMAAirliftLogBlock)log
                                       error:(NSError **)error;
