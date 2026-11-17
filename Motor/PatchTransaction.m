@@ -63,8 +63,93 @@ static NSString *ResolveTarget(NSString *container, NSString *dst) {
     return rootCandidate;
 }
 
-static BOOL RejectSymlink(NSString *root, NSString *dst) {
-    NSFileManager *fm=[NSFileManager defaultManager]; 
+// Free Fire names downloaded bundles by the URL-escaped Base64 of their gzip
+// SHA-1 (`+` -> ~2B, `/` -> ~2F, `=` -> ~3D), so the leaf changes with every
+// game version. Packages use `{gz}` as a placeholder and the fallback name is
+// resolved at runtime from `Data/Raw/ios/fileinfo`.
+static NSString *EscapeGzHash(NSString *hash) {
+    NSMutableString *s = [hash mutableCopy];
+    [s replaceOccurrencesOfString:@"+" withString:@"~2B" options:0 range:NSMakeRange(0, s.length)];
+    [s replaceOccurrencesOfString:@"/" withString:@"~2F" options:0 range:NSMakeRange(0, s.length)];
+    [s replaceOccurrencesOfString:@"=" withString:@"~3D" options:0 range:NSMakeRange(0, s.length)];
+    return s;
+}
+
+// fileinfo line: key,rawSHA1B64,rawSize,0,gzSHA1B64,gzSize,True,0
+static NSString *GzHashForKey(NSData *fileinfo, NSString *key) {
+    if (!fileinfo.length || !key.length) return nil;
+    NSString *text = [[NSString alloc] initWithData:fileinfo encoding:NSUTF8StringEncoding];
+    if (!text) text = [[NSString alloc] initWithData:fileinfo encoding:NSISOLatin1StringEncoding];
+    if (!text) return nil;
+    for (NSString *line in [text componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]]) {
+        if (!line.length) continue;
+        NSArray<NSString *> *fields = [line componentsSeparatedByString:@","];
+        if (fields.count < 5) continue;
+        if (![fields[0] isEqualToString:key]) continue;
+        NSString *gz = fields[4];
+        if (gz.length) return EscapeGzHash(gz);
+    }
+    return nil;
+}
+
+// Resolve a `.../gameassetbundles/<key>.{gz}` destination against fileinfo.
+static NSString *ResolveGzDestination(NSString *dst, NSData *fileinfo) {
+    NSRange marker = [dst rangeOfString:@"{gz}"];
+    if (marker.location == NSNotFound) return dst;
+    if (marker.location + marker.length != dst.length) return nil;
+
+    NSString *stem = [dst substringToIndex:marker.location];
+    static NSString *const prefix = @"Data/Raw/ios/gameassetbundles/";
+    if (![stem hasSuffix:@"."] || ![stem hasPrefix:prefix]) return nil;
+    stem = [stem substringToIndex:stem.length - 1];
+    NSString *key = [stem substringFromIndex:prefix.length];
+    NSString *gz = GzHashForKey(fileinfo, key);
+    if (!gz.length) return nil;
+    return [stem stringByAppendingFormat:@".%@", gz];
+}
+
+static NSData *LoadFileinfo(NSString *container, NSString *bundlePath) {
+    NSMutableArray<NSString *> *paths = [NSMutableArray array];
+    if (bundlePath.length) {
+        [paths addObject:[bundlePath stringByAppendingPathComponent:@"Data/Raw/ios/fileinfo"]];
+    }
+    [paths addObject:[[container stringByAppendingPathComponent:@"Documents"]
+                      stringByAppendingPathComponent:@"Data/Raw/ios/fileinfo"]];
+    [paths addObject:[container stringByAppendingPathComponent:@"Data/Raw/ios/fileinfo"]];
+
+    NSFileManager *fm = [NSFileManager defaultManager];
+    for (NSString *path in paths) {
+        if (![fm isReadableFileAtPath:path]) continue;
+        NSData *data = [NSData dataWithContentsOfFile:path];
+        if (data.length) {
+            [ContainerAccess note:[NSString stringWithFormat:@"fileinfo:local %@ (%lu B)",
+                                   path, (unsigned long)data.length]];
+            return data;
+        }
+    }
+
+    // Not readable from the sandbox: export it through AirTraffic.
+    for (NSString *path in paths) {
+        NSError *readError = nil;
+        NSData *data = [AirliftBridge readFileAtPath:path
+                                                 log:^(NSString *line) {
+            [ContainerAccess note:[NSString stringWithFormat:@"airlift-fileinfo: %@", line]];
+        }
+                                               error:&readError];
+        if (data.length) {
+            [ContainerAccess note:[NSString stringWithFormat:@"fileinfo:airlift %@ (%lu B)",
+                                   path, (unsigned long)data.length]];
+            return data;
+        }
+        if (readError) {
+            [ContainerAccess note:[NSString stringWithFormat:@"fileinfo:airlift-failed %@: %@",
+                                   path, readError.localizedFailureReason ?: readError.localizedDescription]];
+        }
+    }
+    return nil;
+}
+
+static BOOL RejectSymlink(NSString *root, NSString *dst) {    NSFileManager *fm=[NSFileManager defaultManager]; 
     NSString *cur=dst;
     while(cur.length>root.length){
         NSDictionary *a=[fm attributesOfItemAtPath:cur error:nil];
@@ -127,6 +212,18 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
     if(![fm fileExistsAtPath:container]) { 
         if(err)*err=[NSError errorWithDomain:@"patch" code:ENOENT userInfo:@{NSLocalizedDescriptionKey:@"container missing"}]; 
         return NO; 
+    }
+
+    // `{gz}` leaves are version-dependent and resolved from the device's own
+    // fileinfo through Airlift; the MCM path has no reader for it.
+    for (NSDictionary *r in pkg.rules) {
+        NSString *dst = r[@"dst"];
+        if ([dst isKindOfClass:[NSString class]] && [dst containsString:@"{gz}"]) {
+            [ContainerAccess note:@"tx:mcm-skip-gz"];
+            if (err) *err = [NSError errorWithDomain:@"patch" code:ENOTSUP userInfo:@{
+                NSLocalizedDescriptionKey: @"paketa kërkon fileinfo (Airlift)"}];
+            return NO;
+        }
     }
     
     uint64_t total=0; 
@@ -217,11 +314,31 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
     NSMutableArray<NSDictionary *> *entries = [NSMutableArray array];
     if (!gLastResolvedTargets) gLastResolvedTargets = [NSMutableArray array];
 
+    NSData *fileinfo = nil;
+    BOOL fileinfoAttempted = NO;
+
     for (NSDictionary *r in pkg.rules) {
         NSString *src = r[@"src"], *dst = r[@"dst"];
         if (![src isKindOfClass:[NSString class]] || ![dst isKindOfClass:[NSString class]]) {
             if (err) *err = [NSError errorWithDomain:@"patch" code:EINVAL userInfo:nil];
             return NO;
+        }
+        if ([dst containsString:@"{gz}"]) {
+            if (!fileinfoAttempted) {
+                fileinfoAttempted = YES;
+                fileinfo = LoadFileinfo(container, bundlePath);
+                [ContainerAccess note:[NSString stringWithFormat:@"fileinfo:%@",
+                                       fileinfo.length ? @"loaded" : @"missing"]];
+            }
+            NSString *resolved = ResolveGzDestination(dst, fileinfo);
+            if (!resolved.length) {
+                if (err) *err = [NSError errorWithDomain:@"patch" code:ENOENT userInfo:@{
+                    NSLocalizedDescriptionKey: [NSString stringWithFormat:
+                        @"fileinfo nuk e zgjidhi dot %@", dst]}];
+                return NO;
+            }
+            [ContainerAccess note:[NSString stringWithFormat:@"tx:gz %@ -> %@", dst, resolved]];
+            dst = resolved;
         }
         NSData *blob = pkg.files[src];
         if (!blob.length) {

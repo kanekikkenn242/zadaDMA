@@ -410,4 +410,57 @@ static void ZDMAAirliftConfigureRoute(void) {
     return NO;
 }
 
++ (nullable NSData *)readFileAtPath:(NSString *)remotePath
+                                log:(ZDMAAirliftLogBlock)log
+                              error:(NSError **)error {
+    if (remotePath.length == 0 || ![remotePath hasPrefix:@"/"]) {
+        if (error) *error = ZDMAAirliftError(@"Rruga e skedarit nuk është absolute.", nil);
+        return nil;
+    }
+    NSString *pairingPath = [self pairingFilePath];
+    if (!pairingPath) {
+        if (error) *error = ZDMAAirliftError(
+            @"Pairing file (rppairing.plist) mungon. Bëj Start Pairing përsëri.", nil);
+        return nil;
+    }
+
+    ZDMAAirliftConfigureRoute();
+
+    ZDMAAirliftLogSink *sink = [ZDMAAirliftLogSink new];
+    sink.block = log;
+
+    uint8_t *outData = NULL;
+    size_t outLen = 0;
+    char *outError = NULL;
+    int32_t rc = al_exploit_read_file(pairingPath.UTF8String,
+                                      remotePath.UTF8String,
+                                      ZDMAAirliftLogCallback,
+                                      (__bridge void *)sink,
+                                      &outData,
+                                      &outLen,
+                                      &outError);
+
+    NSArray<NSString *> *lines = [sink snapshot];
+    ZDMAAirliftRememberLogs(lines);
+
+    NSData *data = nil;
+    if (rc == 0 && outData != NULL && outLen > 0) {
+        data = [NSData dataWithBytes:outData length:outLen];
+    }
+    if (outData) al_data_free(outData, outLen);
+
+    NSString *reason = ZDMAAirliftConsumeError(outError);
+    if (data.length) {
+        if (reason.length) NSLog(@"[Airlift] read warning: %@", reason);
+        return data;
+    }
+
+    if (error) {
+        *error = ZDMAAirliftError(reason ?: [NSString stringWithFormat:
+            @"Airlift nuk e lexoi %@ (rc=%d). Kontrollo LocalDevVPN dhe që iPhone është i shkyçur.",
+            remotePath, rc], lines);
+    }
+    return nil;
+}
+
 @end

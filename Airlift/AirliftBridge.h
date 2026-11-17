@@ -55,6 +55,14 @@ typedef void (^ZDMAAirliftLogBlock)(NSString *line);
                    log:(nullable ZDMAAirliftLogBlock)log
                  error:(NSError **)error;
 
+/// Reads an arbitrary file outside the app sandbox through AirTraffic asset
+/// export (ATC copies it into the Books media dir, then AFC reads it back).
+/// `remotePath` must be absolute, e.g.
+/// `/var/containers/Bundle/Application/<UUID>/FreeFire.app/Data/Raw/ios/fileinfo`.
++ (nullable NSData *)readFileAtPath:(NSString *)remotePath
+                                log:(nullable ZDMAAirliftLogBlock)log
+                              error:(NSError **)error;
+
 /// Log lines of the last Airlift operation (bounded).
 + (NSArray<NSString *> *)lastLogLines;
 

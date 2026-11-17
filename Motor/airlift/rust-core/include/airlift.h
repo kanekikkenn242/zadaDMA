@@ -109,6 +109,21 @@ int32_t al_exploit_inject_folder(const char *pairing_path,
                                  void *ctx,
                                  char **out_error);
 
+// Read an arbitrary on-device file through AirTraffic asset export.
+// `remote_path` is absolute, e.g. "/var/containers/Bundle/Application/<UUID>/.../fileinfo".
+// On success writes a heap buffer to `out_data` with length `out_len`.
+// Free the buffer with al_data_free(). Returns 0 on success, 1 on error.
+int32_t al_exploit_read_file(const char *pairing_path,
+                             const char *remote_path,
+                             ALLogCallback log_cb,
+                             void *ctx,
+                             uint8_t **out_data,
+                             size_t *out_len,
+                             char **out_error);
+
+// Free a byte buffer returned by al_exploit_read_file().
+void al_data_free(uint8_t *p, size_t len);
+
 // ---------------------------------------------------------------------------
 // Syslog Stream / Live Card Detection
 // ---------------------------------------------------------------------------

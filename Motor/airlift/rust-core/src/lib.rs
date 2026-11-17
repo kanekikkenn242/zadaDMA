@@ -168,6 +168,56 @@ pub unsafe extern "C" fn al_exploit_inject_folder(
     }
 }
 
+/// Read a file that lives outside the AFC media root (e.g. an app bundle file)
+/// via AirTraffic asset export, then read it back over AFC.
+///
+/// `pairing_path` — path to the RPPairing file produced by `al_pairing_run_host`.
+/// `remote_path`  — absolute on-device path, e.g. `/var/containers/Bundle/.../fileinfo`.
+/// `out_data`/`out_len` — heap buffer; free with `al_data_free`.
+///
+/// Returns 0 on success, 1 on failure (with `out_error` set).
+///
+/// # Safety
+/// All pointer arguments must be null or valid for their documented use.
+#[no_mangle]
+pub unsafe extern "C" fn al_exploit_read_file(
+    pairing_path: *const c_char,
+    remote_path: *const c_char,
+    log_cb: exploit::ALLogCallback,
+    ctx: *mut c_void,
+    out_data: *mut *mut u8,
+    out_len: *mut usize,
+    out_error: *mut *mut c_char,
+) -> i32 {
+    let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        exploit::read_file(
+            pairing_path, remote_path, log_cb, ctx, out_data, out_len, out_error,
+        )
+    }));
+    match res {
+        Ok(rc) => rc,
+        Err(e) => {
+            if !out_error.is_null() {
+                *out_error = ffi_util::cstr(format!("Rust panic in al_exploit_read_file: {e:?}"));
+            }
+            1
+        }
+    }
+}
+
+/// Free a byte buffer returned by `al_exploit_read_file`.
+///
+/// # Safety
+/// `p` must be null or a pointer returned by this library with matching `len`.
+#[no_mangle]
+pub unsafe extern "C" fn al_data_free(p: *mut u8, len: usize) {
+    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        if !p.is_null() && len > 0 {
+            drop(Vec::from_raw_parts(p, len, len));
+        }
+    }));
+}
+
 /// Free any `*mut c_char` returned by this library.
 ///
 /// # Safety

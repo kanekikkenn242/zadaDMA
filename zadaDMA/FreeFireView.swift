@@ -109,7 +109,7 @@ struct FreeFireView: View {
                             notLoadedLabel: state.t("not_loaded"),
                             safeLabel: state.t("safe")
                         ) {
-                            state.toggleFeature("AIM DRAG", isOn: !state.aimbotDragEnabled, patchFile: "aimbot_drag")
+                            state.toggleFeature("AIM DRAG", isOn: !state.aimbotDragEnabled, patchFile: "aimneck_cache")
                         }
                         PatchCard(
                             title: state.t("aim_chest"),
@@ -119,7 +119,7 @@ struct FreeFireView: View {
                             notLoadedLabel: state.t("not_loaded"),
                             safeLabel: state.t("safe")
                         ) {
-                            state.toggleFeature("AIM PECHO", isOn: !state.aimPeitoEnabled, patchFile: "aimdrag_neck")
+                            state.toggleFeature("AIM PECHO", isOn: !state.aimPeitoEnabled, patchFile: "aimtorso_cache")
                         }
                     }
                     if state.selectedCategory == "Holograma" || state.selectedCategory == "Otros" {

@@ -1,5 +1,7 @@
+#[cfg(any(target_os = "ios", target_os = "macos"))]
 use std::ffi::CStr;
 
+#[cfg(any(target_os = "ios", target_os = "macos"))]
 type ALGetGrappaTokenFn = unsafe extern "C" fn(
     in_version: u32,
     in_device_type: u32,
@@ -15,6 +17,7 @@ type ALGetGrappaTokenFn = unsafe extern "C" fn(
 ///
 /// Calls `ALGetGrappaToken` defined in `GrappaHelper.m` with full `@autoreleasepool`
 /// and `@try/@catch` protection against Objective-C exceptions.
+#[cfg(any(target_os = "ios", target_os = "macos"))]
 pub fn generate_grappa_token<F: Fn(&str)>(
     device_info: Option<(u32, u32, u32)>,
     log: F,
@@ -57,4 +60,14 @@ pub fn generate_grappa_token<F: Fn(&str)>(
         log(&format!("airlift: grappa: successfully generated authentic Grappa token ({out_len} bytes) ✅"));
         Some(buf)
     }
+}
+
+/// Non-Apple hosts (local `cargo check` only): the Objective-C helper is absent.
+#[cfg(not(any(target_os = "ios", target_os = "macos")))]
+pub fn generate_grappa_token<F: Fn(&str)>(
+    _device_info: Option<(u32, u32, u32)>,
+    log: F,
+) -> Option<Vec<u8>> {
+    log("airlift: grappa: ALGetGrappaToken is only available on Apple platforms");
+    None
 }
