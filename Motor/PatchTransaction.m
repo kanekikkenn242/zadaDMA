@@ -29,6 +29,17 @@ static BOOL IsDirectory(NSString *path) {
     return [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDir] && isDir;
 }
 
+// `/var` and `/private/var` are the same tree on iOS; MCM and InstallationProxy
+// do not spell it the same way. Compare install paths after normalizing so a
+// backup captured through one route is not mistaken for a stale install.
+static NSString *NormalizedInstallPath(NSString *path) {
+    if (![path isKindOfClass:[NSString class]]) return @"";
+    NSString *p = path;
+    if ([p hasPrefix:@"/private/"]) p = [p substringFromIndex:8];
+    while ([p hasSuffix:@"/"]) p = [p substringToIndex:p.length - 1];
+    return p;
+}
+
 // `.3105` rules carry paths relative to the *game's* data root, e.g.
 // `Data/Raw/ios/...`. Free Fire keeps that tree inside `Documents`, while the
 // MobileContainerManager lease returns the data-container root. Resolve the
@@ -237,7 +248,7 @@ static NSString *OriginalsDirectory(void) {
 }
 
 static NSString *OriginalKeyForPath(NSString *path) {
-    NSData *data = [path dataUsingEncoding:NSUTF8StringEncoding];
+    NSData *data = [NormalizedInstallPath(path) dataUsingEncoding:NSUTF8StringEncoding];
     return SHA256Hex(data);
 }
 
@@ -362,6 +373,13 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
         [ContainerAccess note:[NSString stringWithFormat:@"tx:target %@", full]];
         if(!UnderRoot(container,full)){ if(err)*err=[NSError errorWithDomain:@"patch" code:EPERM userInfo:@{NSLocalizedDescriptionKey:@"path traversal"}]; return NO; }
         if(RejectSymlink(container,full)){ if(err)*err=[NSError errorWithDomain:@"patch" code:EPERM userInfo:@{NSLocalizedDescriptionKey:@"symlink"}]; return NO; }
+        // Never create a missing target: MCM writes cannot be undone through
+        // the pairing path once the game is closed. A file that is not there
+        // is not loaded, so skipping it loses nothing.
+        if (![fm fileExistsAtPath:full]) {
+            [ContainerAccess note:[NSString stringWithFormat:@"tx:mcm-absent %@", full]];
+            continue;
+        }
         NSData *blob=pkg.files[src];
         if(!blob){ if(err)*err=[NSError errorWithDomain:@"patch" code:ENOENT userInfo:@{NSLocalizedDescriptionKey:[NSString stringWithFormat:@"missing %@",src]}]; return NO; }
         NSString *want=pkg.digests[src];
@@ -369,6 +387,11 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
         total+=blob.length+4096;
         [plan addObject:@{@"src":src,@"dst":full,@"blob":blob,@"digest":want?:SHA256Hex(blob),
                           @"group":GroupStemForDestination(dst)}];
+    }
+    if (plan.count == 0) {
+        if (err) *err = [NSError errorWithDomain:@"patch" code:ENOENT userInfo:@{
+            NSLocalizedDescriptionKey: @"asnjë target nuk ekzistonte në kontejner"}];
+        return NO;
     }
     if(!EnoughSpace(container,total,err)) return NO;
     
@@ -766,15 +789,18 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
 
         NSString *path = meta[@"path"];
         if (![path isKindOfClass:[NSString class]] || !path.length) continue;
+        NSString *normPath = NormalizedInstallPath(path);
+        NSString *normContainer = NormalizedInstallPath(container);
+        NSString *normBundle = NormalizedInstallPath(bundlePath);
         BOOL currentInstall = NO;
-        if (container.length &&
-            ([path isEqualToString:container] ||
-             [path hasPrefix:[container stringByAppendingString:@"/"]])) {
+        if (normContainer.length &&
+            ([normPath isEqualToString:normContainer] ||
+             [normPath hasPrefix:[normContainer stringByAppendingString:@"/"]])) {
             currentInstall = YES;
         }
-        if (!currentInstall && bundlePath.length &&
-            ([path isEqualToString:bundlePath] ||
-             [path hasPrefix:[bundlePath stringByAppendingString:@"/"]])) {
+        if (!currentInstall && normBundle.length &&
+            ([normPath isEqualToString:normBundle] ||
+             [normPath hasPrefix:[normBundle stringByAppendingString:@"/"]])) {
             currentInstall = YES;
         }
         if (!currentInstall) {
