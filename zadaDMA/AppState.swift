@@ -66,11 +66,25 @@ final class AppState: ObservableObject {
     }
 
     private func applyPatchWithFallback(fileName: String) {
-        if MotorBridge.bootstrap(), MotorBridge.applyPatch(fileName) {
-            patchLog.append("✅ \(fileName) u injektua me kexploit.")
+        // Direct, on-device write through the MobileContainerManager lease.
+        // This is the same path the reference app uses and does not need
+        // installation_proxy / House Arrest (which returns
+        // installationlookupfailed for stock App Store apps on iOS 18+).
+        let bundleIDs = ["com.dts.freefireth", "com.dts.freefiremax"]
+        let local = MotorBridge.applyPatchFile(fileName, bundleIDs: bundleIDs)
+        let patched = local["patched"] as? [String] ?? []
+        let localErrors = local["errors"] as? [String] ?? []
+        if let error = local["error"] as? String {
+            patchLog.append("⚠️ \(error)")
+        }
+        for line in localErrors {
+            patchLog.append("   \(line)")
+        }
+        if !patched.isEmpty {
+            patchLog.append("✅ \(fileName) u injektua lokalisht: \(patched.joined(separator: ", "))")
             return
         }
-        patchLog.append("⚠️ kexploit dështoi. Duke provuar tunelin RPPairing…")
+        patchLog.append("⚠️ MCM dështoi. Duke provuar tunelin RPPairing…")
 
         guard let localPath = Bundle.main.path(forResource: fileName, ofType: "3105") else {
             patchLog.append("❌ Skedari \(fileName).3105 mungon.")

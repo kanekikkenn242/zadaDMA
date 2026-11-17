@@ -1,0 +1,554 @@
+#import "ContainerAccess.h"
+#import <dlfcn.h>
+#import <fcntl.h>
+#import <objc/message.h>
+#import <objc/runtime.h>
+#import <sys/stat.h>
+#import <unistd.h>
+#import <errno.h>
+#import <stdio.h>
+#import <stdlib.h>
+#import <string.h>
+
+// ---------------------------------------------------------------------------
+// Private MobileContainerManager C API (libsystem_containermanager.dylib)
+// ---------------------------------------------------------------------------
+
+typedef void *(*zdma_query_create_fn)(void);
+typedef void (*zdma_query_set_class_fn)(void *, unsigned);
+typedef void (*zdma_query_set_ids_fn)(void *, const char *);
+typedef void (*zdma_query_set_group_fn)(void *, const char *);
+typedef void (*zdma_query_set_flags_fn)(void *, uint64_t);
+typedef void (*zdma_query_set_part_fn)(void *, unsigned);
+typedef void (*zdma_query_set_domain_fn)(void *, const char *);
+typedef void *(*zdma_query_get_single_fn)(void *);
+typedef void *(*zdma_query_get_error_fn)(void *);
+typedef bool (*zdma_query_iterate_fn)(void *, id);
+typedef void (*zdma_query_free_fn)(void *);
+typedef int (*zdma_error_errno_fn)(void *);
+typedef const char *(*zdma_error_message_fn)(void *);
+typedef const char *(*zdma_object_get_path_fn)(void *);
+typedef const char *(*zdma_object_get_identifier_fn)(void *);
+typedef void *(*zdma_object_copy_fn)(void *);
+typedef char *(*zdma_object_copy_token_fn)(void *);
+typedef bool (*zdma_object_activate_fn)(void *, bool);
+typedef void (*zdma_object_free_fn)(void *);
+typedef int64_t (*zdma_ext_consume_fn)(const char *);
+typedef int (*zdma_ext_release_fn)(int64_t);
+
+typedef struct {
+    bool loaded;
+    void *handle;
+
+    zdma_query_create_fn       query_create;
+    zdma_query_set_class_fn    set_class;
+    zdma_query_set_ids_fn      set_identifiers;
+    zdma_query_set_group_fn    set_group;
+    zdma_query_set_flags_fn    set_flags;
+    zdma_query_set_part_fn     set_part;
+    zdma_query_set_domain_fn   set_part_domain;
+    zdma_query_get_single_fn   get_single;
+    zdma_query_get_error_fn    get_last_error;
+    zdma_query_iterate_fn      iterate;
+    zdma_query_free_fn         query_free;
+
+    zdma_error_errno_fn        error_errno;
+    zdma_error_message_fn      error_message;
+
+    zdma_object_get_path_fn    get_path;
+    zdma_object_get_identifier_fn get_identifier;
+    zdma_object_copy_fn        object_copy;
+    zdma_object_copy_token_fn  copy_token;
+    zdma_object_activate_fn    object_activate;
+    zdma_object_free_fn        object_free;
+
+    zdma_ext_consume_fn        ext_consume;
+    zdma_ext_release_fn        ext_release;
+} zdma_mcm_api;
+
+@class ZDMAContainerLease;
+
+static zdma_mcm_api gAPI;
+static NSLock *gLock;
+static NSMutableDictionary<NSString *, ZDMAContainerLease *> *gLeases;
+static NSMutableDictionary<NSString *, NSNumber *> *gBadQueryHandles;
+
+@interface ZDMAContainerLease : NSObject
+@property (nonatomic, copy) NSString *bundleID;
+@property (nonatomic, copy) NSString *rootPath;
+@property (nonatomic) void *object;             // retained container_object_copy
+@property (nonatomic) int64_t extensionHandle;  // consumed sandbox extension
+@end
+
+@implementation ZDMAContainerLease
+- (void)dealloc {
+    if (_extensionHandle > 0 && gAPI.ext_release) {
+        gAPI.ext_release(_extensionHandle);
+    }
+    if (_object && gAPI.object_free) {
+        gAPI.object_free(_object);
+    }
+}
+@end
+
+static void zdma_load_api(void) {
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        gLock = [NSLock new];
+        gLeases = [NSMutableDictionary new];
+        gBadQueryHandles = [NSMutableDictionary new];
+
+        const char *paths[] = {
+            "/usr/lib/system/libsystem_containermanager.dylib",
+            "/System/Library/PrivateFrameworks/MobileContainerManager.framework/MobileContainerManager",
+            NULL
+        };
+        for (int i = 0; paths[i] != NULL; i++) {
+            gAPI.handle = dlopen(paths[i], RTLD_NOW | RTLD_GLOBAL);
+            if (gAPI.handle) break;
+        }
+        if (!gAPI.handle) return;
+
+#define ZDMA_LOAD(field, name) do { \
+    *(void **)(&gAPI.field) = dlsym(gAPI.handle, name); \
+} while (0)
+
+        ZDMA_LOAD(query_create,     "container_query_create");
+        ZDMA_LOAD(set_class,        "container_query_set_class");
+        ZDMA_LOAD(set_identifiers,  "container_query_set_identifiers");
+        ZDMA_LOAD(set_group,        "container_query_set_group_identifiers");
+        ZDMA_LOAD(set_flags,        "container_query_operation_set_flags");
+        ZDMA_LOAD(set_part,         "container_query_operation_set_part");
+        ZDMA_LOAD(set_part_domain,  "container_query_operation_set_part_domain");
+        ZDMA_LOAD(get_single,       "container_query_get_single_result");
+        ZDMA_LOAD(get_last_error,   "container_query_get_last_error");
+        ZDMA_LOAD(iterate,          "container_query_iterate_results_sync");
+        ZDMA_LOAD(query_free,       "container_query_free");
+        ZDMA_LOAD(error_errno,      "container_error_get_posix_errno");
+        ZDMA_LOAD(error_message,    "container_error_get_message");
+        ZDMA_LOAD(get_path,         "container_object_get_path");
+        ZDMA_LOAD(get_identifier,   "container_object_get_identifier");
+        ZDMA_LOAD(object_copy,      "container_object_copy");
+        ZDMA_LOAD(copy_token,       "container_copy_sandbox_token");
+        ZDMA_LOAD(object_activate,  "container_object_sandbox_extension_activate");
+        ZDMA_LOAD(object_free,      "container_object_free");
+        ZDMA_LOAD(ext_consume,      "sandbox_extension_consume");
+        ZDMA_LOAD(ext_release,      "sandbox_extension_release");
+#undef ZDMA_LOAD
+
+        gAPI.loaded = gAPI.query_create && gAPI.set_class && gAPI.set_identifiers &&
+                      gAPI.set_flags && gAPI.get_single && gAPI.query_free;
+    });
+}
+
+static NSError *zdma_error(NSInteger code, NSString *desc, NSString *detail) {
+    NSMutableDictionary *u = [NSMutableDictionary dictionary];
+    u[NSLocalizedDescriptionKey] = desc.length ? desc : @"Container access failed";
+    if (detail.length) u[NSLocalizedFailureReasonErrorKey] = detail;
+    return [NSError errorWithDomain:@"zadaDMA.container" code:code userInfo:u];
+}
+
+static NSError *zdma_diag_error(NSInteger code, NSString *desc, NSArray<NSString *> *diag) {
+    NSMutableDictionary *u = [NSMutableDictionary dictionary];
+    u[NSLocalizedDescriptionKey] = desc.length ? desc : @"Container access failed";
+    if (diag.count) {
+        u[NSLocalizedFailureReasonErrorKey] = [diag componentsJoinedByString:@" | "];
+        u[@"ZDMADiagnostics"] = diag;
+    }
+    return [NSError errorWithDomain:@"zadaDMA.container" code:code userInfo:u];
+}
+
+static bool zdma_safe_identifier(NSString *value) {
+    if (![value isKindOfClass:[NSString class]]) return false;
+    if (value.length == 0 || value.length > 255) return false;
+    if ([value isEqualToString:@"."] || [value isEqualToString:@".."]) return false;
+    static NSCharacterSet *allowed;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        allowed = [NSCharacterSet characterSetWithCharactersInString:
+                   @"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-_"];
+    });
+    return [value rangeOfCharacterFromSet:allowed.invertedSet].location == NSNotFound;
+}
+
+/// /var/... and /private/var/... are the same container; X canonicalises to
+/// /private/var and so do we (the MCM daemon hands out the /var form).
+static NSString *zdma_normalize_path(NSString *path) {
+    if (!path.length) return nil;
+    if ([path isEqualToString:@"/var"] || [path hasPrefix:@"/var/"]) {
+        return [@"/private" stringByAppendingString:path];
+    }
+    return path;
+}
+
+static NSString *zdma_query_error_text(void *query) {
+    if (!query || !gAPI.get_last_error) return nil;
+    void *error = gAPI.get_last_error(query);
+    if (!error) return nil;
+    int posix = gAPI.error_errno ? gAPI.error_errno(error) : 0;
+    const char *message = gAPI.error_message ? gAPI.error_message(error) : NULL;
+    NSString *text = (message && message[0]) ? [NSString stringWithUTF8String:message] : nil;
+    if (text.length && posix != 0) return [NSString stringWithFormat:@"%@ (posix %d)", text, posix];
+    if (text.length) return text;
+    if (posix != 0) return [NSString stringWithFormat:@"posix %d", posix];
+    return nil;
+}
+
+// ---------------------------------------------------------------------------
+// bad_query: legacy path-traversal sandbox extension grant used by X
+// ---------------------------------------------------------------------------
+static int64_t zdma_bad_query(const char *path, bool skipLstat, NSString *group, long alt) {
+    if (!path || path[0] != '/') return -255;
+    if (!skipLstat) {
+        struct stat st;
+        if (lstat(path, &st) != 0) return -254;
+    }
+    zdma_load_api();
+    if (!gAPI.handle || !gAPI.query_create || !gAPI.set_class || !gAPI.set_group ||
+        !gAPI.set_flags || !gAPI.set_part || !gAPI.set_part_domain ||
+        !gAPI.get_single || !gAPI.query_free || !gAPI.copy_token || !gAPI.ext_consume) {
+        return -1;
+    }
+
+    void *query = gAPI.query_create();
+    if (!query) return -2;
+
+    NSString *groupValue = group.length ? group : @"systemgroup.com.apple.mobilegestaltcache";
+    gAPI.set_class(query, group.length ? 13 : 7);
+    gAPI.set_group(query, groupValue.UTF8String);
+    gAPI.set_part(query, 3);
+
+    char *domain = NULL;
+    const char *format = group.length
+        ? "../../../../../../../../..%s"   // 9 x ..
+        : "../../../../../../../..%s";     // 8 x ..
+    if (asprintf(&domain, format, path) < 0 || domain == NULL) {
+        gAPI.query_free(query);
+        return -2;
+    }
+    gAPI.set_part_domain(query, domain);
+    free(domain);
+
+    gAPI.set_flags(query, alt ? 0x800000000ULL : 0x8000000000ULL);
+
+    void *result = gAPI.get_single(query);
+    if (!result) {
+        gAPI.query_free(query);
+        return -3;
+    }
+    char *token = gAPI.copy_token(result);
+    if (!token) {
+        gAPI.query_free(query);
+        return -4;
+    }
+    int64_t handle = gAPI.ext_consume(token);
+    free(token);
+    gAPI.query_free(query);
+    return handle;
+}
+
+// ---------------------------------------------------------------------------
+// Class-2 lease through container_query
+// ---------------------------------------------------------------------------
+static ZDMAContainerLease *zdma_lease_for_bundle(NSString *bundleID, NSString **failure) {
+    if (!gAPI.loaded) {
+        if (failure) *failure = @"MCM API nuk u ngarkua";
+        return nil;
+    }
+
+    void *query = gAPI.query_create();
+    if (!query) {
+        if (failure) *failure = @"container_query_create dështoi";
+        return nil;
+    }
+
+    gAPI.set_class(query, 2);
+    gAPI.set_identifiers(query, bundleID.UTF8String);
+    gAPI.set_flags(query, 0x900000000ULL);
+    if (gAPI.set_part) gAPI.set_part(query, 0);
+
+    void *result = gAPI.get_single(query);
+    if (!result) {
+        NSString *detail = zdma_query_error_text(query);
+        if (failure) *failure = detail.length ? detail : @"daemon nuk ktheu rezultat";
+        gAPI.query_free(query);
+        return nil;
+    }
+
+    const char *pathC = gAPI.get_path ? gAPI.get_path(result) : NULL;
+    if (!pathC || pathC[0] == '\0') {
+        if (failure) *failure = @"container_object_get_path ktheu null";
+        gAPI.query_free(query);
+        return nil;
+    }
+
+    NSString *path = zdma_normalize_path([NSString stringWithUTF8String:pathC]);
+    if (!path.isAbsolutePath) {
+        if (failure) *failure = @"rruga e kontejnerit nuk është absolute";
+        gAPI.query_free(query);
+        return nil;
+    }
+
+    void *retained = gAPI.object_copy ? gAPI.object_copy(result) : NULL;
+
+    bool activated = false;
+    if (gAPI.object_activate) {
+        activated = gAPI.object_activate(retained ? retained : result, false);
+    }
+
+    int64_t handle = -1;
+    if (!activated && gAPI.copy_token && gAPI.ext_consume) {
+        char *token = gAPI.copy_token(result);
+        if (token) {
+            handle = gAPI.ext_consume(token);
+            free(token);
+        }
+    }
+
+    gAPI.query_free(query);
+
+    if (!activated && handle < 0) {
+        if (retained && gAPI.object_free) gAPI.object_free(retained);
+        if (failure) *failure = @"sandbox extension nuk u aktivizua";
+        return nil;
+    }
+
+    ZDMAContainerLease *lease = [ZDMAContainerLease new];
+    lease.bundleID = bundleID;
+    lease.rootPath = path;
+    lease.object = retained;
+    lease.extensionHandle = handle;
+    return lease;
+}
+
+static NSString *zdma_scan_filesystem(NSString *bundleID, NSMutableArray<NSString *> *diag) {
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSArray<NSString *> *roots = @[
+        @"/private/var/mobile/Containers/Data/Application",
+        @"/var/mobile/Containers/Data/Application",
+    ];
+    NSMutableSet<NSString *> *seen = [NSMutableSet set];
+    for (NSString *root in roots) {
+        NSArray<NSString *> *entries = [fm contentsOfDirectoryAtPath:root error:nil];
+        if (entries.count == 0) {
+            [diag addObject:[NSString stringWithFormat:@"FS %@: nuk lexohet", root]];
+            continue;
+        }
+        unsigned long checked = 0;
+        for (NSString *name in entries) {
+            if (name.length == 0 || [name hasPrefix:@"."]) continue;
+            NSString *dir = [root stringByAppendingPathComponent:name];
+            if (![seen addObject:dir]) continue;
+            checked++;
+            NSString *metadata = [dir stringByAppendingPathComponent:
+                                  @".com.apple.mobile_container_manager.metadata.plist"];
+            NSDictionary *plist = [NSDictionary dictionaryWithContentsOfFile:metadata];
+            NSString *identifier = plist[@"MCMMetadataIdentifier"];
+            if ([identifier isEqualToString:bundleID]) {
+                return zdma_normalize_path(dir);
+            }
+        }
+        [diag addObject:[NSString stringWithFormat:@"FS %@: %lu kontrolluar", root, checked]];
+    }
+    return nil;
+}
+
+static NSString *zdma_launchservices_container(NSString *bundleID) {
+    void *handle = dlopen("/System/Library/Frameworks/MobileCoreServices.framework/MobileCoreServices",
+                          RTLD_LAZY);
+    Class workspaceClass = NSClassFromString(@"LSApplicationWorkspace");
+    if (!workspaceClass) {
+        if (handle) dlclose(handle);
+        return nil;
+    }
+    id workspace = [workspaceClass performSelector:@selector(defaultWorkspace)];
+    NSArray *apps = [workspace performSelector:@selector(allInstalledApplications)];
+    NSString *result = nil;
+    for (id app in apps) {
+        NSString *identifier = [app performSelector:@selector(applicationIdentifier)];
+        if (![identifier isEqualToString:bundleID]) continue;
+        NSURL *url = [app performSelector:@selector(dataContainerURL)];
+        if (!url) url = [app performSelector:@selector(bundleContainerURL)];
+        if (url.path.length) {
+            result = zdma_normalize_path(url.path);
+            break;
+        }
+    }
+    if (handle) dlclose(handle);
+    return result;
+}
+
+// ---------------------------------------------------------------------------
+@implementation ContainerAccess
+
++ (BOOL)isAvailable {
+    zdma_load_api();
+    return gAPI.loaded ? YES : NO;
+}
+
++ (NSString *)containerPathForBundleID:(NSString *)bundleID error:(NSError **)error {
+    zdma_load_api();
+
+    if (!zdma_safe_identifier(bundleID)) {
+        if (error) {
+            *error = zdma_error(EINVAL,
+                                @"Bundle ID i pavlefshëm.",
+                                @"Lejohen vetëm shkronja, numra, '.', '-' dhe '_' (max 255).");
+        }
+        return nil;
+    }
+
+    [gLock lock];
+    ZDMAContainerLease *cached = gLeases[bundleID];
+    [gLock unlock];
+    if (cached.rootPath.length) {
+        return cached.rootPath;
+    }
+
+    NSMutableArray<NSString *> *diag = [NSMutableArray array];
+
+    if (gAPI.loaded) {
+        NSString *failure = nil;
+        ZDMAContainerLease *lease = zdma_lease_for_bundle(bundleID, &failure);
+        if (lease) {
+            [gLock lock];
+            gLeases[bundleID] = lease;
+            [gLock unlock];
+            return lease.rootPath;
+        }
+        [diag addObject:[NSString stringWithFormat:@"MCM class-2: %@",
+                         failure.length ? failure : @"nuk u gjet"]];
+    } else {
+        [diag addObject:@"MCM: libsystem_containermanager ose simbolet mungojnë"];
+    }
+
+    NSString *scanned = zdma_scan_filesystem(bundleID, diag);
+    if (scanned.length) {
+        NSError *grantError = nil;
+        if ([self grantAccessToPath:scanned error:&grantError]) {
+            return scanned;
+        }
+        [diag addObject:[NSString stringWithFormat:@"FS lease: %@",
+                         grantError.localizedFailureReason ?: grantError.localizedDescription ?: @"refuzuar"]];
+    }
+
+    NSString *lsPath = zdma_launchservices_container(bundleID);
+    if (lsPath.length) {
+        NSError *grantError = nil;
+        if ([self grantAccessToPath:lsPath error:&grantError]) {
+            return lsPath;
+        }
+        [diag addObject:[NSString stringWithFormat:@"LS lease: %@",
+                         grantError.localizedFailureReason ?: grantError.localizedDescription ?: @"refuzuar"]];
+    } else {
+        [diag addObject:@"LSApplicationWorkspace: pa dataContainerURL"];
+    }
+
+    if (error) {
+        *error = zdma_diag_error(ENOENT,
+                                 [NSString stringWithFormat:@"Kontejneri i %@ nuk u gjet.", bundleID],
+                                 diag);
+    }
+    return nil;
+}
+
++ (BOOL)grantAccessToPath:(NSString *)path error:(NSError **)error {
+    zdma_load_api();
+    if (!path.length || !path.isAbsolutePath) {
+        if (error) *error = zdma_error(EINVAL, @"Rruga e kontejnerit është e pavlefshme.", path);
+        return NO;
+    }
+    if (!gAPI.loaded) {
+        if (error) *error = zdma_error(ENOSYS, @"MCM API nuk u ngarkua.", nil);
+        return NO;
+    }
+
+    int64_t handle = zdma_bad_query(path.fileSystemRepresentation, true, nil, 0);
+    if (handle < 0) {
+        NSString *detail = [NSString stringWithFormat:
+                            @"bad_query kthoi %lld (path=%@, group=systemgroup.com.apple.mobilegestaltcache)",
+                            (long long)handle, path];
+        if (error) *error = zdma_error(EPERM, @"Sandbox extension dështoi.", detail);
+        return NO;
+    }
+
+    [gLock lock];
+    NSNumber *previous = gBadQueryHandles[path];
+    gBadQueryHandles[path] = @(handle);
+    [gLock unlock];
+    if (previous && gAPI.ext_release) {
+        gAPI.ext_release(previous.longLongValue);
+    }
+    return YES;
+}
+
++ (NSArray<NSString *> *)enumerateAppContainerIdentifiers:(NSError **)error {
+    zdma_load_api();
+    if (!gAPI.loaded || gAPI.iterate == NULL || gAPI.get_identifier == NULL) {
+        if (error) *error = zdma_error(ENOSYS, @"MCM enumeration nuk është e disponueshme.", nil);
+        return nil;
+    }
+
+    void *query = gAPI.query_create();
+    if (!query) {
+        if (error) *error = zdma_error(EIO, @"container_query_create dështoi.", nil);
+        return nil;
+    }
+
+    gAPI.set_class(query, 2);
+    gAPI.set_flags(query, 0x100000000ULL);
+
+    NSMutableOrderedSet<NSString *> *identifiers = [NSMutableOrderedSet orderedSet];
+    gAPI.iterate(query, ^bool(void *object) {
+        if (!object) return false;
+        const char *identifier = gAPI.get_identifier(object);
+        if (identifier && identifier[0] != '\0') {
+            NSString *value = [NSString stringWithUTF8String:identifier];
+            if (value.length) [identifiers addObject:value];
+        }
+        return identifiers.count < 4096;
+    });
+
+    gAPI.query_free(query);
+
+    if (identifiers.count == 0) {
+        if (error) *error = zdma_error(ENOENT, @"MCM nuk ktheu asnjë kontejner.", nil);
+        return nil;
+    }
+    return identifiers.array;
+}
+
++ (NSArray<NSString *> *)listDirectory:(NSString *)path error:(NSError **)error {
+    if (!path.length) {
+        if (error) *error = zdma_error(EINVAL, @"Rrugë e pavlefshme.", nil);
+        return nil;
+    }
+    NSError *readError = nil;
+    NSArray<NSString *> *entries = [[NSFileManager defaultManager]
+                                    contentsOfDirectoryAtPath:path error:&readError];
+    if (!entries) {
+        if (error) {
+            *error = zdma_error(EACCES,
+                                [NSString stringWithFormat:@"Nuk lexohet %@", path],
+                                readError.localizedDescription);
+        }
+        return nil;
+    }
+    return entries;
+}
+
++ (void)releaseAll {
+    zdma_load_api();
+    [gLock lock];
+    [gLeases removeAllObjects];
+    NSDictionary<NSString *, NSNumber *> *handles = [gBadQueryHandles copy];
+    [gBadQueryHandles removeAllObjects];
+    [gLock unlock];
+    if (gAPI.ext_release) {
+        for (NSNumber *handle in handles.allValues) {
+            gAPI.ext_release(handle.longLongValue);
+        }
+    }
+}
+
+@end
