@@ -14,13 +14,13 @@ struct MainTabView: View {
             }.tabViewStyle(.page(indexDisplayMode: .never))
             
             HStack {
-                TabButton(icon: "house.fill", title: state.t("home"), isSelected: tab == 0) { withAnimation { tab = 0 } }
+                TabButton(icon: "house.fill", title: "Inicio", isSelected: tab == 0) { withAnimation { tab = 0 } }
                 Spacer()
-                TabButton(icon: "gamecontroller.fill", title: state.t("game"), isSelected: tab == 1) { withAnimation { tab = 1 } }
+                TabButton(icon: "gamecontroller.fill", title: "Free Fire", isSelected: tab == 1) { withAnimation { tab = 1 } }
                 Spacer()
-                TabButton(icon: "person.fill", title: state.t("profile"), isSelected: tab == 2) { withAnimation { tab = 2 } }
+                TabButton(icon: "person.fill", title: "Perfil", isSelected: tab == 2) { withAnimation { tab = 2 } }
                 Spacer()
-                TabButton(icon: "questionmark.circle", title: state.t("support"), isSelected: tab == 3) { withAnimation { tab = 3 } }
+                TabButton(icon: "questionmark.circle", title: "Soporte", isSelected: tab == 3) { withAnimation { tab = 3 } }
             }
             .padding(.horizontal, 20).padding(.vertical, 15)
             .background(Color.appCard)

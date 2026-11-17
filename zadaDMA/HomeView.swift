@@ -14,6 +14,14 @@ struct HomeView: View {
                 VStack(spacing: 20) {
                     // MARK: Header
                     VStack(spacing: 8) {
+                        HStack {
+                            Text("1.40")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.gray)
+                            Spacer()
+                        }
+                        .padding(.horizontal)
+                        
                         Image(systemName: "shield.lefthalf.filled")
                             .font(.system(size: 54))
                             .foregroundColor(.appOrange)

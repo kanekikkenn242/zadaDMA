@@ -2,7 +2,11 @@ import SwiftUI
 
 extension Color {
     static let appOrange = Color(red: 1.0, green: 0.478, blue: 0.0)
-    static let appCard = Color(red: 0.1, green: 0.1, blue: 0.1)
+    static let appCard = Color(red: 0.12, green: 0.12, blue: 0.14)
+    static let appBackground = Color(red: 0.06, green: 0.06, blue: 0.08)
+    static let appSecondary = Color(red: 0.18, green: 0.18, blue: 0.20)
+    static let appGreen = Color(red: 0.2, green: 0.8, blue: 0.4)
+    static let appRed = Color(red: 0.9, green: 0.3, blue: 0.3)
 }
 
 struct OrangeButtonStyle: ButtonStyle {

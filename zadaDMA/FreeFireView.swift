@@ -6,7 +6,36 @@ struct FreeFireView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                Text(state.selectedGame).font(.title2.bold()).foregroundColor(.white).padding(.top, 20)
+                HStack {
+                    Text("1.40")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.gray)
+                    Spacer()
+                }
+                .padding(.horizontal)
+                
+                Text("Free Fire MAX")
+                    .font(.title2.bold())
+                    .foregroundColor(.white)
+                    .padding(.top, 8)
+                
+                HStack {
+                    Text("Listo para cargar")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                    Spacer()
+                    Text("2 EN VIVO")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.appGreen)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.appGreen.opacity(0.15))
+                        .cornerRadius(6)
+                    Text("5d 12h")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.gray)
+                }
+                .padding(.horizontal)
                 
                 HStack(spacing: 12) {
                     CategoryButton(icon: "scope", title: "Aimbot", isActive: state.selectedCategory == "Aimbot") { state.selectedCategory = "Aimbot" }
