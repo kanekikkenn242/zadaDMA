@@ -22,6 +22,45 @@ static BOOL UnderRoot(NSString *r, NSString *p) {
     return [c isEqualToString:rr] || [c hasPrefix:[rr stringByAppendingString:@"/"]];
 }
 
+static BOOL IsDirectory(NSString *path) {
+    BOOL isDir = NO;
+    return [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDir] && isDir;
+}
+
+// `.3105` rules carry paths relative to the *game's* data root, e.g.
+// `Data/Raw/ios/...`. Free Fire keeps that tree inside `Documents`, while the
+// MobileContainerManager lease returns the data-container root. Resolve the
+// base from the filesystem so the write lands where the game reads it:
+//   <container>/Documents/Data/...   (Free Fire, ATC/House Arrest view)
+//   <container>/Library/...          (container-root packages)
+static NSString *ResolveTarget(NSString *container, NSString *dst) {
+    NSString *rel = [dst stringByStandardizingPath];
+    while ([rel hasPrefix:@"/"]) rel = [rel substringFromIndex:1];
+    NSString *documents = [container stringByAppendingPathComponent:@"Documents"];
+    NSString *first = [rel pathComponents].firstObject ?: @"";
+
+    if (![rel hasPrefix:@"Documents/"] && IsDirectory([documents stringByAppendingPathComponent:first])) {
+        return [documents stringByAppendingPathComponent:rel];
+    }
+    if (IsDirectory([container stringByAppendingPathComponent:first])) {
+        return [container stringByAppendingPathComponent:rel];
+    }
+    NSString *documentCandidate = [documents stringByAppendingPathComponent:rel];
+    if (![rel hasPrefix:@"Documents/"] &&
+        [[NSFileManager defaultManager] fileExistsAtPath:documentCandidate]) {
+        return documentCandidate;
+    }
+    NSString *rootCandidate = [container stringByAppendingPathComponent:rel];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:rootCandidate]) {
+        return rootCandidate;
+    }
+    // Nothing exists yet: game asset trees live under Documents.
+    if ([first isEqualToString:@"Data"] && ![rel hasPrefix:@"Documents/"]) {
+        return documentCandidate;
+    }
+    return rootCandidate;
+}
+
 static BOOL RejectSymlink(NSString *root, NSString *dst) {
     NSFileManager *fm=[NSFileManager defaultManager]; 
     NSString *cur=dst;
@@ -83,7 +122,7 @@ static BOOL EnoughSpace(NSString *dir, uint64_t need, NSError **err) {
     for(NSDictionary *r in pkg.rules){
         NSString *src=r[@"src"], *dst=r[@"dst"];
         if(!src||!dst){ if(err)*err=[NSError errorWithDomain:@"patch" code:EINVAL userInfo:nil]; return NO; }
-        NSString *full=[container stringByAppendingPathComponent:dst];
+        NSString *full=ResolveTarget(container,dst);
         if(!UnderRoot(container,full)){ if(err)*err=[NSError errorWithDomain:@"patch" code:EPERM userInfo:@{NSLocalizedDescriptionKey:@"path traversal"}]; return NO; }
         if(RejectSymlink(container,full)){ if(err)*err=[NSError errorWithDomain:@"patch" code:EPERM userInfo:@{NSLocalizedDescriptionKey:@"symlink"}]; return NO; }
         NSData *blob=pkg.files[src];

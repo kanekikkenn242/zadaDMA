@@ -277,12 +277,18 @@ pub unsafe extern "C" fn zdma_pairing_file_validate(
     }
 }
 
-fn candidates(remote_path: &str) -> Vec<String> {
+fn candidates(remote_path: &str, vend: &str) -> Vec<String> {
     let mut relative = remote_path.trim_start_matches('/').to_string();
     if let Some(pos) = relative.find("Data/Raw/") {
         relative = relative[pos..].to_string();
     }
+    // `VendDocuments` roots at <container>/Documents, `VendContainer` at the
+    // data-container root. Free Fire reads `Documents/Data/Raw/...`, so put the
+    // matching spelling first for each root.
     let mut out = Vec::new();
+    if vend == "container" && !relative.starts_with("Documents/") {
+        out.push(format!("Documents/{relative}"));
+    }
     out.push(relative.clone());
     if !relative.starts_with("Documents/") {
         out.push(format!("Documents/{relative}"));
@@ -534,10 +540,10 @@ pub unsafe extern "C" fn zdma_tunnel_write_file(
         let data = tokio::fs::read(&local_path)
             .await
             .map_err(|e| format!("Read {local_path}: {e}"))?;
-        let targets = candidates(&remote_path);
         let mut failures = Vec::new();
 
         for vend in ["container", "documents"] {
+            let targets = candidates(&remote_path, vend);
             let client = HouseArrestClient::connect_rsd(&mut adapter, &mut handshake)
                 .await
                 .map_err(|e| format!("House Arrest connect ({vend}): {e}"))?;
