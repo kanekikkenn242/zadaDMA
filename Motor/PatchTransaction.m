@@ -227,10 +227,10 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
                                                userInfo:@{NSLocalizedDescriptionKey: @"path traversal"}];
             return NO;
         }
-        // Free Fire reads its asset tree from <container>/Documents.
-        NSString *remote = [rel hasPrefix:@"Documents/"] || [rel hasPrefix:@"Library/"]
-            ? [container stringByAppendingPathComponent:rel]
-            : [[container stringByAppendingPathComponent:@"Documents"] stringByAppendingPathComponent:rel];
+        // `.3105` paths are relative to the game data-container root, which is
+        // exactly what the reference app resolves. A Documents fallback is
+        // attempted below when the root write fails.
+        NSString *remote = [container stringByAppendingPathComponent:rel];
 
         NSString *parent = [remote stringByDeletingLastPathComponent];
         NSString *leaf = [remote lastPathComponent];
@@ -245,9 +245,67 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
             groups[parent] = files;
         }
         files[leaf] = blob;
-        [entries addObject:@{@"dst": remote, @"backup": [NSNull null],
-                             @"sha256": want ?: SHA256Hex(blob), @"ok": @YES,
-                             @"via": @"airlift"}];
+    }
+
+    for (NSString *targetDirectory in groups) {
+        NSDictionary<NSString *, NSData *> *files = groups[targetDirectory];
+
+        // Candidate 1: the data-container root (reference-app semantics).
+        // Candidate 2: <container>/Documents (older game layouts).
+        NSMutableArray<NSString *> *candidates = [NSMutableArray arrayWithObject:targetDirectory];
+        NSString *rel = targetDirectory;
+        if ([rel hasPrefix:container]) rel = [rel substringFromIndex:container.length];
+        while ([rel hasPrefix:@"/"]) rel = [rel substringFromIndex:1];
+        if (![rel hasPrefix:@"Documents/"] && ![rel hasPrefix:@"Library/"] && ![rel hasPrefix:@"tmp/"]) {
+            [candidates addObject:[[container stringByAppendingPathComponent:@"Documents"]
+                                   stringByAppendingPathComponent:rel]];
+        }
+
+        NSString *winner = nil;
+        NSError *lastError = nil;
+        NSMutableArray<NSString *> *diagnostics = [NSMutableArray array];
+        for (NSString *candidate in candidates) {
+            [ContainerAccess note:[NSString stringWithFormat:@"tx:airlift %@", candidate]];
+            NSError *writeError = nil;
+            BOOL ok = [AirliftBridge writeFiles:files
+                              toTargetDirectory:candidate
+                                            log:^(NSString *line) {
+                [ContainerAccess note:[NSString stringWithFormat:@"airlift: %@", line]];
+            }
+                                          error:&writeError];
+            if (ok) {
+                winner = candidate;
+                break;
+            }
+            lastError = writeError;
+            NSString *reason = writeError.localizedFailureReason ?: writeError.localizedDescription;
+            if (reason.length) {
+                [diagnostics addObject:[NSString stringWithFormat:@"Airlift %@: %@", candidate, reason]];
+            }
+            for (NSString *line in writeError.userInfo[@"ZDMADiagnostics"]) {
+                [diagnostics addObject:[NSString stringWithFormat:@"Airlift: %@", line]];
+            }
+            [ContainerAccess note:@"tx:airlift-failed"];
+        }
+
+        if (!winner) {
+            NSMutableDictionary *info = [NSMutableDictionary dictionary];
+            info[NSLocalizedDescriptionKey] = @"Airlift write dështoi.";
+            NSString *reason = lastError.localizedFailureReason ?: lastError.localizedDescription;
+            if (reason.length) info[NSLocalizedFailureReasonErrorKey] = reason;
+            if (diagnostics.count) info[@"ZDMADiagnostics"] = diagnostics;
+            if (err) *err = [NSError errorWithDomain:@"patch" code:EIO userInfo:info];
+            return NO;
+        }
+
+        for (NSString *leaf in files) {
+            NSString *full = [winner stringByAppendingPathComponent:leaf];
+            [gLastResolvedTargets addObject:full];
+            [entries addObject:@{@"dst": full, @"backup": [NSNull null],
+                                 @"sha256": SHA256Hex(files[leaf]), @"ok": @YES,
+                                 @"via": @"airlift"}];
+        }
+        [ContainerAccess note:@"tx:airlift-ok"];
     }
 
     PatchLedgerEntry *ledger = [PatchLedgerEntry new];
@@ -255,34 +313,6 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
     ledger.containerPath = container;
     ledger.at = [NSDate date];
     ledger.entries = entries;
-
-    for (NSString *targetDirectory in groups) {
-        [ContainerAccess note:[NSString stringWithFormat:@"tx:airlift %@", targetDirectory]];
-        NSError *writeError = nil;
-        NSDictionary<NSString *, NSData *> *files = groups[targetDirectory];
-        BOOL ok = [AirliftBridge writeFiles:files
-                          toTargetDirectory:targetDirectory
-                                        log:^(NSString *line) {
-            [ContainerAccess note:[NSString stringWithFormat:@"airlift: %@", line]];
-        }
-                                      error:&writeError];
-        if (!ok) {
-            NSMutableDictionary *info = [NSMutableDictionary dictionary];
-            info[NSLocalizedDescriptionKey] = @"Airlift write dështoi.";
-            NSString *reason = writeError.localizedFailureReason ?: writeError.localizedDescription;
-            if (reason.length) info[NSLocalizedFailureReasonErrorKey] = reason;
-            NSArray *diag = writeError.userInfo[@"ZDMADiagnostics"];
-            if (diag.count) info[@"ZDMADiagnostics"] = diag;
-            if (err) *err = [NSError errorWithDomain:@"patch" code:EIO userInfo:info];
-            [ContainerAccess note:@"tx:airlift-failed"];
-            return NO;
-        }
-        for (NSString *leaf in files) {
-            NSString *full = [targetDirectory stringByAppendingPathComponent:leaf];
-            [gLastResolvedTargets addObject:full];
-        }
-        [ContainerAccess note:@"tx:airlift-ok"];
-    }
 
     [self appendLedger:ledger];
     return YES;
