@@ -78,11 +78,25 @@
         NSError *grantError = nil;
         int64_t grant = [ContainerAccess acquireAccessToPath:container error:&grantError];
         [ContainerAccess note:[NSString stringWithFormat:@"apply:grant=%lld", (long long)grant]];
+
+        NSString *localBundle = [ContainerAccess applicationBundlePathForBundleID:bundleID error:nil];
+        int64_t bundleGrant = -1;
+        if (localBundle.length) {
+            [ContainerAccess note:[NSString stringWithFormat:@"apply:local-bundle %@", localBundle]];
+            bundleGrant = [ContainerAccess acquireAccessToPath:localBundle error:nil];
+            [ContainerAccess note:[NSString stringWithFormat:@"apply:bundle-grant=%lld",
+                                   (long long)bundleGrant]];
+        } else {
+            [ContainerAccess note:@"apply:no-local-bundle"];
+        }
+
         NSError *mcmError = nil;
         BOOL applied = [PatchTransaction applyPackage:pkg
                                             container:container
+                                           bundlePath:localBundle
                                              bundleID:bundleID
                                                 error:&mcmError];
+        if (bundleGrant >= 0) [ContainerAccess releaseAccess:bundleGrant];
         if (grant >= 0) [ContainerAccess releaseAccess:grant];
         if (applied) {
             [ContainerAccess note:@"apply:done-mcm"];
@@ -177,6 +191,13 @@
         [ContainerAccess note:@"restore:no-local-container"];
     }
 
+    NSString *localBundle = [ContainerAccess applicationBundlePathForBundleID:bundleID error:nil];
+    if (localBundle.length) {
+        [ContainerAccess note:[NSString stringWithFormat:@"restore:local-bundle %@", localBundle]];
+    } else {
+        [ContainerAccess note:@"restore:no-local-bundle"];
+    }
+
     NSString *remoteBundle = nil;
     NSError *bundleError = nil;
     if ([AirliftBridge isAvailable]) {
@@ -192,8 +213,9 @@
     }
 
     int64_t bundleGrant = -1;
-    if (remoteBundle.length && localGrant >= 0) {
-        bundleGrant = [ContainerAccess acquireAccessToPath:remoteBundle error:nil];
+    NSString *localBundleForRestore = localBundle.length ? localBundle : remoteBundle;
+    if (localBundleForRestore.length && localGrant >= 0) {
+        bundleGrant = [ContainerAccess acquireAccessToPath:localBundleForRestore error:nil];
         [ContainerAccess note:[NSString stringWithFormat:@"restore:bundle-grant=%lld",
                                (long long)bundleGrant]];
     }
@@ -204,7 +226,7 @@
         restored = [PatchTransaction restoreGroup:group
                                          bundleID:bundleID
                                         container:localContainer
-                                       bundlePath:remoteBundle
+                                       bundlePath:localBundleForRestore
                                       localAccess:YES
                                             error:&restoreError];
         if (restored) {

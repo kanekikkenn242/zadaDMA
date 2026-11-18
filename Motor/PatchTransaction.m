@@ -339,6 +339,10 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
 }
 
 + (BOOL)applyPackage:(PatchPackage *)pkg container:(NSString *)container bundleID:(NSString *)bundleID error:(NSError **)err {
+    return [self applyPackage:pkg container:container bundlePath:nil bundleID:bundleID error:err];
+}
+
++ (BOOL)applyPackage:(PatchPackage *)pkg container:(NSString *)container bundlePath:(NSString *)bundlePath bundleID:(NSString *)bundleID error:(NSError **)err {
     NSFileManager *fm=[NSFileManager defaultManager];
     if(![fm fileExistsAtPath:container]) { 
         if(err)*err=[NSError errorWithDomain:@"patch" code:ENOENT userInfo:@{NSLocalizedDescriptionKey:@"container missing"}]; 
@@ -360,15 +364,26 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
         if ([dst containsString:@"{gz}"]) {
             if (!mcmFileinfoAttempted) {
                 mcmFileinfoAttempted = YES;
-                mcmFileinfo = LoadFileinfo(container, nil);
+                mcmFileinfo = LoadFileinfo(container, bundlePath);
                 [ContainerAccess note:[NSString stringWithFormat:@"fileinfo:mcm-%@",
                                        mcmFileinfo.length ? @"loaded" : @"missing"]];
             }
             NSArray<NSString *> *candidates = ResolveGzDestinations(dst, mcmFileinfo);
             NSString *picked = nil;
             for (NSString *candidate in candidates) {
-                NSString *full = ResolveTarget(container, candidate);
-                if ([fm fileExistsAtPath:full]) { picked = candidate; break; }
+                NSString *containerFull = ResolveTarget(container, candidate);
+                NSString *rel = candidate;
+                while ([rel hasPrefix:@"/"]) rel = [rel substringFromIndex:1];
+                NSString *bundleFull = nil;
+                if (bundlePath.length && ![rel hasPrefix:@"Documents/"] &&
+                    ![rel hasPrefix:@"Library/"] && ![rel hasPrefix:@"tmp/"]) {
+                    bundleFull = [bundlePath stringByAppendingPathComponent:rel];
+                }
+                if ([fm fileExistsAtPath:containerFull] ||
+                    (bundleFull.length && [fm fileExistsAtPath:bundleFull])) {
+                    picked = candidate;
+                    break;
+                }
             }
             if (!picked.length) {
                 if ([dst hasSuffix:@".raw.tmp"]) {
@@ -384,24 +399,85 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
             [ContainerAccess note:[NSString stringWithFormat:@"tx:mcm-gz %@ -> %@", dst, picked]];
             dst = picked;
         }
-        NSString *full=ResolveTarget(container,dst);
-        [ContainerAccess note:[NSString stringWithFormat:@"tx:target %@", full]];
-        if(!UnderRoot(container,full)){ if(err)*err=[NSError errorWithDomain:@"patch" code:EPERM userInfo:@{NSLocalizedDescriptionKey:@"path traversal"}]; return NO; }
-        if(RejectSymlink(container,full)){ if(err)*err=[NSError errorWithDomain:@"patch" code:EPERM userInfo:@{NSLocalizedDescriptionKey:@"symlink"}]; return NO; }
-        // Never create a missing target: MCM writes cannot be undone through
-        // the pairing path once the game is closed. A file that is not there
-        // is not loaded, so skipping it loses nothing.
-        if (![fm fileExistsAtPath:full]) {
-            [ContainerAccess note:[NSString stringWithFormat:@"tx:mcm-absent %@", full]];
-            continue;
-        }
+
         NSData *blob=pkg.files[src];
         if(!blob){ if(err)*err=[NSError errorWithDomain:@"patch" code:ENOENT userInfo:@{NSLocalizedDescriptionKey:[NSString stringWithFormat:@"missing %@",src]}]; return NO; }
         NSString *want=pkg.digests[src];
         if(want && ![SHA256Hex(blob) isEqualToString:want]){ if(err)*err=[NSError errorWithDomain:@"patch" code:EINVAL userInfo:@{NSLocalizedDescriptionKey:@"pkg digest"}]; return NO; }
-        total+=blob.length+4096;
-        [plan addObject:@{@"src":src,@"dst":full,@"blob":blob,@"digest":want?:SHA256Hex(blob),
-                          @"group":GroupStemForDestination(dst)}];
+
+        NSString *groupName=GroupStemForDestination(dst);
+        NSString *rel = dst;
+        while ([rel hasPrefix:@"/"]) rel = [rel substringFromIndex:1];
+        NSMutableArray<NSString *> *targets=[NSMutableArray array];
+
+        // Reference/X layout: relative to the data-container root. FF's own
+        // layout adds `Documents/`, which ResolveTarget prefers when present.
+        NSString *containerTarget=ResolveTarget(container,dst);
+        if ([fm fileExistsAtPath:containerTarget]) [targets addObject:containerTarget];
+
+        // Shipped app-bundle copy: Unity's streamingAssetsPath resolves to
+        // `<FreeFire.app>/Data/Raw`, and the loader reads it without consulting
+        // the hot-update manifest. Only asset-relative paths map there.
+        BOOL dataContainerRelative = [rel hasPrefix:@"Documents/"] ||
+                                     [rel hasPrefix:@"Library/"] ||
+                                     [rel hasPrefix:@"tmp/"];
+        if (bundlePath.length && !dataContainerRelative) {
+            NSString *bundleTarget=[bundlePath stringByAppendingPathComponent:rel];
+            if ([fm fileExistsAtPath:bundleTarget] &&
+                ![targets containsObject:bundleTarget]) {
+                [targets addObject:bundleTarget];
+            }
+        }
+
+        // Downloaded overrides live under Documents/streaming and
+        // Documents/optionallocres, relative to `Data/Raw/ios`.
+        NSString *hotRel = nil;
+        for (NSString *prefix in @[@"Data/Raw/ios/", @"Data/Raw/"]) {
+            if ([rel hasPrefix:prefix]) {
+                hotRel = [rel substringFromIndex:prefix.length];
+                break;
+            }
+        }
+        if (hotRel.length) {
+            for (NSString *folder in @[@"streaming", @"optionallocres"]) {
+                NSString *candidate = [[container stringByAppendingPathComponent:@"Documents"]
+                    stringByAppendingPathComponent:folder];
+                candidate = [candidate stringByAppendingPathComponent:hotRel];
+                if ([fm fileExistsAtPath:candidate] &&
+                    ![targets containsObject:candidate]) {
+                    [targets addObject:candidate];
+                }
+            }
+        }
+
+        // Never create a missing target: the write could not be undone through
+        // the pairing path once the game is closed. A file that is not there
+        // is not loaded, so skipping it loses nothing.
+        if (targets.count == 0) {
+            if ([dst hasSuffix:@".raw.tmp"]) {
+                [ContainerAccess note:[NSString stringWithFormat:@"tx:mcm-raw-tmp-absent %@", rel]];
+                continue;
+            }
+            [ContainerAccess note:[NSString stringWithFormat:@"tx:mcm-absent %@", rel]];
+            if (err) *err = [NSError errorWithDomain:@"patch" code:ENOENT userInfo:@{
+                NSLocalizedDescriptionKey: [NSString stringWithFormat:
+                    @"target-i nuk ekziston: %@", rel]}];
+            return NO;
+        }
+
+        for (NSString *full in targets) {
+            NSString *root = nil;
+            if (UnderRoot(container, full)) root = container;
+            else if (bundlePath.length && UnderRoot(bundlePath, full)) root = bundlePath;
+            if(!root.length || RejectSymlink(root,full)){
+                if(err)*err=[NSError errorWithDomain:@"patch" code:EPERM userInfo:@{NSLocalizedDescriptionKey:@"path traversal"}];
+                return NO;
+            }
+            [ContainerAccess note:[NSString stringWithFormat:@"tx:target %@", full]];
+            total+=blob.length+4096;
+            [plan addObject:@{@"src":src,@"dst":full,@"blob":blob,@"digest":want?:SHA256Hex(blob),
+                              @"group":groupName}];
+        }
     }
     if (plan.count == 0) {
         if (err) *err = [NSError errorWithDomain:@"patch" code:ENOENT userInfo:@{
@@ -413,7 +489,8 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
     PatchLedgerEntry *ledger=[PatchLedgerEntry new];
     ledger.bundleID=bundleID; ledger.containerPath=container; ledger.at=[NSDate date];
     NSMutableArray *entries=[NSMutableArray array];
-    
+    NSUInteger wrote = 0, skipped = 0;
+
     for(NSDictionary *p in plan){
         NSString *dst=p[@"dst"]; NSData *blob=p[@"blob"]; NSString *dig=p[@"digest"];
         NSString *group=p[@"group"];
@@ -425,12 +502,14 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
             if(a){
                 NSData *original=[NSData dataWithContentsOfFile:dst options:0 error:nil];
                 if(!original.length || !SaveOriginalMeta(dst,original,bundleID,group)){
-                    if(err)*err=[NSError errorWithDomain:@"patch" code:EIO
-                                               userInfo:@{NSLocalizedDescriptionKey:@"originali nuk u ruajt"}];
-                    [self rollback:entries]; return NO;
+                    [ContainerAccess note:[NSString stringWithFormat:@"tx:skip-original %@", dst]];
+                    skipped++;
+                    continue;
                 }
-            } else {
-                SaveOriginalMeta(dst,nil,bundleID,group);
+            } else if(!SaveOriginalMeta(dst,nil,bundleID,group)){
+                [ContainerAccess note:[NSString stringWithFormat:@"tx:skip-original %@", dst]];
+                skipped++;
+                continue;
             }
         }
 
@@ -438,31 +517,51 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
         if(a){
             backup=[dst stringByAppendingFormat:@".3105-displaced-%@",[[NSUUID UUID].UUIDString substringToIndex:8]];
             [ContainerAccess note:@"tx:backup"];
-            if(![fm copyItemAtPath:dst toPath:backup error:err]){ [self rollback:entries]; return NO; }
+            if(![fm copyItemAtPath:dst toPath:backup error:nil]){
+                [ContainerAccess note:[NSString stringWithFormat:@"tx:skip-backup %@", dst]];
+                skipped++;
+                continue;
+            }
         }
         NSString *parent=[dst stringByDeletingLastPathComponent];
         if(![fm fileExistsAtPath:parent]){
             [ContainerAccess note:@"tx:mkdir"];
-            if(![fm createDirectoryAtPath:parent withIntermediateDirectories:YES attributes:nil error:err]){
-                if(backup)[fm removeItemAtPath:backup error:nil]; [self rollback:entries]; return NO; 
+            if(![fm createDirectoryAtPath:parent withIntermediateDirectories:YES attributes:nil error:nil]){
+                if(backup)[fm removeItemAtPath:backup error:nil];
+                [ContainerAccess note:[NSString stringWithFormat:@"tx:skip-mkdir %@", dst]];
+                skipped++;
+                continue;
             }
         }
         [ContainerAccess note:@"tx:writing"];
-        if(![blob writeToFile:dst options:NSDataWritingAtomic error:err]){
-            if(backup)[fm removeItemAtPath:backup error:nil]; [self rollback:entries]; return NO; 
+        if(![blob writeToFile:dst options:NSDataWritingAtomic error:nil]){
+            if(backup)[fm removeItemAtPath:backup error:nil];
+            [ContainerAccess note:[NSString stringWithFormat:@"tx:skip-write %@", dst]];
+            skipped++;
+            continue;
         }
         
         [ContainerAccess note:@"tx:written"];
         NSData *got=[NSData dataWithContentsOfFile:dst options:0 error:nil];
         if(!got || ![SHA256Hex(got) isEqualToString:dig]){
-            if(err)*err=[NSError errorWithDomain:@"patch" code:EIO userInfo:@{NSLocalizedDescriptionKey:@"readback digest"}];
             [fm removeItemAtPath:dst error:nil];
             if(backup)[fm moveItemAtPath:backup toPath:dst error:nil];
-            [self rollback:entries]; return NO;
+            [ContainerAccess note:[NSString stringWithFormat:@"tx:skip-verify %@", dst]];
+            skipped++;
+            continue;
         }
         [entries addObject:@{@"dst":dst,@"backup":backup?:[NSNull null],@"sha256":dig,@"ok":@YES}];
         [gLastResolvedTargets addObject:dst];
+        wrote++;
         [ContainerAccess note:@"tx:verified"];
+    }
+    if (wrote == 0) {
+        if (err) *err = [NSError errorWithDomain:@"patch" code:EIO userInfo:@{
+            NSLocalizedDescriptionKey: @"asnjë target nuk u shkrua"}];
+        return NO;
+    }
+    if (skipped) {
+        [ContainerAccess note:[NSString stringWithFormat:@"tx:skipped=%lu", (unsigned long)skipped]];
     }
     ledger.entries=entries; [self appendLedger:ledger]; return YES;
 }

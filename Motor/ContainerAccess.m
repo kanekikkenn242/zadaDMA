@@ -844,6 +844,119 @@ static __attribute__((unused)) NSString *zdma_launchservices_container(NSString 
     return zdma_first_app_group();
 }
 
++ (NSString *)applicationBundlePathForBundleID:(NSString *)bundleID
+                                         error:(NSError **)error {
+    zdma_load_api();
+    if (!zdma_safe_identifier(bundleID)) {
+        if (error) *error = zdma_error(EINVAL, @"Bundle ID i pavlefshëm.", bundleID);
+        return nil;
+    }
+
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *root = @"/var/containers/Bundle/Application";
+
+    // 1. MCM class 1 returns the app-bundle container
+    //    (`/var/containers/Bundle/Application/<UUID>`). It is a borrowed path;
+    //    the `.app` child still has to be located.
+    NSString *classOnePath = nil;
+    if (gAPI.loaded && gAPI.query_create && gAPI.set_class && gAPI.set_identifiers &&
+        gAPI.set_flags && gAPI.get_single && gAPI.get_path && gAPI.query_free) {
+        void *query = gAPI.query_create();
+        if (query) {
+            gAPI.set_class(query, 1);
+            xpc_object_t value = xpc_string_create(bundleID.UTF8String);
+            if (value) {
+                gAPI.set_identifiers(query, value);
+#if !OS_OBJECT_USE_OBJC
+                xpc_release(value);
+#endif
+                // Path lookup uses the plain query form (0x100000000), the
+                // same flags X uses in MCMActivateContainerPath; 0x900000000
+                // is reserved for the sandbox-activation lease.
+                gAPI.set_flags(query, 0x100000000ULL);
+                if (gAPI.set_part) gAPI.set_part(query, 0);
+                void *result = gAPI.get_single(query);
+                const char *raw = result ? gAPI.get_path(result) : NULL;
+                if (raw && raw[0]) {
+                    classOnePath = zdma_normalize_path([NSString stringWithUTF8String:raw]);
+                }
+            }
+            gAPI.query_free(query);
+        }
+    }
+    if (classOnePath.length) {
+        zdma_trace([NSString stringWithFormat:@"bundle:mcm1 %@", classOnePath]);
+        NSArray<NSString *> *children = [fm contentsOfDirectoryAtPath:classOnePath error:nil];
+        for (NSString *child in children) {
+            if (![child.pathExtension isEqualToString:@"app"]) continue;
+            NSString *candidate = [classOnePath stringByAppendingPathComponent:child];
+            if ([fm fileExistsAtPath:[candidate stringByAppendingPathComponent:@"Info.plist"]]) {
+                zdma_trace([NSString stringWithFormat:@"bundle:found %@", candidate]);
+                return candidate;
+            }
+        }
+        zdma_trace(@"bundle:mcm1-no-app");
+    }
+
+    // 2. Enumerate the bundle root through a scoped sandbox extension. X does
+    //    the same with bad_query; worse_query covers the same root on iOS 26/27.
+    int64_t grant = [self acquireAccessToPath:root error:nil];
+    zdma_trace([NSString stringWithFormat:@"bundle:grant=%lld", (long long)grant]);
+    NSArray<NSString *> *entries = [fm contentsOfDirectoryAtPath:root error:nil];
+    NSString *found = nil;
+    for (NSString *entry in entries) {
+        if (![entry isKindOfClass:[NSString class]] || !entry.length) continue;
+        NSString *containerDir = [root stringByAppendingPathComponent:entry];
+
+        // Direct `.app` children (older layout, /Applications).
+        if ([entry.pathExtension isEqualToString:@"app"]) {
+            NSString *candidate = containerDir;
+            NSDictionary *info = [NSDictionary dictionaryWithContentsOfFile:
+                                  [candidate stringByAppendingPathComponent:@"Info.plist"]];
+            if ([info[@"CFBundleIdentifier"] isEqual:bundleID]) {
+                found = candidate;
+                break;
+            }
+            continue;
+        }
+
+        // UUID bundle containers: `<UUID>/<Name>.app`.
+        NSString *metadataPath = [containerDir stringByAppendingPathComponent:
+                                  @".com.apple.mobile_container_manager.metadata.plist"];
+        NSDictionary *metadata = [NSDictionary dictionaryWithContentsOfFile:metadataPath];
+        BOOL identifierMatches = [metadata[@"MCMMetadataIdentifier"] isEqual:bundleID];
+        NSArray<NSString *> *children = [fm contentsOfDirectoryAtPath:containerDir error:nil];
+        for (NSString *child in children) {
+            if (![child.pathExtension isEqualToString:@"app"]) continue;
+            NSString *candidate = [containerDir stringByAppendingPathComponent:child];
+            if (identifierMatches) {
+                found = candidate;
+                break;
+            }
+            NSDictionary *info = [NSDictionary dictionaryWithContentsOfFile:
+                                  [candidate stringByAppendingPathComponent:@"Info.plist"]];
+            if ([info[@"CFBundleIdentifier"] isEqual:bundleID]) {
+                found = candidate;
+                break;
+            }
+        }
+        if (found) break;
+    }
+    if (grant >= 0) [self releaseAccess:grant];
+
+    if (found.length) {
+        zdma_trace([NSString stringWithFormat:@"bundle:found %@", found]);
+        return found;
+    }
+    zdma_trace(@"bundle:not-found");
+    if (error) {
+        *error = zdma_error(ENOENT,
+                            [NSString stringWithFormat:@"Bundle-i i %@ nuk u gjet.", bundleID],
+                            @"MCM class 1 + bundle-root enumeration dështuan");
+    }
+    return nil;
+}
+
 + (BOOL)grantAccessToPath:(NSString *)path error:(NSError **)error {
     int64_t handle = [self acquireAccessToPath:path error:error];
     if (handle < 0) return NO;

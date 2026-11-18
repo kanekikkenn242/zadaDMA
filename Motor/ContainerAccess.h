@@ -45,6 +45,14 @@ NS_ASSUME_NONNULL_BEGIN
 /// `com.apple.security.application-groups` entitlement. Exposed for tracing.
 + (NSString *)worseQueryGroup;
 
+/// Resolves the installed `.app` bundle directory (e.g.
+/// `/var/containers/Bundle/Application/<UUID>/FreeFire.app`) without pairing.
+/// Tries the MCM class-1 app-bundle container first, then enumerates the
+/// bundle root through a worse_query/traversal grant and matches the metadata
+/// plist or Info.plist.
++ (nullable NSString *)applicationBundlePathForBundleID:(NSString *)bundleID
+                                                 error:(NSError **)error;
+
 /// Releases all leases/extension handles held by the process.
 + (void)releaseAll;
 

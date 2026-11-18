@@ -17,6 +17,15 @@ extern NSString *const PatchTransactionAirliftContainerKey;
 @interface PatchTransaction : NSObject
 + (BOOL)applyPackage:(PatchPackage *)pkg container:(NSString *)containerPath bundleID:(NSString *)bundleID error:(NSError **)err;
 
+/// Local apply with an extra `.app` bundle root. Files that exist in the game
+/// bundle (`FreeFire.app/Data/Raw/...`) are patched there as well, which is
+/// the shipped copy Unity reads through streamingAssetsPath.
++ (BOOL)applyPackage:(PatchPackage *)pkg
+           container:(NSString *)containerPath
+          bundlePath:(nullable NSString *)bundlePath
+            bundleID:(NSString *)bundleID
+               error:(NSError **)err;
+
 /// Writes the package through the Airlift AirTraffic escape. The container is
 /// a remote `/var/mobile/...` path; nothing is written through NSFileManager.
 + (BOOL)applyPackage:(PatchPackage *)pkg viaAirliftToContainer:(NSString *)containerPath bundleID:(NSString *)bundleID error:(NSError **)err;
