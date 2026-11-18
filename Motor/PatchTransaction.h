@@ -1,0 +1,56 @@
+#pragma once
+#import <Foundation/Foundation.h>
+
+@class PatchPackage;
+
+NS_ASSUME_NONNULL_BEGIN
+/// Marker used by DevicePatchService: this container path came from Airlift
+/// (InstallationProxy over the RPPairing tunnel), not from an MCM lease.
+extern NSString *const PatchTransactionAirliftContainerKey;
+
+@interface PatchLedgerEntry : NSObject
+@property (nonatomic, copy) NSString *bundleID, *containerPath;
+@property (nonatomic, copy) NSArray<NSDictionary *> *entries;
+@property (nonatomic, strong) NSDate *at;
+@end
+
+@interface PatchTransaction : NSObject
++ (BOOL)applyPackage:(PatchPackage *)pkg container:(NSString *)containerPath bundleID:(NSString *)bundleID error:(NSError **)err;
+
+/// Local apply with an extra `.app` bundle root. Files that exist in the game
+/// bundle (`FreeFire.app/Data/Raw/...`) are patched there as well, which is
+/// the shipped copy Unity reads through streamingAssetsPath.
++ (BOOL)applyPackage:(PatchPackage *)pkg
+           container:(NSString *)containerPath
+          bundlePath:(nullable NSString *)bundlePath
+            bundleID:(NSString *)bundleID
+               error:(NSError **)err;
+
+/// Writes the package through the Airlift AirTraffic escape. The container is
+/// a remote `/var/mobile/...` path; nothing is written through NSFileManager.
++ (BOOL)applyPackage:(PatchPackage *)pkg viaAirliftToContainer:(NSString *)containerPath bundleID:(NSString *)bundleID error:(NSError **)err;
++ (BOOL)restoreLedger:(PatchLedgerEntry *)ledger error:(NSError **)err;
+
+/// Stable per-file group of a `.3105` destination, e.g.
+/// `Data/Raw/ios/gameassetbundles/cache_res`. All aim variants share it.
++ (NSArray<NSString *> *)groupsForPackage:(PatchPackage *)pkg;
+
+/// Writes back every original captured before the first write of `group` and
+/// verifies the device bytes. Only paths inside `container` (the game's current
+/// data container) or `bundlePath` are touched; backups from an older install
+/// (different UUID) are ignored. Idempotent: paths that already hold the
+/// original are counted as restored.
+///
+/// `localAccess` selects the transport: YES reads/writes with NSFileManager and
+/// relies on an already-active MCM/worse_query sandbox extension; NO goes
+/// through Airlift's AirTraffic escape.
++ (BOOL)restoreGroup:(NSString *)group
+            bundleID:(NSString *)bundleID
+           container:(nullable NSString *)container
+          bundlePath:(nullable NSString *)bundlePath
+         localAccess:(BOOL)localAccess
+               error:(NSError **)err;
++ (NSArray<NSString *> *)lastResolvedTargets;
++ (void)resetResolvedTargets;
+@end
+NS_ASSUME_NONNULL_END

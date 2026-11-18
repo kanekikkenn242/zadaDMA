@@ -1,0 +1,37 @@
+[package]
+name = "zdma_pairing"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "zdma_pairing"
+crate-type = ["staticlib"]
+
+[dependencies]
+idevice = { path = "../vendor/idevice", default-features = false, features = [
+    "rustcrypto",
+    "remote_pairing",
+    "afc",
+    "house_arrest",
+    "rsd",
+    "tunnel_tcp_stack",
+    "tcp",
+] }
+tokio = { version = "1", features = [
+    "rt-multi-thread",
+    "net",
+    "time",
+    "sync",
+    "fs",
+    "io-util",
+] }
+base64 = "0.22"
+uuid = { version = "1", features = ["v4"] }
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
