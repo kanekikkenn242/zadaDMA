@@ -3,44 +3,114 @@ on:
   push: { branches: [ main ] }
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
-    runs-on: macos-14
-    timeout-minutes: 45
+    # Intel runners have far more free capacity than the arm64 macOS pool,
+    # which repeatedly failed to acquire a runner and produced no artifact.
+    runs-on: macos-15-intel
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with: 
+          targets: aarch64-apple-ios
 
-      - uses: dtolnay/rust-toolchain@stable
-        with: { targets: aarch64-apple-ios }
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            Motor/zdma_crypto -> target
+            Motor/zdma_pairing -> target
+            Motor/airlift/rust-core -> target
 
-      - name: Rust airlift staticlib
-        working-directory: Motor/airlift
-        run: cargo build --release --lib --target aarch64-apple-ios
-
-      - run: brew install xcodegen
-
-      - run: xcodegen generate --spec project.yml
-
-      - name: Build
+      - name: Build Airlift (RPPairing + AirTraffic exploit)
+        env:
+          IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+        run: |
+          cd Motor/airlift/rust-core
+          cargo build --release --target aarch64-apple-ios
+          ls -la target/aarch64-apple-ios/release/libairlift_ffi.a
+          
+      - name: Build zdma_crypto (Rust)
+        run: |
+          if [ -d "Motor/zdma_crypto" ]; then
+            cd Motor/zdma_crypto
+            cargo build --release --target aarch64-apple-ios
+          fi
+          
+      - name: Build zdma_pairing (RPPairing + RSD + House Arrest + AFC)
+        env:
+          IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+          MACOSX_DEPLOYMENT_TARGET: "13.0"
+        run: |
+          cd Motor/zdma_pairing
+          cargo build --release --target aarch64-apple-ios
+          ls -la target/aarch64-apple-ios/release/libzdma_pairing.a
+          
+      - name: Install XcodeGen
+        run: brew install xcodegen
+        
+      - name: Generate Project
+        run: xcodegen generate --spec project.yml
+        
+      - name: Build iOS App
         run: |
           set -o pipefail
+          mkdir -p build
           xcodebuild -project zadaDMA.xcodeproj -scheme zadaDMA -configuration Release \
-            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build 2>&1 | tee build/xcodebuild.log
 
-      - name: Force Copy Patches
+      - name: Report Xcode errors
+        if: failure()
         run: |
-          APP=build/Build/Products/Release-iphoneos/zadaDMA.app
-          for pkg in aimneck_70 aimdrag; do
-            if [ -f "Payload/zadaDMA.app/$pkg.3105" ]; then cp "Payload/zadaDMA.app/$pkg.3105" "$APP/"; fi
+          if [ -f build/xcodebuild.log ]; then
+            grep -E "(error:|fatal error:|Undefined symbols|The following build commands failed)" build/xcodebuild.log | head -n 40 | while IFS= read -r line; do
+              echo "::error title=Xcode::$line"
+            done
+          fi
+            
+      - name: Verify Info.plist keys
+        run: |
+          APP=$(find build/Build/Products/Release-iphoneos -name "*.app" | head -n 1)
+          echo "Checking $APP/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :NSBonjourServices" "$APP/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :NSLocalNetworkUsageDescription" "$APP/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :BGTaskSchedulerPermittedIdentifiers" "$APP/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :NSBonjourServices:0" "$APP/Info.plist" | grep -q "_remotepairing-pairable-host._tcp"
+          /usr/libexec/PlistBuddy -c "Print :BGTaskSchedulerPermittedIdentifiers:0" "$APP/Info.plist" | grep -q "\.pairing\."
+            
+      - name: Force Copy Patches and Sounds
+        run: |
+          APP=$(find build/Build/Products/Release-iphoneos -name "*.app" | head -n 1)
+          if [ -f Payload/zadaDMA.app/aimdrag_neck.3105 ]; then cp Payload/zadaDMA.app/aimdrag_neck.3105 "$APP/"; fi
+          if [ -f Payload/zadaDMA.app/aimbot_drag.3105 ]; then cp Payload/zadaDMA.app/aimbot_drag.3105 "$APP/"; fi
+          if [ -f Payload/zadaDMA.app/aimneck_90.3105 ]; then cp Payload/zadaDMA.app/aimneck_90.3105 "$APP/"; fi
+          if [ -f Payload/zadaDMA.app/aimneck_cache.3105 ]; then cp Payload/zadaDMA.app/aimneck_cache.3105 "$APP/"; fi
+          if [ -f Payload/zadaDMA.app/aimtorso_cache.3105 ]; then cp Payload/zadaDMA.app/aimtorso_cache.3105 "$APP/"; fi
+          if [ -f Payload/zadaDMA.app/aimneck_torso_cache.3105 ]; then cp Payload/zadaDMA.app/aimneck_torso_cache.3105 "$APP/"; fi
+          if [ -f Payload/zadaDMA.app/welcome.wav ]; then cp Payload/zadaDMA.app/welcome.wav "$APP/"; fi
+          if [ -f Payload/zadaDMA.app/activar.wav ]; then cp Payload/zadaDMA.app/activar.wav "$APP/"; fi
+          if [ -f Payload/zadaDMA.app/desactivar.wav ]; then cp Payload/zadaDMA.app/desactivar.wav "$APP/"; fi
+          echo "Patches in app bundle:"
+          ls -la "$APP"/*.3105
+          for p in aimneck_cache aimtorso_cache aimneck_torso_cache; do
+            test -f "$APP/$p.3105" || { echo "::error title=Missing patch::$p.3105 is not in the app bundle"; exit 1; }
           done
-
+          
       - name: Package IPA
         run: |
           rm -rf pkg && mkdir -p pkg/Payload
-          cp -R build/Build/Products/Release-iphoneos/zadaDMA.app pkg/Payload/
+          APP_PATH=$(find build/Build/Products/Release-iphoneos -name "*.app" | head -n 1)
+          cp -R "$APP_PATH" pkg/Payload/
           (cd pkg && zip -ry ../zadaDMA-unsigned.ipa Payload)
-
+          
       - uses: actions/upload-artifact@v4
         with:
           name: zadaDMA-ipa

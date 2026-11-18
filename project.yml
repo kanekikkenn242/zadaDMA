@@ -1,6 +1,6 @@
 name: zadaDMA
 options:
-  bundleIdPrefix: com.apple.mobile
+  bundleIdPrefix: com.apple
   deploymentTarget: { iOS: "16.0" }
   createIntermediateGroups: true
 
@@ -18,26 +18,42 @@ targets:
     type: application
     platform: iOS
     sources:
+      # App/, Patches/ and part of Views/ came from the local rewrite and
+      # duplicate types (AppState, Theme, zadaDMAApp, OnboardingView). Keep
+      # those files in the repo but do not compile them into this target.
+      # PairingView.swift and SettingsView.swift are the original app files.
       - path: zadaDMA
+        excludes:
+          - "App/**"
+          - "Patches/**"
+          - "Views/DashboardView.swift"
+          - "Views/LogView.swift"
+          - "Views/OnboardingView.swift"
+          - "Views/RootView.swift"
+      - path: Airlift
       - path: Motor
-        excludes: ["airlift/**"]
+        excludes: ["zdma_crypto/**", "zdma_pairing/**", "vendor/**", "airlift/**", "kexploit/kfd/**", "libidevice_ffi.a"]
       - path: Payload/zadaDMA.app
         excludes: ["Info.plist", "zadaDMA", "Assets.car"]
         buildPhase: resources
-    dependencies:
-      - sdk: Security.framework
-      - sdk: Network.framework
-      - sdk: CoreFoundation.framework
-      - sdk: SystemConfiguration.framework
-    info:
-      path: Payload/zadaDMA.app/Info.plist
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.apple.mobile.MobileHouseArrest
         PRODUCT_NAME: zadaDMA
         INFOPLIST_FILE: Payload/zadaDMA.app/Info.plist
         SWIFT_OBJC_BRIDGING_HEADER: Motor/MotorBridge.h
-        HEADER_SEARCH_PATHS: ["$(SRCROOT)/Motor"]
-        LIBRARY_SEARCH_PATHS: ["$(SRCROOT)/Motor/airlift/target/aarch64-apple-ios/release"]
-        OTHER_LDFLAGS: ["-ObjC", "-lc++", "-lairlift_ffi"]
+        HEADER_SEARCH_PATHS: ["$(SRCROOT)/Motor", "$(SRCROOT)/Motor/zdma_pairing", "$(SRCROOT)/Motor/airlift/include", "$(SRCROOT)/Airlift", "$(SRCROOT)/Airlift/include"]
+        LIBRARY_SEARCH_PATHS: 
+          - "$(SRCROOT)/Motor/zdma_crypto/target/aarch64-apple-ios/release"
+          - "$(SRCROOT)/Motor/zdma_pairing/target/aarch64-apple-ios/release"
+          - "$(SRCROOT)/Motor/airlift/rust-core/target/aarch64-apple-ios/release"
+          - "$(SRCROOT)/Motor"
+        OTHER_LDFLAGS: 
+          - "-ObjC"
+          - "-lc++"
+          - "-lzdma_crypto"
+          - "-lzdma_pairing"
+          - "-lairlift_ffi"
+          - "-Wl,-u,_ALGetGrappaToken"
+          - "-fobjc-link-runtime"
         TARGETED_DEVICE_FAMILY: "1,2"

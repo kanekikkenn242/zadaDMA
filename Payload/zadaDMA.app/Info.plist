@@ -1,109 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
-	<key>CFBundleDisplayName</key>
-	<string>zadaDMA</string>
-	<key>CFBundleExecutable</key>
-	<string>zadaDMA</string>
-	<key>CFBundleIdentifier</key>
-	<string>com.apple.mobile.MobileHouseArrest</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
-	<key>CFBundleName</key>
-	<string>zadaDMA</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
-	<key>CFBundleShortVersionString</key>
-	<string>1.0.0</string>
-	<key>CFBundleVersion</key>
-	<string>1</string>
-	<key>CFBundleDocumentTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeName</key>
-			<string>3105 Patch Package</string>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>LSHandlerRank</key>
-			<string>Owner</string>
-			<key>LSItemContentTypes</key>
-			<array>
-				<string>com.zadadma.3105.patch-package</string>
-			</array>
-		</dict>
-	</array>
-	<key>UTExportedTypeDeclarations</key>
-	<array>
-		<dict>
-			<key>UTTypeIdentifier</key>
-			<string>com.zadadma.3105.patch-package</string>
-			<key>UTTypeDescription</key>
-			<string>3105 Patch Package</string>
-			<key>UTTypeConformsTo</key>
-			<array>
-				<string>public.data</string>
-			</array>
-			<key>UTTypeTagSpecification</key>
-			<dict>
-				<key>public.filename-extension</key>
-				<array>
-					<string>3105</string>
-				</array>
-				<key>public.mime-type</key>
-				<string>application/x-3105-patch</string>
-			</dict>
-		</dict>
-	</array>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>com.zadadma.3105.patch-import</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>threeoneosfive</string>
-			</array>
-		</dict>
-	</array>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
-	<key>MinimumOSVersion</key>
-	<string>16.0</string>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>zadaDMA uses the local network to reach the device's pairing listener over the loopback tunnel.</string>
-	<key>NSBonjourServices</key>
-	<array>
-		<string>_remotepairing._tcp</string>
-		<string>_remotepairing-pairable-host._tcp</string>
-	</array>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>audio</string>
-	</array>
-	<key>UIFileSharingEnabled</key>
-	<true/>
-	<key>LSSupportsOpeningDocumentsInPlace</key>
-	<true/>
-	<key>UILaunchScreen</key>
-	<dict>
-		<key>UIColorName</key>
-		<string></string>
-	</dict>
-	<key>UIRequiredDeviceCapabilities</key>
-	<array>
-		<string>arm64</string>
-	</array>
-	<key>UISupportedInterfaceOrientations</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-	</array>
-	<key>UIDeviceFamily</key>
-	<array>
-		<integer>1</integer>
-		<integer>2</integer>
-	</array>
-</dict>
-</plist>
+<plist version="1.0"><dict>
+  <key>CFBundleIdentifier</key>         <string>com.apple.mobile.MobileHouseArrest</string>
+  <key>CFBundleExecutable</key>         <string>zadaDMA</string>
+  <key>CFBundleName</key>               <string>zadaDMA</string>
+  <key>CFBundleDisplayName</key>        <string>zadaDMA</string>
+  <key>CFBundleShortVersionString</key> <string>5.2.0</string>
+  <key>CFBundleVersion</key>            <string>124</string>
+  <key>CFBundlePackageType</key>        <string>APPL</string>
+  <key>LSRequiresIPhoneOS</key>         <true/>
+  <key>MinimumOSVersion</key>           <string>16.0</string>
+  <key>UIDeviceFamily</key>             <array><integer>1</integer><integer>2</integer></array>
+  <key>UILaunchScreen</key>             <dict/>
+  <key>NSAppTransportSecurity</key>
+  <dict><key>NSAllowsArbitraryLoads</key><true/></dict>
+  <key>UIBackgroundModes</key>
+  <array><string>audio</string></array>
+  <key>BGTaskSchedulerPermittedIdentifiers</key>
+  <array>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER).pairing.*</string>
+  </array>
+  <key>NSLocalNetworkUsageDescription</key> <string>Pairing tunnel.</string>
+  <key>NSBonjourServices</key>
+  <array>
+    <string>_remotepairing-pairable-host._tcp</string>
+    <string>_remotepairing._tcp</string>
+    <string>_remoted._tcp</string>
+  </array>
+  <key>UIFileSharingEnabled</key>       <true/>
+  <key>LSSupportsOpeningDocumentsInPlace</key><true/>
+</dict></plist>
