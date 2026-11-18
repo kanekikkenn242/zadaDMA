@@ -329,14 +329,20 @@ static NSString *zdma_first_app_group(void) {
         void *createSym = dlsym(RTLD_DEFAULT, "SecTaskCreateFromSelf");
         void *copySym = dlsym(RTLD_DEFAULT, "SecTaskCopyValueForEntitlement");
         if (createSym && copySym) {
-            zdma_SecTaskRef (*createTask)(void) =
-                (zdma_SecTaskRef (*)(void))createSym;
+            // SecTaskCreateFromSelf takes a CFAllocatorRef. Declaring it as a
+            // void function leaves x0 uninitialised on arm64 and the garbage
+            // allocator crashes inside CoreFoundation before the first trace.
+            zdma_SecTaskRef (*createTask)(CFAllocatorRef) =
+                (zdma_SecTaskRef (*)(CFAllocatorRef))createSym;
             CFTypeRef (*copyEntitlement)(zdma_SecTaskRef, CFStringRef, CFErrorRef *) =
                 (CFTypeRef (*)(zdma_SecTaskRef, CFStringRef, CFErrorRef *))copySym;
-            zdma_SecTaskRef task = createTask();
+            zdma_trace(@"wq:task-begin");
+            zdma_SecTaskRef task = createTask(kCFAllocatorDefault);
+            zdma_trace(task ? @"wq:task" : @"wq:task-null");
             if (task) {
                 CFTypeRef value = copyEntitlement(
                     task, CFSTR("com.apple.security.application-groups"), NULL);
+                zdma_trace(value ? @"wq:task-value" : @"wq:task-no-value");
                 if (value) {
                     if (CFGetTypeID(value) == CFArrayGetTypeID()) {
                         groups = (__bridge_transfer NSArray *)value;
@@ -403,25 +409,31 @@ static int64_t zdma_worse_query_grant(NSString *basePath,
     [fm createDirectoryAtPath:library withIntermediateDirectories:YES attributes:nil error:nil];
     NSString *linkPath = [library stringByAppendingPathComponent:@"Caches"];
 
+    zdma_trace([NSString stringWithFormat:@"wq:grant class=%d part=3 flags=%llx base=%@",
+                isGroup ? 7 : 2, isGroup ? 0x800000000ULL : 0x900000000ULL, basePath]);
     void *query = gAPI.query_create();
     if (!query) return -3;
 
+    zdma_trace(@"wq:set-class");
     gAPI.set_class(query, isGroup ? 7 : 2);
     xpc_object_t value = xpc_string_create(identifier.UTF8String);
     if (!value) {
         gAPI.query_free(query);
         return -3;
     }
+    zdma_trace(@"wq:set-ids");
     if (isGroup) gAPI.set_group(query, value);
     else gAPI.set_identifiers(query, value);
 #if !OS_OBJECT_USE_OBJC
     xpc_release(value);
 #endif
+    zdma_trace(@"wq:set-part");
     gAPI.set_part(query, 3);
     gAPI.set_flags(query, isGroup ? 0x800000000ULL : 0x900000000ULL);
 
     // Replace the caches directory with a link to the requested path. X does
     // this after the query is configured and before get_single_result.
+    zdma_trace([NSString stringWithFormat:@"wq:symlink %@", linkPath]);
     [fm removeItemAtPath:linkPath error:nil];
     NSString *target = [NSString stringWithUTF8String:targetC];
     NSError *linkError = nil;
@@ -435,6 +447,7 @@ static int64_t zdma_worse_query_grant(NSString *basePath,
         return -4;
     }
 
+    zdma_trace(@"wq:get-single");
     void *result = gAPI.get_single(query);
     if (!result) {
         zdma_trace(@"wq:no-result");
@@ -442,6 +455,7 @@ static int64_t zdma_worse_query_grant(NSString *basePath,
         zdma_clean_worse_symlink(linkPath);
         return -5;
     }
+    zdma_trace(@"wq:result");
     char *token = gAPI.copy_token(result);
     if (!token || token[0] == '\0') {
         if (token) free(token);
@@ -450,7 +464,9 @@ static int64_t zdma_worse_query_grant(NSString *basePath,
         zdma_clean_worse_symlink(linkPath);
         return -6;
     }
+    zdma_trace(@"wq:token");
     int64_t handle = gAPI.ext_consume(token);
+    zdma_trace([NSString stringWithFormat:@"wq:consumed=%lld", (long long)handle]);
     free(token);
     gAPI.query_free(query);
     zdma_clean_worse_symlink(linkPath);
@@ -589,15 +605,24 @@ static ZDMAContainerLease *zdma_lease_for_bundle(NSString *bundleID, NSString **
     int fd = open(path.fileSystemRepresentation, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
     if (fd < 0) {
         int savedErrno = errno;
+        // The daemon resolved the path but refused the token (iOS 26/27). The
+        // path itself is still authoritative: return it so the caller can mint
+        // its own extension through worse_query instead of aborting the whole
+        // lookup and falling back to a blind data-root scan.
         if (handle > 0 && gAPI.ext_release) gAPI.ext_release(handle);
-        gAPI.object_free(retained);
-        gAPI.query_free(query);
         if (failure) {
             *failure = [NSString stringWithFormat:@"container root open failed errno=%d (%s)",
                         savedErrno, strerror(savedErrno)];
         }
         zdma_trace([NSString stringWithFormat:@"lease:open-failed errno=%d", savedErrno]);
-        return nil;
+        zdma_trace(@"lease:path-only");
+        ZDMAContainerLease *pathOnly = [ZDMAContainerLease new];
+        pathOnly.bundleID = bundleID;
+        pathOnly.rootPath = path;
+        pathOnly.query = query;
+        pathOnly.object = retained;
+        pathOnly.extensionHandle = -1;
+        return pathOnly;
     }
     close(fd);
     zdma_trace(activated || handle > 0 ? @"lease:ok" : @"lease:ok-no-extension");
@@ -784,8 +809,10 @@ static __attribute__((unused)) NSString *zdma_launchservices_container(NSString 
     // 1. X's iOS 26/27 path: symlink the App Group caches directory to the
     //    target and let MCM hand out the resolved extension.
     NSString *group = zdma_first_app_group();
+    zdma_trace([NSString stringWithFormat:@"wq:group-url-begin %@", group]);
     NSURL *groupURL = [[NSFileManager defaultManager]
                        containerURLForSecurityApplicationGroupIdentifier:group];
+    zdma_trace(@"wq:group-url-end");
     if (groupURL.path.length) {
         zdma_trace([NSString stringWithFormat:@"wq:group-url %@", groupURL.path]);
         handle = zdma_worse_query_grant(groupURL.path,
