@@ -1,0 +1,6 @@
+Motor/airlift/target/
+build/
+pkg/
+*.xcodeproj/
+*.xcworkspace/
+DerivedData/

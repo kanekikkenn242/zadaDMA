@@ -1,0 +1,47 @@
+name: build-ipa
+on:
+  push: { branches: [ main ] }
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with: { targets: aarch64-apple-ios }
+
+      - name: Rust airlift staticlib
+        working-directory: Motor/airlift
+        run: cargo build --release --lib --target aarch64-apple-ios
+
+      - run: brew install xcodegen
+
+      - run: xcodegen generate --spec project.yml
+
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild -project zadaDMA.xcodeproj -scheme zadaDMA -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+
+      - name: Force Copy Patches
+        run: |
+          APP=build/Build/Products/Release-iphoneos/zadaDMA.app
+          for pkg in aimneck_70 aimdrag; do
+            if [ -f "Payload/zadaDMA.app/$pkg.3105" ]; then cp "Payload/zadaDMA.app/$pkg.3105" "$APP/"; fi
+          done
+
+      - name: Package IPA
+        run: |
+          rm -rf pkg && mkdir -p pkg/Payload
+          cp -R build/Build/Products/Release-iphoneos/zadaDMA.app pkg/Payload/
+          (cd pkg && zip -ry ../zadaDMA-unsigned.ipa Payload)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zadaDMA-ipa
+          path: zadaDMA-unsigned.ipa

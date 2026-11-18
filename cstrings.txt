@@ -1,0 +1,3877 @@
+invalid output buffer
+/System/Library/PrivateFrameworks/AirTrafficDevice.framework/AirTrafficDevice
+/System/Library/PrivateFrameworks/AirTrafficHost.framework/AirTrafficHost
+dlopen AirTraffic failed: %s
+version
+deviceType
+protocolVersion
+ATGrappaDeviceInfo
+ATGrappaSession
+ATGrappaSession class not found
+initWithType:
+establishHostSessionWithDeviceInfo:clientRequestData:
+establishDeviceSessionWithRequestData:responseData:
+failed to obtain valid Grappa token
+buffer too small: %lu > %lu
+NSException in Grappa generation: %s
+01012ba6a01f2ccf66a02613d5b72e0bc916004058a001a6874d18b5bd7b3395e25d79fa3ffcc67e718106d485c51540b828d1620e9f94f582d3bcc6f97e9088c923095ad8d36ab568fb45df61e286d25354b04c
+0101efa33b1586f410087474b2ccaf8cdb4d0040e5aee6017fdcf774a51c1980b4238076e86218af5a5f169470df90b73f4fc893a22da94fb9745c10f23df0620cfe3f19be3f2ab37d2f7590d8597ab51ebcced0
+0101aab479a6d8226f3e1d7a57a2501337e50240e54444b5f1d04101205a7a2f3d148d18440e2edef03d37fcdc7423c0bb441b4c4a355169d511d67ae3466fdf8865e69a8aed45867801ea8e1bbb48889ba0b834
+010194ab2ece86e05d7313e4075a947ab3be0240c9237c46b3c519d2ec297304413dab741827016e5eb9af8792bc2b3d6f12be25397931f41bffb887d042b97057c03ed8d72a3acb72378d30f7a073e3d7590f62
+01018cec0ea2c25446c90133d435eaafb0150240c6c28dd42f62f8907133c462fc8b6def05e543ab2d59952f6eb3b38e382d492cd2881beceaeaea67fc1331f77fca50fde6bed35622009670e6d6e4a36b09c088
+0101243b2587f14dd812751c6710730f46d50440fe2e5e9ccfe70200487e14c131412381fd7c214241b182ca04ebe0c1f3cdd54ac17eef31705c06289e02f672fa8c0d9dff167f1c925df876d5814d3265f55b06
+01016f8908f8f972bdc8fe99002f7648e86c024011a469c4320bb7e44137756dde3ecfbff08a55081e532c12a06101c6ae5283a014512d977eafad06c34b1f116422f6bf72ef56f8d734d37db287b170be7a3a82
+01015c5fcc103d0460f5bbfd48c387806e8e0340e3323ed780fbeccc2908c059d9a81e75976bf058b411f62a9a6e1df7ba307f69226942373f484690799b230bc60e99036f40eae25229aff6bb31ab74820e68a9
+0101f3f542aaa17252a8f81b3dc5b007adc304408d2496cee3af54113ffa9fba392b4143d4c38e4d79680e8e9feb554e450c1f89220c02375a9063b3a62bf61f62bd073991ebf215c6c2e28938d1aa53ed580c02
+0101fc26f7e89d1635d86b5c886df69f526a0040038b6c33049f6bd5cc526b4ee7ccce614135d2c73f8326d9af6d28399a231510917493d4fdaa395b4d1c1e1b09bdf3fe6fb7e16ad6d5f5cc18b93730874e6f4e
+%02x
+[bad_query] lstat failed path=%s errno=%d (%s)
+
+/usr/lib/system/libsystem_containermanager.dylib
+[bad_query] dlopen containermanager failed path=%s errno=%d (%s)
+
+container_query_create
+container_query_set_class
+container_query_set_group_identifiers
+container_query_operation_set_flags
+container_query_operation_set_part
+container_query_operation_set_part_domain
+container_query_get_single_result
+container_query_free
+container_copy_sandbox_token
+sandbox_extension_consume
+[bad_query] missing symbols path=%s create=%d query_create=%p set_class=%p set_group=%p set_flags=%p set_part=%p set_part_domain=%p get_single=%p free=%p copy_token=%p consume=%p
+
+[bad_query] query create failed path=%s
+
+systemgroup.com.apple.mobilegestaltcache
+../../../../../../../..%s
+[bad_query] asprintf failed path=%s
+
+../../../../../../../../..%s
+[bad_query] asprintf failed group=%s path=%s
+
+[bad_query] daemon returned no result (denied?) path=%s part=%s
+
+[bad_query] daemon result contained no sandbox token path=%s part=%s
+
+[bad_query] consume_extension failed path=%s handle=%lld
+
+sandbox_extension_release
+missing symbols
+query create failed
+B16@?0^v8
+enumeration denied posix=%d message=%s
+unknown
+lookup denied posix=%d message=%s
+/var
+/var/
+/private
+MCM unavailable or identifier contains unsupported characters
+MCM returned no absolute container path
+lease invalidated
+sandbox extension activation failed
+MCM object contained no sandbox token
+host bundle identifier is not com.apple.mobile.MobileHouseArrest
+identifier contains unsupported characters
+%llu:%d:%@
+MCM lookup failed
+container root open failed errno=%d
+v8@?0
+container_query_set_identifiers
+container_query_get_last_error
+container_query_iterate_results_sync
+container_object_get_path
+container_object_get_identifier
+container_object_copy
+container_object_sandbox_extension_activate
+container_object_free
+container_error_get_posix_errno
+container_error_get_message
+abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-_
+[-] exploit aborted with failure code %d (app stays alive)
+
+[+] readFd: %d
+
+[+] writeFd: %d
+
+[+] freeTarget: %#llx
+
+[+] targetObject: %#x
+
+[-] socket create failed!!!
+IOSurfaceAddress
+IOSurfaceAllocSize
+IOSurfaceMemoryRegion
+PurpleGfxMem
+[+] physicalMappingAddress: %p
+
+[-] mach_make_memory_entry_64 failed: %d!!!
+
+[+] pcObject: %u
+
+[+] pcAddress: %#llx
+
+[%s:%d] kaddr isn't valid, spinning here. kaddr: 0x%llx
+
+early_kread
+  #%d %s
+
+[+] pcbStartOffset: %#llx
+
+[+] targetInpGencnt: %#llx
+
+[+] inpListNextPointer: %#llx
+
+[+] icmp6Filter: %#llx
+
+[*] MTE checkpoint: OOB physical read/write reached without panic
+[+] target corrupted: %#llx
+
+[+] Found control_socket at idx: %u
+
+[-] Failed to corrupt control_socket at idx: %u
+
+[i] totalSearchMappingPagesNum: %#llx
+
+[i] searchMappingSize: %#llx
+
+[i] totalSearchMappingSize: %#llx
+
+[i] searchMappingNum: %#llx
+
+[+] wiredMapping: %#llx
+
+[-] Failed to spray sockets: %u
+
+[i] socketPortsCount: %u
+
+[i] startPcbId: %llu
+
+[i] endPcbId: %llu
+
+[i] looking in search mapping: %llu
+
+[-] mach_make_memory_entry_64 failed!!!
+[i] pe_v2: Allocating %llu wired pages (2GB)...
+
+[+] pe_v2: Allocated %llu wired pages
+
+[i] pe_v2: offset %#llx: Found wired page %#llx
+
+[-] pe_v2: Failed to spray sockets: %u
+
+[+] pe_v2: offset %#llx: Reallocated PCB page!
+
+[+] pe_v2: offset %#llx: Found PCB page!
+
+[+] pe_v2: Done, cleaned up %lu remaining wired pages
+
+[-] kexploit aborted: failure code %d
+
+[+] highestSuccessIdx: %d
+
+[+] successReadCount: %d
+
+16.0
+19.0
+26.0
+early_kread64(%#llx) -> %#llx
+
+[-] setsockopt failed!!!
+[-] mach_vm_map failed !!!
+[-] Failed to create surface!!!
+[+] mach_vm_map failed!!!
+[-] mach_vm_map failed!!!
+[!] error: (size > EARLY_KRW_LENGTH)
+[-] Found freed PCB Page!
+[+] Corrupting icmp6filter pointer...
+[-] getsockopt failed!!!
+[-] Found old PCB Page!!!!
+[-] Found last PCB
+[-] mach_port_deallocate failed!!!
+[-] mach_vm_allocate failed!!!
+[-] pe_v2: mach_vm_allocate search mapping failed
+[-] pe_v2: mach_make_memory_entry_64 failed
+[-] pe_v2: Failed to deallocate wired page
+[+] pe_v2: Socket limit reached, waiting for zone trimming...
+[-] pe_v2: Found old/duplicate wired page, skipping
+[-] pe_v2: initial mach_vm_allocate failed
+[-] Couldn't find controlSocketAddr || rwSocketAddr
+[+] Running on non-A18/M4 device
+[+] Running on A18/M4 device
+win??
+[-] race thread reported failure
+hw.cpufamily
+hw.cpusubtype
+17.0
+26.1
+17.1
+17.4
+18.0
+18.1
+18.4
+18.6
+hw.machine
+[-] Only supported offset for iOS/iPadOS 17.0 - 26.0.x
+/private/var/mobile/Containers/Data/Application
+/private/var/mobile/Containers/Data/System
+[SBX] self_proc is NULL
+[SBX] proc_ro invalid
+[SBX] ucred not found
+[SBX] cr_label invalid
+[SBX] sandbox invalid
+[SBX] ext_set invalid
+[SBX] *** SANDBOX ESCAPED (R+W) ***
+.3105_access_probe_%d_%@
+com.apple.app-sandbox.read-write
+[3105] ls: workspace empty; MobileInstallation=%lu
+LSApplicationProxy
+applicationProxyForIdentifier:
+applicationIdentifier
+bundleIdentifier
+found
+bundleURL
+CFBundleName
+localizedName
+localizedShortName
+shortVersionString
+dataContainerURL
+containerURL
+container
+LSApplicationWorkspace
+defaultWorkspace
+[3105] ls: LSApplicationWorkspace class unavailable
+[3105] ls: defaultWorkspace selector unavailable
+[3105] ls: defaultWorkspace returned nil
+allApplications
+allInstalledApplications
+[3105] ls: %@ returned %lu
+[3105] ls: workspace enumeration empty
+[3105] ls: %@ returned %lu proxies
+[3105] ls: extracted %lu apps (%lu with container)
+/System/Library/Frameworks/CoreServices.framework/CoreServices
+/System/Library/PrivateFrameworks/MobileCoreServices.framework/MobileCoreServices
+/System/Library/Frameworks/MobileCoreServices.framework/MobileCoreServices
+[3105] ls: loaded %s
+[3105] ls: CoreServices/MobileCoreServices dlopen failed
+MobileInstallationLookup
+ApplicationType
+User
+System
+/System/Library/PrivateFrameworks/MobileInstallation.framework/MobileInstallation
+BundleIdentifier
+ApplicationIdentifier
+LocalizedName
+Name
+Container
+DataContainer
+DataContainerURL
+ContainerPath
+SandboxPath
+BundleShortVersionString
+v16@?0@"UIGraphicsImageRendererContext"8
+iconDataForVariant:
+https://
+1.2.12
+ptrace
+activation_granted
+activation_account
+activation_password
+activation_expires_at
+app: X launching — iOS 
+system
+light
+dark
+View.task @ X/App.swift:
+update.dismissedVersion
+server.notice.title
+blocked.access.title
+ACCOUNT_MISMATCH
+blocked.account.state
+person.crop.circle.badge.xmark
+blocked.countdown
+license.reason.account_mismatch
+blocked.access.detail
+blocked.ipa.detail
+blocked.device.detail
+blocked.pause.detail
+blocked.key.detail
+blocked.ipa.title
+blocked.device.title
+blocked.pause.title
+blocked.key.title
+lock.shield.fill
+update.force.warning
+update.force.download
+checkmark.seal.fill
+update.force.feature1
+update.force.feature2
+update.force.feature3
+update.force.title
+update.force.subtitle
+security.blocked.title
+[X] app: running kernel exploit on background...
+[X] app: kernel exploit failed — relaunch the app before retrying
+[X] app: kernel exploit success — kernel access active
+[X] app: kernel exploit success — sandbox access verified
+[X] app: sandbox access is no longer active
+[X] app: existing sandbox access is still active; skipping kernel exploit
+[X] app: starting kernel exploit automatically
+security.blocked.simulator
+security.blocked.debugger
+integrity: protected components altered — 
+security.blocked.integrity
+Optional<UserInterfaceSizeClass>
+https://play-lh.googleusercontent.com/M78HyakHaxKrjoeqYx41E9DXfVYYtx67nvc7Ks4G4zFQeaAJdGCi8gzzGSrHIwlrmnJS6zD9S4fAXqdEwfuHQAQ=w480-h960
+gamecontroller.fill
+profile.notices.title
+View.task @ X/ContentView.swift:
+notices.mark_read
+notices.empty.title
+notices.empty.sub
+smallcircle.filled.circle
+headphones.circle.fill
+freeFire
+freeFireMax
+freefiremax-icon
+intent.deactivate.short
+intent.activate.short
+intent.pick.empty
+freefire.title_max
+freefire.title_regular
+accessibility.open_settings
+accessibility.open_logs
+home.device_status
+dashboard.hardware_model
+settings.ios_version
+settings.exploit_compatibility
+settings.compatibility.unsupported
+checkmark.shield.fill
+dashboard.kernel_status
+dashboard.kernel_inactive
+dashboard.kernel_active
+settings.compatibility.unreadable_build
+settings.compatibility.untested_build
+settings.compatibility.ready_by_pairing
+settings.supported
+exclamationmark.circle.fill
+checkmark.circle.fill
+profile.activate_title
+profile.activate_sub
+profile.activate_button
+profile.verifying
+profile.key_placeholder
+profile.activate_hint
+profile.notices.unread
+profile.notices.sub
+profile.game.title
+profile.game.sub
+xmark.circle.fill
+profile.time_left
+profile.assigned
+profile.badge_pro
+profile.active_sub
+profile.needs_revalidation
+profile.no_membership
+profile.no_membership_sub
+support.check.title
+bubble.left.and.bubble.right.fill
+license.discord_support
+license.discord_support_sub
+https://discord.gg/wpqqTnfXfc
+settings.discord_announce
+settings.discord_announce_sub
+https://discord.gg/wAAbwX8Dmc
+support.check.sub
+support.check.applied
+support.check.files
+support.check.missing
+support.check.none
+support.center_title
+support.center_subtitle
+X.Coordinator
+init()
+settings.pairing_import_error_title
+settings.delete_pairing_confirm_title
+View.task @ X/SettingsView.swift:
+settings.pairing_import_failed
+settings.delete_pairing_confirm_message
+settings.delete_pairing
+settings.delete_pairing_error_title
+settings.delete_pairing_failed
+aircard_pairing.plist
+settings.pairing_import_too_large
+settings.pairing_import_invalid
+settings.language
+settings.appearance
+settings.verified_versions
+settings.supported_versions_footer
+settings.social_media
+settings.credits
+settings.pairing_section
+settings.pairing_direct_note
+settings.pairing_pin
+settings.pairing.section_not_activation
+settings.pairing.ready_to_work
+settings.open_localdevvpn
+https://apps.apple.com/app/id6755608044
+settings.pair_on_this_iphone
+settings.stop_pairing
+settings.pairing_pin_notification_title
+settings.pairing_pin_notification_body
+settings.export_pairing
+square.and.arrow.up
+settings.pairing_export_error_title
+settings.pairing_export_failed
+settings.import_pairing
+square.and.arrow.down
+settings.pairing_importing
+settings.tunnel_checking
+arrow.triangle.2.circlepath
+settings.pairing
+settings.pairing_missing
+exclamationmark.circle
+settings.direct_pairing
+settings.pairing_supported
+settings.pairing_ready
+bolt.slash.circle
+settings.tunnel_disconnected
+settings.tunnel_connected
+https://github.com/bnxyung7/ProyectX
+accessibility.open_profile
+settings.appearance.dark
+settings.appearance.light
+settings.appearance.system
+settings.language.system
+settings.provenance
+settings.provenance.none
+AppReleaseDisplayVersion
+CFBundleShortVersionString
+logs.empty_title
+logs.empty_message
+accessibility.log_entry
+SIMULATOR_DEVICE_NAME
+IPHONE_SIMULATOR_ROOT
+CFBundleIdentifier
+bundle-id-mismatch
+com.apple.mobile.MobileHouseArrest
+CFBundleDisplayName
+display-name-mismatch
+CFBundleExecutable
+executable-name-mismatch
+version-mismatch
+executable-missing
+executable-empty
+brand-asset-missing
+sound-unreadable-
+release-version-mismatch
+571cea7fd9eec0b53e4c26b93ee5db9e41bda8916c50ae6317d94832d25b42d4
+19650380eeb8a9f3a5dda148eb8694bd65558cbbb7fe89a53673b5a4909e4db2
+0aa8dd3756a36e19b99a5a3d2b65e4bbb92137f6aaf2e8166336236b26b67295
+airlift_transport_log
+airlift_transport_log.txt
+airlift_transport_log.log
+pairing.status.failed
+pairing.status.cancelled
+pairing.status.ready
+pairing.status.enter_pin
+pairing.status.developer_mode
+pairing.status.waiting
+pairing.status.starting
+pairing.status.idle
+pairing.error.needs_session
+[X] pairing: direct pairing host requested
+0.0.0.0
+[X] pairing: PIN received; notification scheduled
+pairing: could not schedule PIN notification: 
+_remotepairing-pairable-host._tcp.
+pairing: Bonjour service 
+ published on port 
+pairing: host failed: 
+_aircardprobe._tcp
+pairing: notification permission request failed: 
+pairing: Airlift logger initialization failed (
+pairing.error.empty_file
+pairing.error.already_running
+kern.osversion
+[X] setupLogCapture: dup2 failed, log capture disabled
+application/json
+https://t.me/hole30601
+https://xkeyapi.onrender.com/api/version/check
+El certificado de la API no coincide
+La conexión con 
+ no trae ninguno de los certificados esperados. 
+Suele pasar cuando la CA renueva el certificado: reintenta. 
+Si sigue fallando puedes continuar sin esta comprobación hasta que cierres la app.
+Continuar sin comprobación
+drJ7gKWAJ9w88dpo2sFwEO2TmX0LYD4vrb6FASSTtac=
+HfwWBfutNY2LyET3bRUgP6ycpcGnn9SFf/ryhk++v5Y=
+69QQQOS7PsdCyeOB0x7ypBpItmhclufO88HfbNQzHJk=
+xkeyapi.onrender.com
+AppBuildProvenance
+appLanguageAnchor
+com.x.device-identity
+identifierForVendor
+stable-device-id
+https://xkeyapi.onrender.com/api
+x.profile.avatar
+x.profile.discord
+license.reason.key_missing
+license.reason.gate_unavailable
+license.reason.rejected
+license.reason.expired
+license.reason.revoked
+x.catalog.active
+x.catalog.projects
+license.reason.signed_out
+license.reason.endpoint
+license.reason.no_response
+license.reason.unreadable_response
+license.reason.http
+license.reason.rejected_by_server
+license.reason.empty_response
+license.reason.rate_limited
+device
+pause
+access
+valid
+success
+reason
+needsActivation
+message
+error
+updateRequired
+announcement
+blocked
+blockType
+title
+banReason
+paused
+security: cleanup incomplete — 
+ unrecoverable; retry stays available
+security: restored 
+ were already clean
+Fatal error
+Down-casted Array element failed to match the target type
+Expected 
+PairingController
+NSArray element failed to match the Swift Array Element type
+Expected 
+SecCertificateRef
+ journal(s) hold changes with no ledger entry; they stay pending work
+ has no journal; the change stays reported and cannot be verified
+security: dropped ledger entry for 
+; its journal has nothing left to revert
+x.patches.ledger
+security: migrated 
+ applied patch(es) into the restore ledger
+security: restore failed for 
+security: no journal survived for 
+; the change cannot be reversed
+product.phase.maintenance
+product.phase.unauthorized
+product.phase.failed
+product.phase.deactivating
+product.phase.active
+product.phase.activating
+product.phase.ready
+product.phase.preparing
+product.phase.idle
+product.phase.unavailable
+product.error.not_prepared
+product.error.offline
+patch.no_permission
+product.error.unconfirmed
+patch.error.restore
+patch.error.unrecoverable
+_Concurrency/arm64e-apple-ios.swiftinterface
+, escribe el mismo archivo
+patch.error.conflict
+: revirtiendo diario huérfano 
+product.error.unknown
+product.error.bundle_missing
+product.error.timeout
+com.dts.freefireth
+com.dts.freefiremax
+Activa un producto en 
+Activate a product in 
+Desactiva un producto en 
+Deactivate a product in 
+arrow.counterclockwise
+Abre Free Fire con 
+Open Free Fire with 
+intent.open_regular.short
+Abre Free Fire MAX con 
+Open Free Fire MAX with 
+intent.open_max.short
+play.circle.fill
+intent.product.parameter
+intent.open.unavailable
+intent.open.done
+intent.open_max.title
+intent.open_regular.title
+intent.result.not_found
+intent.result.pick
+intent.result.not_downloaded
+intent.result.no_license
+intent.result.patches_blocked
+intent.deactivate.title
+intent.activate.title
+https://xkeyapi.onrender.com/api/notifications/
+yyyy-MM-dd'T'HH:mm:ss.SSSSSS
+yyyy-MM-dd'T'HH:mm:ss
+https://xkeyapi.onrender.com/api/notifications/active
+catalog-index.json
+filename
+productName
+defaultProductName
+localizedNames
+category
+subcategory
+productId
+tagColor
+slug
+sha256
+fileState
+fileAvailable
+paths
+catalog-state.json
+withdrawn-products.json
+patch-cache.json
+) no disponible — 
+[X] remote-patch: one or more files failed; sync will retry
+remote-patch: could not save 
+https://xkeyapi.onrender.com/api/products/files/
+ checksum mismatch — discarding
+known-products.json
+https://xkeyapi.onrender.com/api/products/catalog
+[X] remote-patch: catalog request failed
+remote-patch: catalog HTTP 
+[X] remote-patch: catalog response could not be read
+remote-patch: catalog row 
+ has no usable identity — skipped
+remote-patch: catalog read leniently (
+ff.download.network
+ff.download.http
+ff.download.unwritable
+ff.download.checksum
+ff.download.refused
+ff.problem.noPermission.title
+ff.problem.blocked.title
+ff.problem.expired.title
+ff.problem.notActivated.title
+ff.download.bad_slug
+ff.download.not_found
+ff.download.banned
+ff.download.sha_mismatch
+ff.file.bad_plist
+ff.file.bad_format
+ff.file.unavailable
+exclamationmark.triangle.fill
+info.circle.fill
+View.task @ X/IntroSplashView.swift:
+ff.product.aim_neck
+ff.product.holograma_turquoise
+square.stack.3d.up.fill
+cube.transparent
+ARMA
+PERSONAJE
+CACHE
+AVATAR
+AIMBOT
+HOLOGRAMA
+MOD SKIN
+COMBO
+OTROS
+View.task @ X/ProductCatalogView.swift:
+ff.catalog_unconfirmed
+ff.problem.unavailable.detail
+ff.problem.refused.detail
+ff.problem.noPermission.detail
+ff.problem.blocked.detail
+ff.problem.expired.detail
+ff.problem.notActivated.detail
+ff.state.unconfirmed
+ff.catalog_malformed
+ff.catalog_unavailable
+ff.catalog_offline
+ff.problem.unavailable.title
+ff.problem.refused.title
+ff.skip.filename
+ff.skip.no_paths
+square.stack.3d.up
+person.crop.circle
+ff.holo.character
+ff.empty.section
+arrow.down.circle
+shippingbox.fill
+wrench.and.screwdriver.fill
+questionmark.circle.fill
+product.phase.unconfirmed
+product.action.none
+product.action.restore
+product.action.retry
+product.action.deactivate
+product.action.activate
+product.action.prepare
+ff.pending_restore
+patch.restored_message
+ff.cat.holograma
+ff.state.applied
+https://xkeyapi.onrender.com/api/music/files/
+https://xkeyapi.onrender.com/api/music
+View.task @ X/AppMusic.swift:
+launch.profile_sub
+https://xkeyapi.onrender.com/udid/web
+launch.music_ask
+iPhone 14 Pro Max
+/var/mobile/Containers/Data/Application
+patch: MHA-C2 could not resolve 
+patch: filesystem metadata scan resolved 
+patch: MHA-C2 resolved 
+[X] patch: metadata scan unavailable — no containers enumerated
+[X] patch: metadata scan skipped — sandbox access not active
+.com.apple.mobile_container_manager.metadata.plist
+MCMMetadataIdentifier
+enumerate: NULL for 
+enumerate: inode fallback for 
+enumerate: FileManager+inode unavailable for 
+browser: inferred 
+browser: inferred identities for 
+ merged containers; unresolved=
+Saved Application State
+state/preferences
+SplashBoard/Snapshots
+Caches/Snapshots
+browser: unresolved 
+ metadata=unavailable savedStates=
+browser: content+LaunchServices confirmed 
+invalid app-data path
+browser: MHA-C2 resolved 
+ bundle candidates
+[X] browser: MHA catalog returned no bundle candidates
+/var/mobile/Containers/Data/System
+/var/mobile/Library/Caches
+browser: LaunchServices store total candidates=
+com.apple.LaunchServices-
+browser: LaunchServices store 
+browser: LaunchServices traversal grant failed 
+browser: MCM com.apple.lsd activation unavailable detail=
+browser: root traversal grant failed 
+browser: filesystem root=
+ traversal enumerated 
+browser.container_fallback
+browser: filesystem accepted 
+ inode fallback enumerated 
+browser: MCM resolved 
+browser: MCM class-2 identifiers=
+browser: LS/API apps=
+ missingContainer=
+/var/containers/Bundle/Application
+/System/Applications
+browser: app-bundle metadata resolved 
+browser: app-bundle metadata unavailable root=
+listFiles: FAILED for 
+browser: merged api=
+com.apple.mobilesafari
+com.apple.mobilenotes
+com.apple.facetime
+com.apple.iBooks
+com.apple.podcasts
+com.apple.PosterBoard
+com.apple.mobilemail
+com.apple.weather
+com.apple.camera
+com.apple.Health
+com.apple.Fitness
+com.apple.Passbook
+com.apple.reminders
+com.apple.stocks
+com.apple.shortcuts
+com.apple.freeform
+com.apple.calculator
+com.apple.MobileSMS
+com.apple.InCallService
+com.apple.Preferences
+com.apple.springboard
+com.apple.Photos
+com.apple.AppStore
+com.apple.Bridge
+com.apple.VoiceMemos
+com.apple.Translate
+com.apple.measure
+com.apple.compass
+com.apple.Magnifier
+com.apple.DocumentsApp
+browser: MHA catalog dynamic=
+[X] browser: installed-app API unavailable; trying MCM class-2 enumeration...
+folder.badge.questionmark
+browser.search_apps_empty_message
+browser.search_empty
+browser.workspace
+browser.open_new_tab
+square.on.square
+browser.workspace_subtitle
+browser.apps_count
+browser.mha_scanning
+/var/mobile/Containers/Data/Application/
+patch: Airlift remote removal started 
+browser.replace_error_remote_delete
+patch: Airlift remote removal failed 
+patch: Airlift deleted 
+/private/var/mobile/
+patch: Airlift remote read started 
+3105-remote-read-
+browser.replace_error_remote_read
+patch: Airlift remote read failed 
+browser.replace_error_remote_backup
+patch: Airlift read 
+3105-patch-remote-
+browser.replace_error_remote_write
+patch: Airlift wrote 
+browser.replace_error_remote_container
+browser.replace_error_remote_path
+browser.replace_error_pairing_missing
+browser.replace_error_failed
+browser.replace_error_backup
+browser.replace_error_too_large
+browser.replace_error_symlink
+browser.replace_error_same_file
+browser.replace_error_source_directory
+browser.replace_error_target_directory
+browser.replace_error_source_missing
+browser.replace_error_target_missing
+.3105-replacement-
+file replacement: backup created 
+3105-remote-replacement-
+file replacement: remote target=
+.3105-displaced-
+browser.error_insufficient_space
+browser.error_unsafe_archive
+browser.error_extract
+browser.error_archive
+browser.error_move
+browser.error_copy
+browser.error_import
+browser.error_delete
+browser.error_rename
+browser.error_create
+browser.error_too_large
+browser.error_recursive_destination
+browser.error_symlink
+browser.error_destination_not_directory
+browser.error_destination_directory
+browser.error_source_directory
+browser.error_destination_missing
+browser.error_source_missing
+browser.error_exists
+browser.error_name_too_long
+browser.error_invalid_name
+[X] kexploit: ===== STAGE 1/2: kernel r/w (kexploit_opa334) =====
+[X] kexploit: starting… (may take 10–30s, device may briefly freeze)
+kexploit: FAILED — kexploit_opa334 returned 
+[X] kexploit: common causes: unsupported iOS build, wrong SoC offsets, or a race loss
+[X] kexploit: OK — kernel read/write established
+[X] kexploit: ===== STAGE 2/2: sandbox escape =====
+kexploit: self_proc=0x
+[X] kexploit: FAILED — proc_self() returned 0
+[X] kexploit: FAILED — sandbox escape reported success but outside-sandbox read/write probe failed
+kexploit: FAILED — sandbox_escape returned 
+ (ucred/ext_set walk or patch failed)
+kexploit: sandbox_escape returned 
+ — continuing with kernel R/W (iOS 
+kexploit: ===== COMPLETE — kernel access active (iOS 
+[X] kexploit: OK — sandbox escaped (full R+W filesystem)
+[X] kexploit: ===== COMPLETE — sandbox access active =====
+attribution.title
+attribution.link_section
+attribution.share
+attribution.open
+arrow.up.right.square
+attribution.subtitle
+browser.delete_title
+browser.import_conflict_title
+browser.transfer_conflict_title
+browser.transfer_conflict_message
+browser.keep_both
+browser.replace_all
+browser.keep_both_all
+browser.transfer_done_title
+browser.transfer_summary
+browser.transfer_cancelled_title
+filebrowser: traversal grant 
+filebrowser: MCM activate 
+filebrowser: transfer failed mode=
+filebrowser: transfer succeeded mode=
+browser.import_conflict_message
+[X] filebrowser: import session cancelled
+browser.import_done_title
+browser.import_summary
+filebrowser: import session finished imported=
+browser.import_cancelled_title
+[X] filebrowser: import Replace All enabled
+browser.importing
+filebrowser: import begin source=
+filebrowser: import failed source=
+filebrowser: import succeeded path=
+filebrowser: import conflict name=
+filebrowser: import skipped source=
+browser.delete_multiple_message
+browser.delete_message
+browser.deleting
+browser.operation_error_title
+ succeeded path=
+browser.name_message
+browser.name_placeholder
+browser.archiving
+browser.renaming
+browser.creating
+browser.archive_done_title
+browser.archive_done_message
+browser.create_zip
+browser.new_folder
+browser.new_file
+[X] filebrowser: import picker cancelled
+[X] filebrowser: import picker returned
+filebrowser: import session started files=
+browser.import_error_title
+filebrowser: import picker failed error=
+[X] filebrowser: replacement picker cancelled
+[X] filebrowser: replacement picker returned
+[X] filebrowser: legacy supported iOS replacement uses exploit access without pairing
+browser.replacing
+filebrowser: replacement started target=
+[X] filebrowser: replacement picker returned no file
+browser.replace_error_title
+browser.replace_error_tunnel
+[X] filebrowser: replacement blocked because LocalDevVPN is not connected
+[X] filebrowser: pairing replacement authorized by LocalDevVPN route
+filebrowser: replacement picker failed error=
+filebrowser: replacement source access securityScope=
+filebrowser: replacement copy begin target=
+filebrowser: replace failed target=
+filebrowser: replaced 
+browser.replace_done_title
+browser.replace_done_message
+browser.default_archive_name
+filebrowser: transfer started mode=
+patch.select_all
+patch.deselect_all
+browser.clear_clipboard
+browser.paste_count
+doc.on.clipboard
+folder.badge.plus
+browser.import_files
+filebrowser: import requested destination=
+browser.search_files
+browser.empty_folder
+browser.search_empty_message
+browser.items_count
+browser.file_actions_hint
+browser.create_patch
+patch.create_from_browser_failed
+patch.error.invalid_bundle
+patch.preparing_from_browser
+browser.extract_zip
+browser.extracting
+browser.extract_done_title
+browser.extract_done_message
+filebrowser: replacement requested target=
+filebrowser: replacement request superseded target=
+checkmark.circle
+browser.selected_count
+browser.move_ready
+browser.copy_ready
+View.task @ X/FileBrowserView.swift:
+browser.preview_error
+doc.questionmark
+patch.error.remote_replacement_failed
+patch.error.remote_target_missing
+patch.error.pairing_file_import_required
+patch.error.pairing_file_missing
+patch.error.pairing_tunnel_required
+patch.error.remote_import
+patch.error.invalid_import_link
+patch.error.verify_failed
+patch.error.apply
+patch.error.symlink
+patch.error.app_unavailable
+patch.error.keychain
+patch.error.invalid_project
+patch.error.duplicate_target
+patch.error.size_limit
+patch.error.unsafe_path
+patch.error.password_or_corrupt
+patch.error.unsupported_version
+patch.error.unsupported_format
+name
+createdAt
+updatedAt
+bundleIdentifiers
+directories
+rules
+replacementFilename
+replacementDigests
+isPasswordProtected
+wrappedContentKey
+publicContentKey
+encryptedPayload
+.3105-wallpaper-
+.3105-wallpaper-probe-
+.3105-workspace-
+.3105-displaced-workspace-
+ displaced item(s) in 
+their bytes are not provably X's
+storage: stale staging 
+ could not be removed: 
+storage: removed stale staging 
+0123456789ABCDEF
+patch: restore failed: 
+patch: restore failed — 
+patch: staging sweep after restore — 
+patch: restoring original remote target 
+patch: original remote target restored and verified 
+patch: refusing to delete 
+; digest is not ours
+patch: refusing to delete remote target 
+patch: staging sweep before apply — 
+patch: rollback after a failed write did not finish: 
+patch: apply stopped — 
+[X] patch: remote write complete; verifying readback
+[X] patch: remote readback digest verified
+patch: backing up remote target 
+patch: remote target absent, creating it 
+patch: remote backup saved bytes=
+createdDirectories
+containerFingerprint
+replacementDigest
+prepared
+applied
+rolledBack
+restored
+patch: Airlift resolved app container 
+largestFirst
+smallestFirst
+wallpaper.error.restore
+wallpaper.error.install
+wallpaper.error.backup
+wallpaper.error.access
+wallpaper.error.no_descriptors
+wallpaper.error.size
+wallpaper.error.symlink
+wallpaper.error.archive
+wallpaper.error.package
+wallpaper.error.layout
+wallpaper.error.store_unavailable
+wallpaper.error.unsafe_container
+onboarding.completedFingerprint
+onboarding.completedVersion
+onboarding.language_hint
+onboarding.language_title
+onboarding.language_subtitle
+onboarding.welcome_badge
+onboarding.welcome_title
+onboarding.welcome_message
+slider.horizontal.3
+onboarding.setup_title
+onboarding.setup_sub
+onboarding.versions_footer
+onboarding.build_count
+onboarding.versions_title
+onboarding.versions_subtitle
+exclamationmark.shield.fill
+onboarding.install_footer
+onboarding.install_ok
+xmark.octagon.fill
+onboarding.install_bad
+onboarding.install_title
+onboarding.install_message
+browser.rename_tab
+browser.tab_name_message
+browser.tab_name
+browser.close_tab
+browser.close_other_tabs
+square.on.square.dashed
+browser.tabs_root
+browser.tabs_root_detail
+/rust/deps/addr2line-0.27.1/src/line.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aes-0.8.4/src/soft/fixslice64.rs
+vendor/idevice/src/remote_pairing/rp_pairing_file.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/net/tcp/listener.rs
+vendor/idevice/src/remote_pairing/responder.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/io/registration.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/fs/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/fs/read.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/fs/write.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/fs/metadata.rs
+SRP process_reply failed: �
+!Failed to decrypt pair-setup M5: �
+RPPairing: PIN issued — �
+src/pairing.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/io/poll_evented.rs
+failed to bind �:�: �
+accept failed: �
+pairing failed: �
+failed to write pairing file: �
+no local addr: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/io/scheduled_io.rs
+RPPairing: binding on �:�
+RPPairing: listening on port �
+&RPPairing: reusing host key pair from �
+&RPPairing: waiting for device on port �…
+!RPPairing: device connected from �
+"RPPairing: handshake complete — � (�)
+%handshake completed but pairing file �	 is empty
+#RPPairing: pairing file written to � (� bytes)
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/future/ready.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/str/pattern.rs
+Connecting to RSD service �	 on port �
+vendor/idevice/src/services/rsd.rs
+vendor/idevice/src/services/lockdown.rs
+vendor/idevice/src/lib.rs
+Writing �/�
+vendor/idevice/src/services/afc/mod.rs
+File info kvs not empty: �
+src/exploit.rs
+encode plist: �
+write body: �
+flush: �
+write length: �
+encode MediaSubdir: �
+write MediaSubdir: �
+write read archive: �
+flush archive: �
+read archive response length: �
+read archive response: �
+open Books.plist: �
+write Books.plist: �
+stat recovered target: �
+read recovered target: �
+read recovered target bytes: �
+write MediaSubdir length: �
+Failed to read pairing file at �: �
+write remove archive: �
+AirTraffic did not relocate �; nothing was deleted (�)
+delete relocated file: �
+AFC connect over RSD failed: �
++InstallationProxy connect over RSD failed: �
+build_books_plist: �
+write MediaSubdir body: �
+write archive bytes: �
+read zip response length: �
+read zip response body: �
+AFC open Books.plist: �
+build_archive: �
+AFC write Books.plist: �
+build read archive: �
+build Books.plist: �
+�/p0/p1/p2/link
+airlift-read: recovered � bytes
+write local backup �: �
+	read_dir(�): �
+
+read file(�): �
+Connect to '�
+' on port �	 failed: �
+RSD checkin for '�
+' failed: �
+Lockdown connect for '�
+' failed: �
+Lockdown start_service('�') failed: �
+Connect to service port �	 failed: �
+build remove archive: �
+'relocated entry is not a regular file: �
+airlift-remove: deleted �
+ bytes of �
+(relocated file is still present in AFC: �
+reopen Books.plist: �
+restore Books.plist: �
+InstallationProxy get_apps('�') failed: �
+Lockdown connect failed: �
+Service TLS session failed: �
+Lockdown start_session failed: �
+build_archive_multi: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/jktcp-0.1.7/src/handle.rs
+vendor/idevice/src/services/afc/inner_file.rs
+vendor/idevice/src/services/afc/file.rs
+vendor/idevice/src/services/afc/packet.rs
+vendor/idevice/src/services/installation_proxy.rs
+Received plist: �
+� (�)
+2Error is not a string or integer from read_plist: �
+Sending plist: �
+Failed to set crypto provider: �
+afc header: �
+
+Recv afc: �
+airlift: RSD published �
+ services:
+airlift:   • � (port �)
+../../�/p0/p1/p2/link
+�/�
+../../�/payload
+�/payload
+-airlift: captured GrappaSupportInfo: version=�, deviceType=�, protocolVersion=�
+�-�-�-�-�
+airlift: atc sync state: '�'
+ airlift: atc manifest message: '�'
+*airlift: tunnel connected successfully on �:� via raw RPPairing!
+airlift: raw RPPairing on �:�	 failed: ��
+�:�: ��
+�:�": raw RPPairing timed out after 6s
+	airlift: �
+Failed to parse pairing file: �
+airlift: trying RSD tunnel on �:� via RemoteXPC...
+*airlift: tunnel connected successfully on �:� via RemoteXPC!
+�:�: � (�)
+airlift: RemoteXPC on �:�	 failed: �
+�:�: RemoteXPC timed out after 6s
+*airlift: fallback trying raw RPPairing on �:�...
+#airlift: connected to lockdownd on � :62078 with TLS session (legacy=�)!
+lockdownd start_session on �:62078 failed: �
+Device connection failed: �L. Ensure a loopback VPN (e.g. LocalDevVPN or SideStore WireGuard) is active.
+$airlift: connecting to lockdownd on �	:62078...
+connect to lockdownd on �:62078 failed: �
+connect to lockdownd on �:62078 timed out
+airlift: staging � could not be released: �
+airlift: reading existing file �
+read failed (�); original remains staged at �; restore failed (�)
+ original file remains staged at �; target restore failed: �
+airlift: read and restored �
+'airlift: preparing to write files from � to �
+airlift: found � file(s) to write
+#no valid files found in source_dir �
+0airlift: attempting fast atomic batch write for � file(s)...
+,airlift: fast batch write succeeded for all � file(s) in 1 shot! ✅
+airlift: batch write notice (�(), falling back to file-by-file write...
+
+airlift: [�/�] writing '�' (�
+ bytes)...
+
+airlift: [�/�] '�' written successfully ✅
+failed to write '�': �
+airlift: write '�
+' attempt �	 failed (�), retrying in 1s...
+airlift: successfully wrote �
+ files to �
+�.shim.remote
+!airlift: found RSD shim service '�
+' on port �
+!airlift: found RSD bare service '�
+' on port �
+
+airlift: '�7' not in RSD, starting via fresh Lockdown connection...
+
+airlift: '�' started on port � (ssl=�)
+airlift-remove: relocating � into AFC to delete it
+delete failed (�); original remains staged at �; restore failed (�)
+�; original restored to �
+airlift: deleted �
+Stage verification failed for �&: extracted files not present in Media
+airlift: atc received '�' for '�'
+airlift: atc sync state for '�': '�'
+airlift: atc sync notice for '�' (non-fatal): �
+$airlift: ReadyForSync observed for '�'
+ATC read error: �
+*AirTraffic: ReadyForSync not observed for �" (ensure Apple Books is installed)
+#airlift: atc manifest message for '�': '�'
+"airlift: atc manifest notice for '�' (non-fatal): �
+%airlift: AssetManifest observed for '�'
+ATC manifest read error: �
++AirTraffic: AssetManifest not observed for �" (ensure Apple Books is installed)
+#airlift: looking up container for '�'...
+airlift: found container for '�': �
+Container for '�)' not found in InstallationProxy response
+airlift: starting '�' via Lockdown...
+ATC initial read: �
+ATC ReadyForSync: �
+#airlift-read: ATC manifest state: '�'
+2AirTraffic finished before sending AssetManifest: �
+/airlift-read: ATC sync notice before manifest: �
+ATC AssetManifest: �
+/airlift-read: still waiting for AssetManifest (�/6, �	 seconds)
+!airlift-read: FileComplete sent (�/�)
+airlift: batch staging � files (archive=� bytes, books_plist=�
+ bytes)...
+../../�	/payload_�
+�
+/payload_0
+/airlift: starting com.apple.atc batch sync for �	 files...
+airlift: atc received '�'
+3airlift: atc manifest notice in batch (non-fatal): �
+airlift: [batch �/�] written -> �
+"airlift: successfully batch-wrote � files in one shot! ✅
+vendor/idevice/src/tcp/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-0.4.45/src/datetime/mod.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/string.rs
+vendor/idevice/src/remote_pairing/mod.rs
+vendor/idevice/src/xpc/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/net/tcp/stream.rs
+vendor/idevice-ffi/src/tunnel_provider.rs
+9tunnel dial: TLS-PSK + CDTunnel handshake succeeded over �
+ — host � (�) is the one that works
+tunnel dial: �D accepted the connection but the TLS-PSK/CDTunnel handshake failed: �
+Itunnel dial: asked the device for a replacement listener — now on port �; dialling � again straight away
+tunnel dial: �E handshake(s) rejected — not asking the device for another listener
+TLS tunnel: �: �
+TLS tunnel: �: no answer and no refusal
+failed (�)
+TLS tunnel: none of �$ candidate host(s) answered on port � [�]; last error: �
+tunnel dial: tunnel up (client �	, server �, mtu �); connecting to RSD on port �
+ inside it
+ ATC message length invalid: raw=�, le=�, be=�
+vendor/idevice/src/remote_pairing/tunnel.rs
+CDTunnel established: �
+vendor/idevice/src/remote_pairing/tls_psk.rs
+TLS Alert during handshake: �
+Using cipher suite: �
+Got handshake msg type �
+Expected handshake, got ct=�
+ TLS Alert after Finished: level=� desc=�
+Unexpected record type � during handshake
+2TLS tunnel: no candidate host was reached on port �
+read length: �
+decode plist: �
+read body (len=�): �
+Received message for stream ID � not in cache
+RSD connect �: �
+tunnel service connect �: �
+"tunnel dial: RPPairing connect to �	 failed: � (kind �, os error �)
+	connect: �
+!tunnel dial: pair-verify against �	 failed: �
+SRP verifier creation failed: �
+Server auth failed: �
+ciphertext len: �
+Chacha encryption failed: �
+Decrypted plaintext TLV: �
+vendor/idevice/src/xpc/http2/mod.rs
+Got data frame for � with � bytes
+could not be decrypted (�)
+3peer sent a TLS alert instead of application data: �
+"Expected application data, got ct=�
+1tunnel dial: opening the RPPairing connection to �
+tunnel dial: �" accepted the connection in round �
+tunnel dial: � failed in round �: � (kind �, os error �)
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/smallvec-1.16.1/src/lib.rs
+vendor/idevice-ffi/src/lib.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sharded-slab-0.1.7/src/shard.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/mio-1.2.3/src/poll.rs
+ALGetGrappaToken
+@airlift: grappa: successfully generated authentic Grappa token (� bytes) ✅
+-airlift: grappa: token generation failed (rc=�): �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sharded-slab-0.1.7/src/page/mod.rs
+vendor/idevice/src/remote_pairing/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/sync/mpsc/list.rs
+AThread count overflowed the configured max count. Thread index = �, max threads = �.
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sharded-slab-0.1.7/src/page/slot.rs
+OS can't spawn worker thread: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/idevice-srp-0.6.0/src/utils.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/plist-1.10.1/src/de.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/task/core.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signature-2.2.0/src/signer.rs
+	../../../�
+payload_�
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/blocking/task.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/collections/btree/node.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/slice/mod.rs
+vendor/idevice-ffi/src/lib.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/collections/btree/map/entry.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/plist-1.10.1/src/stream/binary_reader.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.8/src/biguint/division.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/plist-1.10.1/src/stream/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-0.4.45/src/lib.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/scheduler/current_thread/mod.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/collections/btree/navigate.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-0.23.1/src/encode.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-0.22.1/src/encode.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-0.23.1/src/engine/mod.rs
+*internal error: entered unreachable code: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-0.22.1/src/engine/mod.rs
+� �
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/thread/local.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/str.rs
+Failed to spawn worker thread '�': �
+Worker thread '�' panicked: �
+src/ffi_util.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/context/runtime_mt.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/scheduler/multi_thread/worker.rs
+,Unable to format the following event. Name: �
+; Fields: �
+
+k[tracing-subscriber] Unable to write an "event formatting error" to the Writer for this Subscriber! Error: �
+
+
+X[tracing-subscriber] Unable to write an event to the Writer for this Subscriber! Error: �
+
+
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/sys/sync/once/queue.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/scheduler/multi_thread/queue.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/thread/lifecycle.rs
+$Rust panic in al_exploit_read_file: �
+&Rust panic in al_exploit_remove_path: �
+$Rust panic in al_exploit_write_dir: �
+%Rust panic in al_find_app_container: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/scheduler/multi_thread/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/io/poll_evented.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/indexmap-2.14.2/src/map.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/vec/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/quick-xml-0.42.0/src/escape.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.151/src/value/ser.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/indexmap-2.14.2/src/inner.rs
+vendor/idevice/src/services/afc/mod.rs
+� (�)
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/quick-xml-0.42.0/src/name.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/quick-xml-0.42.0/src/events/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-subscriber-0.3.23/src/registry/sharded.rs
+�� 
+��:� 
+ index out of bounds: the len is � but the index is �
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/vec/spec_from_iter_nested.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-subscriber-0.3.23/src/fmt/fmt_layer.rs
+E[tracing-subscriber] Unable to format the following event, ignoring: �
+
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/sync/once.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/scheduler/multi_thread/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/scheduler/current_thread/mod.rs
+creating a new thread ID (�A) would exceed the maximum number of thread ID bits specified in � (�)
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sharded-slab-0.1.7/src/tid.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/sync/once_lock.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/once_cell-1.21.4/src/lib.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signature-2.2.0/src/signer.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/quick-xml-0.42.0/src/events/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-subscriber-0.3.23/src/registry/extensions.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/task/core.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zip-2.4.2/src/zipcrypto.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/sync/oneshot.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cipher-0.4.4/src/stream.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/io/write.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/quick-xml-0.42.0/src/reader/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zopfli-0.8.3/src/lz77.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zopfli-0.8.3/src/deflate.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zopfli-0.8.3/src/symbols.rs
+
+treesize: �
+compressed block size: � (�	k) (unc: �)
+
+Iteration �: � bit
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zopfli-0.8.3/src/squeeze.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/io/borrowed_buf.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/io/read.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/plist-1.10.1/src/integer.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/quick-xml-0.42.0/src/reader/buffered_reader.rs
+vendor/idevice/src/remote_pairing/socket.rs
+Received RemoteXPC �
+recv_rppairing: � json bytes
+recv_rppairing payload: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/quick-xml-0.42.0/src/reader/state.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/io/io_slice.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/io/io_slice/repr_iovec.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zopfli-0.8.3/src/hash.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-rustls-0.26.5/src/common/handshake.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/quick-xml-0.42.0/src/parser/pi.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/quick-xml-0.42.0/src/parser/element.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/io/read_buf.rs
+TLS decrypt failed (ct=�, seq=�, body_len=�): �
+TLS decrypt: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-rustls-0.26.5/src/common/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-rustls-0.26.5/src/client.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/itoa-1.0.18/src/lib.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/io/write.rs
+invalid type: �, expected �
+invalid value: �, expected �
+unknown variant `�`, expected �
+unknown variant `�`, there are no variants
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zip-2.4.2/src/write.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/plist-1.10.1/src/stream/xml_writer.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/plist-1.10.1/src/stream/binary_writer.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/io/write.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/plist-1.10.1/src/stream/ascii_reader.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/flate2-1.1.10/src/zio.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/io/util/write_all.rs
+ZipWriter drop failed: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_core-1.0.229/src/de/value.rs
+vendor/idevice-ffi/src/lib.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/conn.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/slice/index.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/slice/iter.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/vec/mod.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/io/buffered/bufwriter.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/raw_vec/mod.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/sync.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/slice/index.rs
+insertion index (is �) should be <= len (is �)
+swap_remove index (is �) should be < len (is �)
+removal index (is �) should be < len (is �)
+`at` split index (is �) should be <= len (is �)
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/fmt.rs
+feature not supported: '�'
+compression not supported: �
+,host attribute compatibility not supported: �
+Hattempted to write a ZIP file with force_no_zip64 when ZIP64 is needed: �
+%extra field size was indicated to be �
+ but only � bytes remain
+&an upstream reader returned an error: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-lc-rs-1.18.1/src/digest.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-lc-rs-1.18.1/src/evp_pkey.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/sync/once.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-lc-rs-1.18.1/src/lib.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-lc-rs-1.18.1/src/aead.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-lc-rs-1.18.1/src/digest.rs
+Digest algorithm not found: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-lc-rs-1.18.1/src/digest/digest_ctx.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-lc-rs-1.18.1/src/pqdsa/key_pair.rs
+Ointernal error: entered unreachable code: Unreachable agreement algorithm nid: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-lc-rs-1.18.1/src/agreement.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-lc-rs-1.18.1/src/hmac.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-lc-rs-1.18.1/src/rsa/key.rs
+{ � }
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-0.23.1/src/engine/general_purpose/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-0.23.1/src/engine/general_purpose/decode_suffix.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-0.23.1/src/engine/general_purpose/decode.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-0.22.1/src/engine/general_purpose/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-0.22.1/src/engine/general_purpose/decode_suffix.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-0.22.1/src/engine/general_purpose/decode.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bumpalo-3.20.3/src/lib.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-0.4.45/src/naive/internals.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-0.4.45/src/naive/date/mod.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/num/imp/flt2dec/mod.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/num/imp/dec2flt/parse.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/net/parser.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/fmt/builders.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/num/imp/dec2flt/decimal_seq.rs
+�18446744073709551616
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/time.rs
+"�"
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/str/mod.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/num/imp/diy_float.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/num/imp/bignum.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/fmt/num.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/fmt/mod.rs
+start byte index �& is not a char boundary; it is inside � (bytes � of string)
+end byte index �& is not a char boundary; it is inside � (bytes � of string)
+end byte index �' is out of bounds for string of length �
+byte range starts at � but ends at �
+start byte index �' is out of bounds for string of length �
+�: �
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/panicking.rs
+ index out of bounds: the len is � but the index is �
+assertion `left � right` failed
+  left: �	
+ right: �
+assertion `left � right` failed: �	
+  left: �	
+ right: �
+range end index �" out of range for slice of length �
+slice index starts at � but ends at �
+range start index �" out of range for slice of length �
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/slice/memchr.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/slice/sort/shared/smallsort.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/num/imp/flt2dec/strategy/grisu.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/num/imp/flt2dec/strategy/dragon.rs
+&copy_from_slice: source slice length (�+) does not match destination slice length (�)
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/str/lossy.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/net/ip_addr.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/bstr/mod.rs
+� (os error �)
+�:�
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/net/socket_addr.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/net/display_buffer.rs
+�.�.�.�
+[�]:�
+[�%�]:�
+� (1 << �)
+invalid utf-8 sequence of � bytes from index �
+*incomplete utf-8 byte sequence from index �
+::ffff:�
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/crc32fast-1.5.2/src/specialized/aarch64.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/curve25519-dalek-4.1.3/src/scalar.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/curve25519-dalek-4.1.3/src/edwards.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-core-0.3.34/src/task/__internal/atomic_waker.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-util-0.3.34/src/stream/futures_unordered/abort.rs
+Unknown Error: �
+Unknown Error: �
+
+OS Error: �
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/collections/btree/node.rs
+/rust/deps/gimli-0.34.0/src/read/abbrev.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashbrown-0.17.1/src/raw.rs
+/rust/deps/hashbrown-0.17.1/src/raw.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/slice/sort/stable/quicksort.rs
+vendor/idevice/src/xpc/http2/frame.rs
+vendor/idevice/src/sni.rs
+Unknown TLV: �
+Pairing rejected: �
+Unknown aux value type: �
+unknown channel: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/io/poll_evented.rs
+%installation proxy operation failed: �
+malformed package archive: �
+not enough bytes, expected �, got �
+!unexpected response from device: �
+unknown error `�` returned from device
+#buffer passed is too small - needs �, got �
+afc error: �
+!Application verification failed: �
+vendor/idevice/src/provider.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/plist-1.10.1/src/stream/binary_reader.rs
+invalid type: �, expected �
+invalid value: �, expected �
+missing field `�`
+duplicate field `�`
+unknown variant `�`, expected �
+unknown variant `�`, there are no variants
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/slice/iter.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/indexmap-2.14.2/src/inner.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/slice.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/collections/btree/navigate.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-0.23.1/src/engine/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-0.22.1/src/engine/mod.rs
+unknown http frame type: �
+unknown http setting type: �
+unknown XPC type: �
+go away packet received: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cipher-0.4.4/src/block.rs
+CBC decrypt: �
+� � (level=� desc=�)
+&unexpected pair-setup state: expected �, got �
+device returned pairing error: �
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/ops/function.rs
+device returned an error: �
+(device response missing required field `�`
+device response field `�!` had an unexpected type or shape
+media negotiation blob error: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/quick-xml-0.42.0/src/events/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_core-1.0.229/src/de/value.rs
+6Unable to convert raw pairing file into pairing file: �
+-Unable to convert bytes to raw pairing file: �
+-----BEGIN �-----
+
+	-----END �-----
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/mio-1.2.3/src/poll.rs
+vendor/idevice/src/remote_pairing/opack.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/indexmap-2.14.2/src/inner.rs
+unexpected EOF while reading � bytes
+'invalid UTF-8 string in OPACK payload: �
+OPACK back-reference � out of range, only � objects seen
+vendor/idevice/src/remote_pairing/tlv.rs
+/unexpected trailing bytes after OPACK payload: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/indexmap-2.14.2/src/map.rs
+vendor/idevice/src/xpc/format.rs
+
+Body_len: �
+Body length is �, but received bytes is �
+String(�)
+XPCMessage { flags: [�], message_id: �, message: � }
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/io/read.rs
+Cerror: AFC file descriptor dropped without calling .close().await (�)
+
+>failed to parse OPACK info payload from pair record response: �
+Binvalid altIRK length in peer device info: expected 16 bytes, got �
+missing data field `�` in peer device info
+missing string field `�` in peer device info
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/sync/mutex.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/lib.rs
+�, os error �
+vendor/idevice-ffi/src/lib.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/io/read_buf.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/util/linked_list.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/util/sharded_list.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spin-0.9.9/src/once.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/idevice-srp-0.6.0/src/utils.rs
+*internal error: entered unreachable code: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/itoa-1.0.18/src/lib.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/jktcp-0.1.7/src/lib.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/task/core.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/fs/open_options.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/fs/file.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/jktcp-0.1.7/src/adapter.rs
+hp=� timed out after � retransmissions; closing
+retransmitting � bytes for hp=�
+out-of-order seq=�
+ expected=� hp=�
+duplicate data seq=�
+ expected=� hp=�
+keep-alive on hp=�
+)packet received on errored connection hp=�
+
+RST on hp=�
+psh � bytes on hp=�
+retransmitting SYN for port �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/task/core.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/sync/mpsc/unbounded.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/io/write.rs
+Reseeding RNG failed: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand-0.9.5/src/rngs/reseeding.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-util-0.3.34/src/stream/futures_unordered/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/jktcp-0.1.7/src/adapter.rs
+udp � bytes -> local port �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/blocking/task.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/io/write.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/context/current.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/sync/oneshot.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/sync.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/slice/index.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/sync/mpsc/list.rs
+Logging � byte packet
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/collections/vec_deque/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/scheduler/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/scheduler/multi_thread/handle.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/io/read_buf.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/jktcp-0.1.7/src/lib.rs
+	poll psh �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/jktcp-0.1.7/src/packets.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/io/util/write_all.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/miniz_oxide-0.9.1/src/deflate/core.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/miniz_oxide-0.9.1/src/deflate/stored.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/miniz_oxide-0.9.1/src/deflate/stream.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/os/unix/net/stream.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/os/fd/net.rs
+48;5;�
+48;2;�;�;�
+38;5;�
+38;2;�;�;�
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.8/src/biguint/addition.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.8/src/biguint/subtraction.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.8/src/biguint/multiplication.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.8/src/biguint/monty.rs
+� � � �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.8/src/biguint/convert.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.8/src/bigint/shift.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.8/src/big_digit.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/raw_vec/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.8/src/biguint/subtraction.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.8/src/biguint/shift.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.8/src/biguint/addition.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/slice/iter.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/slice/index.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.8/src/biguint.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.8/src/biguint/power.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/char/methods.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/once_cell-1.21.4/src/imp_std.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/parking_lot_core-0.9.12/src/parking_lot.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/parking_lot-0.12.5/src/condvar.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/smallvec-1.16.1/src/lib.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/io/write.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/plist-1.10.1/src/stream/binary_writer.rs
+� (�)
+offset �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/plist-1.10.1/src/date.rs
+[
+�
+�]
+{
+�
+�}
+Data(� Len: �)
+Data(�	... Len: �)
+Date(�)
+��: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/indexmap-2.14.2/src/map.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/base64-0.23.1/src/encode.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/slice.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/plist-macro-0.1.6/src/io.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/quick-xml-0.42.0/src/events/mod.rs
+{
+�
+}
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/quick-xml-0.42.0/src/reader/state.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/quick-xml-0.42.0/src/writer.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/quick-xml-0.42.0/src/parser/dtd.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/quick-xml-0.42.0/src/parser/comment.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/thread/local.rs
+ could not initialize ThreadRng: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand-0.9.5/src/rngs/thread.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/thread/local.rs
+could not reseed ThreadRng: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand-0.10.2/src/rngs/thread.rs
+Error: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.6.4/src/os.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/context/current.rs
+/rust/deps/rustc-demangle-0.1.28/src/v0.rs
+9internal error: entered unreachable code: str::from_utf8(�) = �" was expected to have 1 char, but � chars were found
+/rust/deps/rustc-demangle-0.1.28/src/lib.rs
+/rust/deps/rustc-demangle-0.1.28/src/legacy.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/slice.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/msgs/handshake.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/common_state.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-lc-rs-1.18.1/src/hkdf.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/msgs/codec.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/msgs/message/inbound.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/crypto/aws_lc_rs/tls13.rs
+TLS 1.3, client CertificateVerify
+TLS 1.3, server CertificateVerify
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-lc-rs-1.18.1/src/hmac.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/msgs/handshake.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/client/ech.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/vecbuf.rs
+%illegal write_vectored return value (� > �)
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/quic.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/collections/btree/navigate.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/collections/btree/map.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/client/tls13.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/crypto/cipher.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/crypto/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/crypto/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-lc-rs-1.18.1/src/digest.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/client/client_conn.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/msgs/deframer/buffers.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/webpki/verify.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/record_layer.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/crypto/hmac.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/msgs/deframer/handshake.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/msgs/deframer/buffers.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/crypto/aws_lc_rs/tls12.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/sync/once.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-webpki-0.103.15/src/verify_cert.rs
+'certificate expired: verification time �, (UNIX), but certificate is not valid after � (� seconds ago)
+-certificate not valid yet: verification time �- (UNIX), but certificate is not valid before � (� seconds in future)
+7certificate revocation list expired: verification time �$ (UNIX), but CRL is not valid after � (� seconds ago)
+certificate not valid for name �; certificate 
+is only valid for �
+ or �
+2certificate does not allow extended key usage for �	, allows 
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/string.rs
+!received unexpected message: got � when expecting �
++received unexpected handshake message: got � when expecting �
+ encrypted client hello failure: �
+!received corrupt message of type �
+peer is incompatible: �
+peer misbehaved: �
+received fatal alert: �
+invalid peer certificate: �
+%invalid certificate revocation list: �
+unexpected error: �
+keys may not be consistent: �
+other error: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/crypto/tls13.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/tls13/key_schedule.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/msgs/message/outbound.rs
+	*�H��
+	*�H��
+	*�H��
+	*�H��
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/crypto/aws_lc_rs/../ring/quic.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/msgs/deframer/buffers.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/slice/index.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/compress.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/sync.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/client/handy.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/client/hs.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/crypto/aws_lc_rs/pq/hybrid.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/tls12/mod.rs
+!failed to parse RSA private key: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-lc-rs-1.18.1/src/ec/key_pair.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-lc-rs-1.18.1/src/ec.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-lc-rs-1.18.1/src/signature.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/crypto/aws_lc_rs/sign.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aws-lc-rs-1.18.1/src/ed25519.rs
+%failed to parse Ed25519 private key: �
+(� roots)
+	*�H��
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/collections/btree/node.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-0.23.45/src/crypto/hash.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-pki-types-1.15.1/src/server_name.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-pki-types-1.15.1/src/lib.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/string.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-pki-types-1.15.1/src/pem.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-pki-types-1.15.1/src/base64.rs
+	boolean `�`
+	integer `�`
+floating point `�`
+character `�`
+string �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_core-1.0.229/src/de/mod.rs
+`�`
+`�` or `�`
+Bool(�)
+Number(�)
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/itoa-1.0.18/src/lib.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.151/src/read.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.151/src/error.rs
+�	 at line � column �
+Error(�, line: �
+, column: �)
+invalid type: �, expected �
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/string.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/collections/btree/navigate.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spin-0.9.9/src/once.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/lib.rs
+'Attempted to register forbidden signal �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/vec_map.rs
+Some(�)
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/cell/once.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/sync/once.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/thread/local.rs
+/rust/deps/gimli-0.34.0/src/read/line.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/num/wrapping.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/collections/btree/navigate.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/io/read.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/io/write.rs
+failed printing to �: �
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/io/stdio.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/sys/thread/unix.rs
+	
+thread '�' (�) panicked at �:
+�
+
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/panicking.rs
+      [... omitted � frame� ...]
+
+/rust/deps/addr2line-0.27.1/src/unit.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/sys/fs/unix.rs
+5fatal runtime error: failed to initiate panic, error �, aborting
+
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/time.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/thread/id.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/thread/scoped.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/sys/pal/unix/time.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/sys/pal/unix/sync/mutex.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/../../backtrace/src/symbolize/gimli.rs
+failed to join thread: �
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/sys/sync/thread_parking/darwin.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/path.rs
+/rust/deps/addr2line-0.27.1/src/function.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/sync/reentrant_lock.rs
+main
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/../../backtrace/src/symbolize/gimli/lru.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/sys/sync/rwlock/queue.rs
+memory allocation of � bytes failed
+
+memory allocation of �G bytes failed
+skipping backtrace printing to avoid potential recursion
+
+aborting due to panic at �:
+�
+
+panicked at �:
+�3
+thread panicked while processing panic. aborting.
+
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/../../backtrace/src/symbolize/mod.rs
+.��
+Hcannot access a Thread Local Storage value during or after destruction: �
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/thread/current.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/sys/random/apple.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/../../backtrace/src/symbolize/gimli/libs_macos.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/sys/thread_local/destructors/list.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/sys/io/error/unix.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/sys/net/connection/socket/mod.rs
+failed to lock mutex: �
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/thread/thread.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/../../backtrace/src/backtrace/libunwind.rs
+�:�:�
+"unexpected error during closedir: �
+hw.optional.floatingpoint
+hw.optional.AdvSIMD
+hw.optional.arm.AdvSIMD
+hw.optional.armv8_crc32
+hw.optional.arm.FEAT_AES
+hw.optional.arm.FEAT_BF16
+hw.optional.arm.FEAT_BTI
+hw.optional.arm.FEAT_CRC32
+hw.optional.arm.FEAT_CSSC
+hw.optional.arm.FEAT_DIT
+hw.optional.arm.FEAT_DotProd
+hw.optional.arm.FEAT_DPB
+hw.optional.arm.FEAT_DPB2
+hw.optional.arm.FEAT_ECV
+hw.optional.arm.FEAT_FCMA
+hw.optional.arm.FEAT_FHM
+hw.optional.arm.FEAT_FlagM
+hw.optional.arm.FEAT_FlagM2
+hw.optional.arm.FEAT_FP16
+hw.optional.arm.FEAT_FRINTTS
+hw.optional.arm.FEAT_HBC
+hw.optional.arm.FEAT_I8MM
+hw.optional.arm.FEAT_JSCVT
+hw.optional.arm.FEAT_LRCPC
+hw.optional.arm.FEAT_LRCPC2
+hw.optional.arm.FEAT_LSE
+hw.optional.arm.FEAT_LSE2
+hw.optional.arm.FEAT_MTE
+hw.optional.arm.FEAT_MTE2
+hw.optional.arm.FEAT_PAuth
+hw.optional.arm.FEAT_PMULL
+hw.optional.arm.FEAT_RDM
+hw.optional.arm.FEAT_SB
+hw.optional.arm.FEAT_SHA1
+hw.optional.arm.FEAT_SHA256
+hw.optional.arm.FEAT_SHA3
+hw.optional.arm.FEAT_SHA512
+hw.optional.arm.FEAT_SME
+hw.optional.arm.FEAT_SME2
+hw.optional.arm.FEAT_SME2p1
+hw.optional.arm.FEAT_SME_B16B16
+hw.optional.arm.FEAT_SME_F16F16
+hw.optional.arm.FEAT_SME_F64F64
+hw.optional.arm.FEAT_SME_I16I64
+hw.optional.arm.FEAT_SSBS
+hw.optional.arm.FEAT_SVE_B16B16
+hw.optional.arm.FEAT_WFxT
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thread_local-1.1.10/src/thread_id.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/task/core.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/task/harness.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/blocking/pool.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/metrics/worker.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/time/wheel/level.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/util/linked_list.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/util/wake_list.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/sync/notify.rs
+queue is not full; tail = �	; head = �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/scheduler/multi_thread/queue.rs
+"�" must be usize, error: �	, value: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/loom/std/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/fs/file.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/thread/lifecycle.rs
+	actual = �
+"�" cannot be set to 0
+"� " must be valid unicode, error: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/process/unix/orphan.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/io/driver.rs
+.unexpected error when polling the I/O driver: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/util/wake_list.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/io/write.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/scheduler/current_thread/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/sync/batch_semaphore.rs
+*cannot add more than MAX_PERMITS permits (�)
+number of added permits (�) would overflow MAX_PERMITS (�)
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/time/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/util/rand/rt.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/mio-1.2.3/src/poll.rs
+,registering event source with poller: token=�, interests=�
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/scheduler/multi_thread/mod.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/sync.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/scheduler/current_thread/mod.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/sync/once.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/io/write.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/io/poll_evented.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/net/tcp/listener.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/task/list.rs
+invalid event_id: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/signal/registry.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/thread/local.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/scheduler/multi_thread/park.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/context/runtime_mt.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/context/current.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/context/runtime.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/util/sharded_list.rs
+elapsed=�; when=�
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/time/wheel/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/util/linked_list.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/time/wheel/level.rs
+!inconsistent park_timeout state: �
+"inconsistent park state; actual = �
+*inconsistent park_timeout state, actual = �
+%invalid park_timeout state, actual = �
+'inconsistent state in unpark; actual = �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/park.rs
+*inconsistent park_timeout state; actual = �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/context/blocking.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/io/poll_evented.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/sys/sync/once/queue.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/io/registration.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/task/coop/mod.rs
+Refusing to register signal �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/signal/unix.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/task/state.rs
+	current: �, sub: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/io/blocking.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/context/current.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/time/sleep.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/handle.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/signal/mod.rs
+Bad read on self-pipe: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/io/poll_evented.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/net/tcp/stream.rs
+timer error: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/blocking/schedule.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/scheduler/multi_thread/worker.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/blocking/shutdown.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/scheduler/defer.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/time/instant.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/task/core.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/time/entry.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/context.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/context/current.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/scheduler/multi_thread/worker.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/scheduler/mod.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.53.1/src/runtime/blocking/task.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-core-0.1.36/src/dispatcher.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-core-0.1.36/src/callsite.rs
+Identifier(�)
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-core-0.1.36/src/span.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/sync.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-core-0.1.36/src/field.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-core-0.1.36/src/dispatcher.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-log-0.2.0/src/lib.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-subscriber-0.3.23/src/fmt/time/datetime.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sharded-slab-0.1.7/src/shard.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sharded-slab-0.1.7/src/page/slot.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-subscriber-0.3.23/src/fmt/format/mod.rs
+� ����
+\u{�}
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/std/src/thread/local.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-subscriber-0.3.23/src/registry/sharded.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-subscriber-0.3.23/src/registry/stack.rs
+tried to clone a span (�) that already closed
+tried to drop a ref to �, but no such span exists!
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/io/write.rs
+*could not retrieve random bytes for uuid: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/uuid-1.26.1/src/rng.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-webpki-0.103.15/src/subject_name/ip_address.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-webpki-0.103.15/src/crl/types.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-webpki-0.103.15/src/subject_name/ip_address.rs
+	DnsName("�")
+
+IpAddress(�)
+UniformResourceIdentifier("�")
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/collections/btree/node.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-webpki-0.103.15/src/verify_cert.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/untrusted-0.9.0/src/reader.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-webpki-0.103.15/src/time.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-webpki-0.103.15/src/crl/mod.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/alloc/src/collections/btree/navigate.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustls-webpki-0.103.15/src/subject_name/dns_name.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zip-2.4.2/src/types.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zip-2.4.2/src/write.rs
+i/o error: �
+invalid Zip archive: �
+unsupported Zip archive: �
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zopfli-0.8.3/src/deflate.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zopfli-0.8.3/src/blocksplitter.rs
+block split points: � (hex: �)
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zopfli-0.8.3/src/hash.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zopfli-0.8.3/src/cache.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zopfli-0.8.3/src/squeeze.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zopfli-0.8.3/src/symbols.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zopfli-0.8.3/src/tree.rs
+/rustc/58cf8f9c35b355199727627d07ae34a4e2846d67/library/core/src/slice/index.rs
+/Users/builder/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zopfli-0.8.3/src/katajainen.rs
+/aws-lc/crypto/bn_extra/bn_asn1.c
+convert.c
+/aws-lc/crypto/bn_extra/convert.c
+decode_hex
+i <= bn->dmax
+!cbb->is_child
+aws_lc_0_45_0_CBB_cleanup
+cbb.c
+/aws-lc/crypto/bytestring/cbb.c
+aws_lc_0_45_0_CBB_flush
+cbb->child->is_child
+child->base == base
+child->pending_len_len == 1
+aws_lc_0_45_0_CBB_data
+cbb->child == NULL
+aws_lc_0_45_0_CBB_len
+cbb->u.child.offset + cbb->u.child.pending_len_len <= cbb->u.child.base->len
+cbb_add_child
+!is_asn1 || len_len == 1
+aws_lc_0_45_0_cbs_get_any_asn1_element
+cbs.c
+out_ber_found == NULL
+out_indefinite == NULL
+cbs_get_asn1
+aws_lc_0_45_0_CRYPTO_chacha_20
+chacha.c
+!buffers_alias(out, in_len, in, in_len) || in == out
+/aws-lc/crypto/cipher_extra/e_chacha20poly1305.c
+align_pointer
+internal.h
+((uintptr_t)ptr & (alignment - 1)) == 0
+crypto_md32_final
+md32_common.h
+n < block_size
+/aws-lc/crypto/dh_extra/dh_asn1.c
+parse_integer
+dh_asn1.c
+*out == NULL
+/aws-lc/crypto/dh_extra/params.c
+RIPEMD160
+ripemd160
+SHA1
+sha1
+SHA224
+sha224
+SHA256
+SHA384
+sha384
+SHA512
+sha512
+SHA512-224
+sha512-224
+SHA512-256
+sha512-256
+SHA3-224
+sha3-224
+SHA3-256
+sha3-256
+SHA3-384
+sha3-384
+SHA3-512
+sha3-512
+SHAKE128
+shake128
+SHAKE256
+shake256
+KECCAK-256
+keccak-256
+MD5-SHA1
+md5-sha1
+DSA-SHA
+dsaWithSHA
+DSA-SHA1
+dsaWithSHA1
+ecdsa-with-SHA1
+RSA-MD5
+md5WithRSAEncryption
+RSA-SHA1
+sha1WithRSAEncryption
+RSA-SHA224
+sha224WithRSAEncryption
+RSA-SHA256
+sha256WithRSAEncryption
+RSA-SHA384
+sha384WithRSAEncryption
+RSA-SHA512
+sha512WithRSAEncryption
+/aws-lc/crypto/dsa/dsa.c
+/aws-lc/crypto/dsa/dsa_asn1.c
+dsa_asn1.c
+/aws-lc/crypto/ecdsa_extra/ecdsa_asn1.c
+/aws-lc/crypto/ec_extra/ec_asn1.c
+brainpoolP224r1
+brainpoolP256r1
+brainpoolP320r1
+brainpoolP384r1
+brainpoolP512r1
+/aws-lc/crypto/evp_extra/evp_asn1.c
+/aws-lc/crypto/evp_extra/p_dh.c
+pkey_dh_derive
+p_dh.c
+ret <= DH_size(our_key)
+dh_paramgen_prime_len
+dh_paramgen_generator
+dh_pad
+OpenSSL PKCS#3 DH method
+/aws-lc/crypto/evp_extra/p_dh_asn1.c
+/aws-lc/crypto/evp_extra/p_dsa.c
+dsa_paramgen_bits
+dsa_paramgen_q_bits
+dsa_paramgen_md
+OpenSSL DSA method
+/aws-lc/crypto/evp_extra/p_dsa_asn1.c
+OpenSSL EC algorithm
+/aws-lc/crypto/evp_extra/p_ec_asn1.c
+ED25519
+OpenSSL ED25519 algorithm
+ED25519ph
+OpenSSL ED25519ph algorithm
+/aws-lc/crypto/evp_extra/p_ed25519_asn1.c
+HMAC
+OpenSSL HMAC method
+AWS-LC KEM method
+/aws-lc/crypto/evp_extra/p_kem_asn1.c
+PQ DSA
+AWS-LC PQ DSA method
+/aws-lc/crypto/evp_extra/p_pqdsa_asn1.c
+OpenSSL RSA method
+RSA-PSS
+OpenSSL RSA-PSS method
+/aws-lc/crypto/evp_extra/p_rsa_asn1.c
+/aws-lc/crypto/evp_extra/p_x25519.c
+X25519
+OpenSSL X25519 algorithm
+/aws-lc/crypto/evp_extra/p_x25519_asn1.c
+aws_lc_0_45_0_CRYPTO_free_ex_data
+ex_data.c
+sk_CRYPTO_EX_DATA_FUNCS_num(func_pointers) <= (size_t)(INT_MAX - ex_data_class->num_reserved)
+aes_nohw.c
+aws_lc_0_45_0_AES_ecb_encrypt
+mode_wrappers.c
+in && out && key
+(AES_ENCRYPT == enc) || (AES_DECRYPT == enc)
+/aws-lc/crypto/fipsmodule/bn/add.c
+aws_lc_0_45_0_bn_set_static_words
+bn.c
+num <= BN_MAX_WORDS
+/aws-lc/crypto/fipsmodule/bn/bn.c
+aws_lc_0_45_0_BN_bin2bn
+bytes.c
+num_words <= INT_MAX
+aws_lc_0_45_0_bn_assert_fits_in_bytes
+bytes[i] == 0
+aws_lc_0_45_0_bn_words_to_big_endian
+constant_time_declassify_int(fits_in_bytes(in, in_len, out_len))
+aws_lc_0_45_0_BN_CTX_free
+ctx.c
+ctx->used == 0 || ctx->error
+/aws-lc/crypto/fipsmodule/bn/ctx.c
+/aws-lc/crypto/fipsmodule/bn/div.c
+aws_lc_0_45_0_bn_reduce_once
+div.c
+r != a
+constant_time_declassify_int(carry + 1 <= 1)
+aws_lc_0_45_0_bn_reduce_once_in_place
+aws_lc_0_45_0_bn_div_consttime
+constant_time_declassify_int(divisor_min_bits <= aws_lc_0_45_0_BN_num_bits(divisor))
+div_extra.c
+/aws-lc/crypto/fipsmodule/bn/exponentiation.c
+aws_lc_0_45_0_BN_mod_exp_mont
+exponentiation.c
+wvalue < (1 << window)
+!r_is_one
+aws_lc_0_45_0_bn_mod_exp_mont_small
+BN_is_odd(&mont->N)
+bits != 0
+wvalue < (1u << window)
+aws_lc_0_45_0_BN_mod_exp_mont_consttime
+(size_t)top <= BN_MONTGOMERY_MAX_WORDS
+!a->neg
+constant_time_declassify_int(aws_lc_0_45_0_BN_ucmp(a, m) < 0)
+/aws-lc/crypto/fipsmodule/bn/gcd.c
+/aws-lc/crypto/fipsmodule/bn/gcd_extra.c
+aws_lc_0_45_0_bn_mod_inverse_consttime
+gcd_extra.c
+constant_time_declassify_int(u_is_even != v_is_even)
+constant_time_declassify_int(aws_lc_0_45_0_BN_is_zero(v))
+/aws-lc/crypto/fipsmodule/bn/jacobi.c
+/aws-lc/crypto/fipsmodule/bn/montgomery.c
+aws_lc_0_45_0_BN_mod_mul_montgomery
+montgomery.c
+(size_t)num <= BN_MONTGOMERY_MAX_WORDS
+aws_lc_0_45_0_bn_mont_n0
+montgomery_inv.c
+!BN_is_zero(n)
+!BN_is_negative(n)
+BN_is_odd(n)
+aws_lc_0_45_0_bn_mont_ctx_set_RR_consttime
+!BN_is_zero(&mont->N)
+!BN_is_negative(&mont->N)
+bn_minimal_width(&mont->N) == mont->N.width
+n_bits != 0
+lgBigR >= n_bits
+threshold == mont->N.width
+/aws-lc/crypto/fipsmodule/bn/mul.c
+/aws-lc/crypto/fipsmodule/bn/prime.c
+aws_lc_0_45_0_BN_primality_test
+prime.c
+constant_time_declassify_int(uniform_iterations >= (crypto_word_t)checks)
+/aws-lc/crypto/fipsmodule/bn/random.c
+aws_lc_0_45_0_bn_rand_secret_range
+random.c
+words > 0
+constant_time_declassify_int(aws_lc_0_45_0_bn_in_range_words(r->d, min_inclusive, max_exclusive->d, words))
+/aws-lc/crypto/fipsmodule/bn/shift.c
+/aws-lc/crypto/fipsmodule/bn/sqrt.c
+/aws-lc/crypto/fipsmodule/cipher/aead.c
+aws_lc_0_45_0_EVP_AEAD_CTX_open
+aead.c
+ctx->tag_len
+aws_lc_0_45_0_aes_ctr_set_key
+e_aes.c
+key_bytes == 128 / 8 || key_bytes == 192 / 8 || key_bytes == 256 / 8
+Fatal Error: HW capability found: 0x%02X, but HW capability requested: 0x%02X.
+
+hw.optional.armv8_2_sha512
+hw.optional.armv8_2_sha3
+Apple M
+OPENSSL_armcap
+/aws-lc/crypto/fipsmodule/curve25519/curve25519.c
+/aws-lc/crypto/fipsmodule/dh/check.c
+/aws-lc/crypto/fipsmodule/dh/dh.c
+aws_lc_0_45_0_EVP_MD_CTX_cleanup
+digest.c
+ctx->pctx == NULL || ctx->pctx_ops != NULL
+/aws-lc/crypto/fipsmodule/digest/digest.c
+aws_lc_0_45_0_EVP_MD_CTX_copy_ex
+in->pctx == NULL || in->pctx_ops != NULL
+in->digest->ctx_size != 0
+out->pctx == NULL || out->pctx_ops != NULL
+aws_lc_0_45_0_EVP_DigestInit_ex
+type->ctx_size != 0
+aws_lc_0_45_0_EVP_DigestFinal_ex
+ctx->digest->md_size <= EVP_MAX_MD_SIZE
+/aws-lc/crypto/fipsmodule/ecdh/ecdh.c
+/aws-lc/crypto/fipsmodule/ecdsa/ecdsa.c
+/aws-lc/crypto/fipsmodule/ec/ec.c
+aws_lc_0_45_0_EC_GROUP_get0_order
+ec.c
+group->has_order
+P-224
+P-256
+P-384
+P-521
+aws_lc_0_45_0_ec_get_x_coordinate_as_bytes
+len <= EC_MAX_BYTES
+/aws-lc/crypto/fipsmodule/ec/ec_key.c
+aws_lc_0_45_0_EC_KEY_set_group
+ec_key.c
+key->priv_key == NULL
+key->pub_key == NULL
+aws_lc_0_45_0_ec_bignum_to_felem
+felem.c
+sizeof(bytes) >= len
+/aws-lc/crypto/fipsmodule/ec/felem.c
+aws_lc_0_45_0_ec_felem_neg
+borrow == 0
+/aws-lc/crypto/fipsmodule/ec/oct.c
+aws_lc_0_45_0_ec_point_to_bytes
+oct.c
+field_len == BN_num_bytes(&group->field.N)
+/aws-lc/crypto/fipsmodule/ec/scalar.c
+/aws-lc/crypto/fipsmodule/ec/simple.c
+aws_lc_0_45_0_ec_compute_wNAF
+wnaf.c
+0 < w && w <= 7
+0 <= window_val && window_val <= next_bit
+0 < window_val && window_val < next_bit
+window_val == 0 || window_val == next_bit || window_val == bit
+-bit < digit && digit < bit
+digit & 1
+window_val <= next_bit
+window_val == 0
+aws_lc_0_45_0_ec_GFp_mont_mul_public_batch
+wNAF_len <= OPENSSL_ARRAY_SIZE(g_wNAF)
+/aws-lc/crypto/fipsmodule/evp/digestsign.c
+/aws-lc/crypto/fipsmodule/evp/evp.c
+aws_lc_0_45_0_EVP_PKEY_assign_RSA
+evp.c
+meth != NULL
+aws_lc_0_45_0_EVP_PKEY_assign_DSA
+aws_lc_0_45_0_EVP_PKEY_assign_EC_KEY
+/aws-lc/crypto/fipsmodule/evp/evp_ctx.c
+digest
+/aws-lc/crypto/fipsmodule/evp/p_ec.c
+/aws-lc/crypto/fipsmodule/evp/p_hmac.c
+/aws-lc/crypto/fipsmodule/evp/p_kem.c
+/aws-lc/crypto/fipsmodule/evp/p_pqdsa.c
+/aws-lc/crypto/fipsmodule/evp/p_rsa.c
+/aws-lc/crypto/fipsmodule/hkdf/hkdf.c
+aws_lc_0_45_0_HKDF_extract
+hkdf.c
+*out_len == EVP_MD_size(digest)
+aws_lc_0_45_0_HMAC_Init_ex
+hmac.c
+impl == NULL
+/aws-lc/crypto/fipsmodule/hmac/hmac.c
+block_size % 8 == 0
+block_size <= EVP_MAX_MD_BLOCK_SIZE
+/aws-lc/crypto/fipsmodule/kem/kem.c
+/aws-lc/crypto/fipsmodule/pqdsa/pqdsa.c
+/aws-lc/crypto/fipsmodule/rsa/padding.c
+aws_lc_0_45_0_RSA_padding_add_PKCS1_PSS_mgf1
+padding.c
+emLen >= 1
+/aws-lc/crypto/fipsmodule/rsa/rsa.c
+aws_lc_0_45_0_RSA_size
+rsa.c
+ret < UINT_MAX
+aws_lc_0_45_0_RSA_add_pkcs1_prefix
+digest_len == SSL_SIG_LENGTH
+digest_len == sig_prefix->hash_len
+aws_lc_0_45_0_rsa_sign_no_self_test
+digest_len <= EVP_MAX_MD_SIZE
+/aws-lc/crypto/fipsmodule/rsa/rsa_impl.c
+aws_lc_0_45_0_rsa_default_private_transform
+rsa_impl.c
+len == BN_num_bytes(rsa->n)
+result->width == rsa->mont_n->N.width
+aws_lc_0_45_0_Keccak1600_Absorb
+keccak1600.c
+r < (25 * sizeof(A[0][0])) && (r % 8) == 0
+aws_lc_0_45_0_Keccak1600_Squeeze
+aws_lc_0_45_0_Keccak1600_Absorb_once_x4
+r <= SHA3_MAX_BLOCKSIZE
+aws_lc_0_45_0_SHA384_Final
+sha512.c
+sha->md_len == SHA384_DIGEST_LENGTH
+aws_lc_0_45_0_SHA512_224_Final
+sha->md_len == SHA512_224_DIGEST_LENGTH
+aws_lc_0_45_0_SHA512_256_Final
+sha->md_len == SHA512_256_DIGEST_LENGTH
+aes_nohw_to_batch
+num_blocks <= AES_NOHW_BATCH_SIZE
+aes_nohw_from_batch
+CRYPTO_addc_u64
+constant_time_declassify_int(carry <= 1)
+CRYPTO_subc_u64
+constant_time_declassify_int(borrow <= 1)
+BN_STACK_pop
+st->depth > 0
+bn_resized_from_ctx
+bn_fits_in_words(bn, width)
+mod_u16
+constant_time_declassify_int(n < d)
+copy_to_prebuf
+bn_gcd_consttime
+constant_time_declassify_int(!(u_is_odd & v_is_odd))
+constant_time_declassify_int(aws_lc_0_45_0_BN_is_zero(u) | aws_lc_0_45_0_BN_is_zero(v))
+bn_neg_inv_mod_r_u64
+(BN_ULLONG)(1) << (LG_LITTLE_R - i) == ((BN_ULLONG)u * 2 * alpha) - ((BN_ULLONG)v * beta)
+constant_time_declassify_int(1 == ((uint128_t)u * 2 * alpha) - ((uint128_t)v * beta))
+bn_sub_part_words
+mul.c
+cl >= 0
+bn_mul_impl
+j <= al || j <= bl
+al >= j && bl >= j
+bn_mul_part_recursive
+n != 0 && (n & (n - 1)) == 0
+0 <= tna && tna < n
+0 <= tnb && tnb < n
+-1 <= tna - tnb && tna - tnb <= 1
+constant_time_declassify_int(c == 0)
+bn_mul_recursive
+n2 != 0 && (n2 & (n2 - 1)) == 0
+-BN_MUL_RECURSIVE_SIZE_NORMAL/2 <= dna && dna <= 0
+-BN_MUL_RECURSIVE_SIZE_NORMAL/2 <= dnb && dnb <= 0
+bn_sqr_recursive
+c == 0
+/aws-lc/crypto/fipsmodule/cipher/e_aes.c
+has_hw_feature
+cpu_aarch64_apple.c
+machdep.cpu.brand_string
+is_brand
+NIST P-224
+NIST P-256
+NIST P-384
+NIST P-521
+secp256k1
+/aws-lc/crypto/fipsmodule/ec/ec_montgomery.c
+/aws-lc/crypto/fipsmodule/ec/p224-64.c
+ec_GFp_nistp224_point_mul_public
+p224-64.c
+!skip
+group->field.N.width == group->order.N.width
+/aws-lc/crypto/fipsmodule/ec/p256-nistz.c
+ecp_nistz256_get_affine
+p256-nistz.c
+group->field.N.width == P256_LIMBS
+ecp_nistz256_point_mul_base
+ecp_nistz256_points_mul_public
+p_ != NULL && p_scalar != NULL && g_scalar != NULL
+ecp_nistz256_windowed_mul
+ecp_nistz256_scalar_to_montgomery_inv_vartime
+group->order.N.width == P256_LIMBS
+ecp_nistz256_cmp_x_coordinate
+/aws-lc/crypto/fipsmodule/ec/p384.c
+ec_GFp_nistp384_cmp_x_coordinate
+p384.c
+/aws-lc/crypto/fipsmodule/ec/p521.c
+algorithm %d
+ec_paramgen_curve
+ec_param_enc
+named_curve
+/aws-lc/crypto/fipsmodule/evp/p_ed25519.c
+/aws-lc/crypto/fipsmodule/evp/p_ed25519ph.c
+/aws-lc/crypto/fipsmodule/evp/p_hkdf.c
+mode
+EXTRACT_AND_EXPAND
+EXTRACT_ONLY
+EXPAND_ONLY
+salt
+hexsalt
+hexkey
+info
+hexinfo
+rsa_padding_mode
+pkcs1
+none
+oeap
+oaep
+rsa_pss_saltlen
+rsa_keygen_bits
+rsa_keygen_pubexp
+rsa_mgf1_md
+rsa_oaep_md
+rsa_oaep_label
+MLKEM512 
+MLKEM768 
+MLKEM1024 
+MLDSA44
+MLDSA65
+MLDSA87
+/aws-lc/crypto/fipsmodule/rsa/blinding.c
+rsa_blinding_get
+rsa->mont_n != NULL
+rsa->blindings_inuse[i] == 0
+new_num_blindings > rsa->num_blindings
+*index_used != MAX_BLINDINGS_PER_RSA
+mod_exp
+rsa->n != NULL
+rsa->e != NULL
+rsa->d != NULL
+rsa->p != NULL
+rsa->q != NULL
+rsa->dmp1 != NULL
+rsa->dmq1 != NULL
+rsa->iqmp != NULL
+constant_time_declassify_int(aws_lc_0_45_0_BN_ucmp(I, n) < 0)
+constant_time_declassify_int(aws_lc_0_45_0_BN_cmp(r0, n) < 0)
+rsa_generate_key_impl
+sqrt2_bits == (int)BN_num_bits(sqrt2)
+prime_bits == (int)BN_num_bits(sqrt2)
+BN_num_bits(pm1) == (unsigned)prime_bits
+BN_num_bits(qm1) == (unsigned)prime_bits
+generate_prime
+BN_is_pow2(pow2_bits_100)
+BN_is_bit_set(pow2_bits_100, bits - 100)
+KeccakF1600_XORBytes
+len <= SHA3_MAX_BLOCKSIZE
+(len % 8) == 0
+KeccakF1600_ExtractBytes
+sha256_final_impl
+sha256.c
+md_len % 4 == 0
+sha512_final_impl
+md_len % 8 == 0 || md_len == SHA512_224_DIGEST_LENGTH
+tls1_P_hash
+kdf.c
+len == chunk
+/aws-lc/crypto/mem.c
+aws_lc_0_45_0_OPENSSL_malloc
+mem.c
+realloc_impl != NULL
+free_impl != NULL
+aws_lc_0_45_0_OPENSSL_free
+malloc_impl != NULL
+aws_lc_0_45_0_OPENSSL_realloc
+rsadsi
+RSA Data Security, Inc.
+pkcs
+RSA Data Security, Inc. PKCS
+rsaEncryption
+RSA-MD2
+md2WithRSAEncryption
+PBE-MD2-DES
+pbeWithMD2AndDES-CBC
+PBE-MD5-DES
+pbeWithMD5AndDES-CBC
+X500
+directory services (X.500)
+X509
+commonName
+countryName
+localityName
+stateOrProvinceName
+organizationName
+organizationalUnitName
+pkcs7
+pkcs7-data
+pkcs7-signedData
+pkcs7-envelopedData
+pkcs7-signedAndEnvelopedData
+pkcs7-digestData
+pkcs7-encryptedData
+pkcs3
+dhKeyAgreement
+DES-ECB
+des-ecb
+DES-CFB
+des-cfb
+DES-CBC
+des-cbc
+DES-EDE
+des-ede
+DES-EDE3
+des-ede3
+IDEA-CBC
+idea-cbc
+IDEA-CFB
+idea-cfb
+IDEA-ECB
+idea-ecb
+RC2-CBC
+rc2-cbc
+RC2-ECB
+rc2-ecb
+RC2-CFB
+rc2-cfb
+RC2-OFB
+rc2-ofb
+RSA-SHA
+shaWithRSAEncryption
+DES-EDE-CBC
+des-ede-cbc
+DES-EDE3-CBC
+des-ede3-cbc
+DES-OFB
+des-ofb
+IDEA-OFB
+idea-ofb
+pkcs9
+emailAddress
+unstructuredName
+contentType
+messageDigest
+signingTime
+countersignature
+challengePassword
+unstructuredAddress
+extendedCertificateAttributes
+Netscape
+Netscape Communications Corp.
+nsCertExt
+Netscape Certificate Extension
+nsDataType
+Netscape Data Type
+DES-EDE-CFB
+des-ede-cfb
+DES-EDE3-CFB
+des-ede3-cfb
+DES-EDE-OFB
+des-ede-ofb
+DES-EDE3-OFB
+des-ede3-ofb
+DSA-old
+dsaEncryption-old
+PBE-SHA1-RC2-64
+pbeWithSHA1AndRC2-CBC
+PBKDF2
+DSA-SHA1-old
+dsaWithSHA1-old
+nsCertType
+Netscape Cert Type
+nsBaseUrl
+Netscape Base Url
+nsRevocationUrl
+Netscape Revocation Url
+nsCaRevocationUrl
+Netscape CA Revocation Url
+nsRenewalUrl
+Netscape Renewal Url
+nsCaPolicyUrl
+Netscape CA Policy Url
+nsSslServerName
+Netscape SSL Server Name
+nsComment
+Netscape Comment
+nsCertSequence
+Netscape Certificate Sequence
+DESX-CBC
+desx-cbc
+id-ce
+subjectKeyIdentifier
+X509v3 Subject Key Identifier
+keyUsage
+X509v3 Key Usage
+privateKeyUsagePeriod
+X509v3 Private Key Usage Period
+subjectAltName
+X509v3 Subject Alternative Name
+issuerAltName
+X509v3 Issuer Alternative Name
+basicConstraints
+X509v3 Basic Constraints
+crlNumber
+X509v3 CRL Number
+certificatePolicies
+X509v3 Certificate Policies
+authorityKeyIdentifier
+X509v3 Authority Key Identifier
+BF-CBC
+bf-cbc
+BF-ECB
+bf-ecb
+BF-CFB
+bf-cfb
+BF-OFB
+bf-ofb
+MDC2
+mdc2
+RSA-MDC2
+mdc2WithRSA
+RC4-40
+rc4-40
+RC2-40-CBC
+rc2-40-cbc
+givenName
+surname
+initials
+crlDistributionPoints
+X509v3 CRL Distribution Points
+RSA-NP-MD5
+md5WithRSA
+serialNumber
+description
+CAST5-CBC
+cast5-cbc
+CAST5-ECB
+cast5-ecb
+CAST5-CFB
+cast5-cfb
+CAST5-OFB
+cast5-ofb
+pbeWithMD5AndCast5CBC
+RSA-SHA1-2
+sha1WithRSA
+dsaEncryption
+RSA-RIPEMD160
+ripemd160WithRSA
+RC5-CBC
+rc5-cbc
+RC5-ECB
+rc5-ecb
+RC5-CFB
+rc5-cfb
+RC5-OFB
+rc5-ofb
+ZLIB
+zlib compression
+extendedKeyUsage
+X509v3 Extended Key Usage
+PKIX
+id-kp
+serverAuth
+TLS Web Server Authentication
+clientAuth
+TLS Web Client Authentication
+codeSigning
+Code Signing
+emailProtection
+E-mail Protection
+timeStamping
+Time Stamping
+msCodeInd
+Microsoft Individual Code Signing
+msCodeCom
+Microsoft Commercial Code Signing
+msCTLSign
+Microsoft Trust List Signing
+msSGC
+Microsoft Server Gated Crypto
+msEFS
+Microsoft Encrypted File System
+nsSGC
+Netscape Server Gated Crypto
+deltaCRL
+X509v3 Delta CRL Indicator
+CRLReason
+X509v3 CRL Reason Code
+invalidityDate
+Invalidity Date
+SXNetID
+Strong Extranet ID
+PBE-SHA1-RC4-128
+pbeWithSHA1And128BitRC4
+PBE-SHA1-RC4-40
+pbeWithSHA1And40BitRC4
+PBE-SHA1-3DES
+pbeWithSHA1And3-KeyTripleDES-CBC
+PBE-SHA1-2DES
+pbeWithSHA1And2-KeyTripleDES-CBC
+PBE-SHA1-RC2-128
+pbeWithSHA1And128BitRC2-CBC
+PBE-SHA1-RC2-40
+pbeWithSHA1And40BitRC2-CBC
+keyBag
+pkcs8ShroudedKeyBag
+certBag
+crlBag
+secretBag
+safeContentsBag
+friendlyName
+localKeyID
+x509Certificate
+sdsiCertificate
+x509Crl
+PBES2
+PBMAC1
+hmacWithSHA1
+id-qt-cps
+Policy Qualifier CPS
+id-qt-unotice
+Policy Qualifier User Notice
+RC2-64-CBC
+rc2-64-cbc
+SMIME-CAPS
+S/MIME Capabilities
+PBE-MD2-RC2-64
+pbeWithMD2AndRC2-CBC
+PBE-MD5-RC2-64
+pbeWithMD5AndRC2-CBC
+PBE-SHA1-DES
+pbeWithSHA1AndDES-CBC
+msExtReq
+Microsoft Extension Request
+extReq
+Extension Request
+dnQualifier
+id-pe
+id-ad
+authorityInfoAccess
+Authority Information Access
+OCSP
+caIssuers
+CA Issuers
+OCSPSigning
+OCSP Signing
+member-body
+ISO Member Body
+ISO-US
+ISO US Member Body
+X9-57
+X9.57
+X9cm
+X9.57 CM ?
+pkcs5
+SMIME
+S/MIME
+id-smime-mod
+id-smime-ct
+id-smime-aa
+id-smime-alg
+id-smime-cd
+id-smime-spq
+id-smime-cti
+id-smime-mod-cms
+id-smime-mod-ess
+id-smime-mod-oid
+id-smime-mod-msg-v3
+id-smime-mod-ets-eSignature-88
+id-smime-mod-ets-eSignature-97
+id-smime-mod-ets-eSigPolicy-88
+id-smime-mod-ets-eSigPolicy-97
+id-smime-ct-receipt
+id-smime-ct-authData
+id-smime-ct-publishCert
+id-smime-ct-TSTInfo
+id-smime-ct-TDTInfo
+id-smime-ct-contentInfo
+id-smime-ct-DVCSRequestData
+id-smime-ct-DVCSResponseData
+id-smime-aa-receiptRequest
+id-smime-aa-securityLabel
+id-smime-aa-mlExpandHistory
+id-smime-aa-contentHint
+id-smime-aa-msgSigDigest
+id-smime-aa-encapContentType
+id-smime-aa-contentIdentifier
+id-smime-aa-macValue
+id-smime-aa-equivalentLabels
+id-smime-aa-contentReference
+id-smime-aa-encrypKeyPref
+id-smime-aa-signingCertificate
+id-smime-aa-smimeEncryptCerts
+id-smime-aa-timeStampToken
+id-smime-aa-ets-sigPolicyId
+id-smime-aa-ets-commitmentType
+id-smime-aa-ets-signerLocation
+id-smime-aa-ets-signerAttr
+id-smime-aa-ets-otherSigCert
+id-smime-aa-ets-contentTimestamp
+id-smime-aa-ets-CertificateRefs
+id-smime-aa-ets-RevocationRefs
+id-smime-aa-ets-certValues
+id-smime-aa-ets-revocationValues
+id-smime-aa-ets-escTimeStamp
+id-smime-aa-ets-certCRLTimestamp
+id-smime-aa-ets-archiveTimeStamp
+id-smime-aa-signatureType
+id-smime-aa-dvcs-dvc
+id-smime-alg-ESDHwith3DES
+id-smime-alg-ESDHwithRC2
+id-smime-alg-3DESwrap
+id-smime-alg-RC2wrap
+id-smime-alg-ESDH
+id-smime-alg-CMS3DESwrap
+id-smime-alg-CMSRC2wrap
+id-smime-cd-ldap
+id-smime-spq-ets-sqt-uri
+id-smime-spq-ets-sqt-unotice
+id-smime-cti-ets-proofOfOrigin
+id-smime-cti-ets-proofOfReceipt
+id-smime-cti-ets-proofOfDelivery
+id-smime-cti-ets-proofOfSender
+id-smime-cti-ets-proofOfApproval
+id-smime-cti-ets-proofOfCreation
+id-pkix-mod
+id-qt
+id-it
+id-pkip
+id-alg
+id-cmc
+id-on
+id-pda
+id-aca
+id-qcs
+id-cct
+id-pkix1-explicit-88
+id-pkix1-implicit-88
+id-pkix1-explicit-93
+id-pkix1-implicit-93
+id-mod-crmf
+id-mod-cmc
+id-mod-kea-profile-88
+id-mod-kea-profile-93
+id-mod-cmp
+id-mod-qualified-cert-88
+id-mod-qualified-cert-93
+id-mod-attribute-cert
+id-mod-timestamp-protocol
+id-mod-ocsp
+id-mod-dvcs
+id-mod-cmp2000
+biometricInfo
+Biometric Info
+qcStatements
+ac-auditEntity
+ac-targeting
+aaControls
+sbgp-ipAddrBlock
+sbgp-autonomousSysNum
+sbgp-routerIdentifier
+textNotice
+ipsecEndSystem
+IPSec End System
+ipsecTunnel
+IPSec Tunnel
+ipsecUser
+IPSec User
+DVCS
+dvcs
+id-it-caProtEncCert
+id-it-signKeyPairTypes
+id-it-encKeyPairTypes
+id-it-preferredSymmAlg
+id-it-caKeyUpdateInfo
+id-it-currentCRL
+id-it-unsupportedOIDs
+id-it-subscriptionRequest
+id-it-subscriptionResponse
+id-it-keyPairParamReq
+id-it-keyPairParamRep
+id-it-revPassphrase
+id-it-implicitConfirm
+id-it-confirmWaitTime
+id-it-origPKIMessage
+id-regCtrl
+id-regInfo
+id-regCtrl-regToken
+id-regCtrl-authenticator
+id-regCtrl-pkiPublicationInfo
+id-regCtrl-pkiArchiveOptions
+id-regCtrl-oldCertID
+id-regCtrl-protocolEncrKey
+id-regInfo-utf8Pairs
+id-regInfo-certReq
+id-alg-des40
+id-alg-noSignature
+id-alg-dh-sig-hmac-sha1
+id-alg-dh-pop
+id-cmc-statusInfo
+id-cmc-identification
+id-cmc-identityProof
+id-cmc-dataReturn
+id-cmc-transactionId
+id-cmc-senderNonce
+id-cmc-recipientNonce
+id-cmc-addExtensions
+id-cmc-encryptedPOP
+id-cmc-decryptedPOP
+id-cmc-lraPOPWitness
+id-cmc-getCert
+id-cmc-getCRL
+id-cmc-revokeRequest
+id-cmc-regInfo
+id-cmc-responseInfo
+id-cmc-queryPending
+id-cmc-popLinkRandom
+id-cmc-popLinkWitness
+id-cmc-confirmCertAcceptance
+id-on-personalData
+id-pda-dateOfBirth
+id-pda-placeOfBirth
+id-pda-gender
+id-pda-countryOfCitizenship
+id-pda-countryOfResidence
+id-aca-authenticationInfo
+id-aca-accessIdentity
+id-aca-chargingIdentity
+id-aca-group
+id-aca-role
+id-qcs-pkixQCSyntax-v1
+id-cct-crs
+id-cct-PKIData
+id-cct-PKIResponse
+ad_timestamping
+AD Time Stamping
+AD_DVCS
+ad dvcs
+basicOCSPResponse
+Basic OCSP Response
+Nonce
+OCSP Nonce
+CrlID
+OCSP CRL ID
+acceptableResponses
+Acceptable OCSP Responses
+noCheck
+OCSP No Check
+archiveCutoff
+OCSP Archive Cutoff
+serviceLocator
+OCSP Service Locator
+extendedStatus
+Extended OCSP Status
+path
+trustRoot
+Trust Root
+algorithm
+rsaSignature
+X500algorithms
+directory services - algorithms
+IANA
+iana
+directory
+Directory
+mgmt
+Management
+experimental
+Experimental
+private
+Private
+security
+Security
+snmpv2
+SNMPv2
+Mail
+enterprises
+Enterprises
+dcobject
+dcObject
+domainComponent
+domain
+Domain
+selected-attribute-types
+Selected Attribute Types
+clearance
+RSA-MD4
+md4WithRSAEncryption
+ac-proxying
+subjectInfoAccess
+Subject Information Access
+id-aca-encAttrs
+role
+policyConstraints
+X509v3 Policy Constraints
+targetInformation
+X509v3 AC Targeting
+noRevAvail
+X509v3 No Revocation Available
+ansi-X9-62
+ANSI X9.62
+prime-field
+characteristic-two-field
+id-ecPublicKey
+prime192v1
+prime192v2
+prime192v3
+prime239v1
+prime239v2
+prime239v3
+prime256v1
+CSPName
+Microsoft CSP Name
+AES-128-ECB
+aes-128-ecb
+AES-128-CBC
+aes-128-cbc
+AES-128-OFB
+aes-128-ofb
+AES-128-CFB
+aes-128-cfb
+AES-192-ECB
+aes-192-ecb
+AES-192-CBC
+aes-192-cbc
+AES-192-OFB
+aes-192-ofb
+AES-192-CFB
+aes-192-cfb
+AES-256-ECB
+aes-256-ecb
+AES-256-CBC
+aes-256-cbc
+AES-256-OFB
+aes-256-ofb
+AES-256-CFB
+aes-256-cfb
+holdInstructionCode
+Hold Instruction Code
+holdInstructionNone
+Hold Instruction None
+holdInstructionCallIssuer
+Hold Instruction Call Issuer
+holdInstructionReject
+Hold Instruction Reject
+data
+pilot
+pilotAttributeType
+pilotAttributeSyntax
+pilotObjectClass
+pilotGroups
+iA5StringSyntax
+caseIgnoreIA5StringSyntax
+pilotObject
+pilotPerson
+account
+document
+room
+documentSeries
+rFC822localPart
+dNSDomain
+domainRelatedObject
+friendlyCountry
+simpleSecurityObject
+pilotOrganization
+pilotDSA
+qualityLabelledData
+userId
+textEncodedORAddress
+mail
+rfc822Mailbox
+favouriteDrink
+roomNumber
+photo
+userClass
+host
+manager
+documentIdentifier
+documentTitle
+documentVersion
+documentAuthor
+documentLocation
+homeTelephoneNumber
+secretary
+otherMailbox
+lastModifiedTime
+lastModifiedBy
+aRecord
+pilotAttributeType27
+mXRecord
+nSRecord
+sOARecord
+cNAMERecord
+associatedDomain
+associatedName
+homePostalAddress
+personalTitle
+mobileTelephoneNumber
+pagerTelephoneNumber
+friendlyCountryName
+organizationalStatus
+janetMailbox
+mailPreferenceOption
+buildingName
+dSAQuality
+singleLevelQuality
+subtreeMinimumQuality
+subtreeMaximumQuality
+personalSignature
+dITRedirect
+audio
+documentPublisher
+x500UniqueIdentifier
+mime-mhs
+MIME MHS
+mime-mhs-headings
+mime-mhs-bodies
+id-hex-partial-message
+id-hex-multipart-message
+generationQualifier
+pseudonym
+id-set
+Secure Electronic Transactions
+set-ctype
+content types
+set-msgExt
+message extensions
+set-attr
+set-policy
+set-certExt
+certificate extensions
+set-brand
+setct-PANData
+setct-PANToken
+setct-PANOnly
+setct-OIData
+setct-PI
+setct-PIData
+setct-PIDataUnsigned
+setct-HODInput
+setct-AuthResBaggage
+setct-AuthRevReqBaggage
+setct-AuthRevResBaggage
+setct-CapTokenSeq
+setct-PInitResData
+setct-PI-TBS
+setct-PResData
+setct-AuthReqTBS
+setct-AuthResTBS
+setct-AuthResTBSX
+setct-AuthTokenTBS
+setct-CapTokenData
+setct-CapTokenTBS
+setct-AcqCardCodeMsg
+setct-AuthRevReqTBS
+setct-AuthRevResData
+setct-AuthRevResTBS
+setct-CapReqTBS
+setct-CapReqTBSX
+setct-CapResData
+setct-CapRevReqTBS
+setct-CapRevReqTBSX
+setct-CapRevResData
+setct-CredReqTBS
+setct-CredReqTBSX
+setct-CredResData
+setct-CredRevReqTBS
+setct-CredRevReqTBSX
+setct-CredRevResData
+setct-PCertReqData
+setct-PCertResTBS
+setct-BatchAdminReqData
+setct-BatchAdminResData
+setct-CardCInitResTBS
+setct-MeAqCInitResTBS
+setct-RegFormResTBS
+setct-CertReqData
+setct-CertReqTBS
+setct-CertResData
+setct-CertInqReqTBS
+setct-ErrorTBS
+setct-PIDualSignedTBE
+setct-PIUnsignedTBE
+setct-AuthReqTBE
+setct-AuthResTBE
+setct-AuthResTBEX
+setct-AuthTokenTBE
+setct-CapTokenTBE
+setct-CapTokenTBEX
+setct-AcqCardCodeMsgTBE
+setct-AuthRevReqTBE
+setct-AuthRevResTBE
+setct-AuthRevResTBEB
+setct-CapReqTBE
+setct-CapReqTBEX
+setct-CapResTBE
+setct-CapRevReqTBE
+setct-CapRevReqTBEX
+setct-CapRevResTBE
+setct-CredReqTBE
+setct-CredReqTBEX
+setct-CredResTBE
+setct-CredRevReqTBE
+setct-CredRevReqTBEX
+setct-CredRevResTBE
+setct-BatchAdminReqTBE
+setct-BatchAdminResTBE
+setct-RegFormReqTBE
+setct-CertReqTBE
+setct-CertReqTBEX
+setct-CertResTBE
+setct-CRLNotificationTBS
+setct-CRLNotificationResTBS
+setct-BCIDistributionTBS
+setext-genCrypt
+generic cryptogram
+setext-miAuth
+merchant initiated auth
+setext-pinSecure
+setext-pinAny
+setext-track2
+setext-cv
+additional verification
+set-policy-root
+setCext-hashedRoot
+setCext-certType
+setCext-merchData
+setCext-cCertRequired
+setCext-tunneling
+setCext-setExt
+setCext-setQualf
+setCext-PGWYcapabilities
+setCext-TokenIdentifier
+setCext-Track2Data
+setCext-TokenType
+setCext-IssuerCapabilities
+setAttr-Cert
+setAttr-PGWYcap
+payment gateway capabilities
+setAttr-TokenType
+setAttr-IssCap
+issuer capabilities
+set-rootKeyThumb
+set-addPolicy
+setAttr-Token-EMV
+setAttr-Token-B0Prime
+setAttr-IssCap-CVM
+setAttr-IssCap-T2
+setAttr-IssCap-Sig
+setAttr-GenCryptgrm
+generate cryptogram
+setAttr-T2Enc
+encrypted track 2
+setAttr-T2cleartxt
+cleartext track 2
+setAttr-TokICCsig
+ICC or token signature
+setAttr-SecDevSig
+secure device signature
+set-brand-IATA-ATA
+set-brand-Diners
+set-brand-AmericanExpress
+set-brand-JCB
+set-brand-Visa
+set-brand-MasterCard
+set-brand-Novus
+DES-CDMF
+des-cdmf
+rsaOAEPEncryptionSET
+ITU-T
+itu-t
+JOINT-ISO-ITU-T
+joint-iso-itu-t
+international-organizations
+International Organizations
+msSmartcardLogin
+Microsoft Smartcardlogin
+msUPN
+Microsoft Universal Principal Name
+AES-128-CFB1
+aes-128-cfb1
+AES-192-CFB1
+aes-192-cfb1
+AES-256-CFB1
+aes-256-cfb1
+AES-128-CFB8
+aes-128-cfb8
+AES-192-CFB8
+aes-192-cfb8
+AES-256-CFB8
+aes-256-cfb8
+DES-CFB1
+des-cfb1
+DES-CFB8
+des-cfb8
+DES-EDE3-CFB1
+des-ede3-cfb1
+DES-EDE3-CFB8
+des-ede3-cfb8
+street
+streetAddress
+postalCode
+id-ppl
+proxyCertInfo
+Proxy Certificate Information
+id-ppl-anyLanguage
+Any language
+id-ppl-inheritAll
+Inherit all
+nameConstraints
+X509v3 Name Constraints
+id-ppl-independent
+Independent
+identified-organization
+certicom-arc
+wap-wsg
+id-characteristic-two-basis
+onBasis
+tpBasis
+ppBasis
+c2pnb163v1
+c2pnb163v2
+c2pnb163v3
+c2pnb176v1
+c2tnb191v1
+c2tnb191v2
+c2tnb191v3
+c2onb191v4
+c2onb191v5
+c2pnb208w1
+c2tnb239v1
+c2tnb239v2
+c2tnb239v3
+c2onb239v4
+c2onb239v5
+c2pnb272w1
+c2pnb304w1
+c2tnb359v1
+c2pnb368w1
+c2tnb431r1
+secp112r1
+secp112r2
+secp128r1
+secp128r2
+secp160k1
+secp160r1
+secp160r2
+secp192k1
+secp224k1
+secp224r1
+secp384r1
+secp521r1
+sect113r1
+sect113r2
+sect131r1
+sect131r2
+sect163k1
+sect163r1
+sect163r2
+sect193r1
+sect193r2
+sect233k1
+sect233r1
+sect239k1
+sect283k1
+sect283r1
+sect409k1
+sect409r1
+sect571k1
+sect571r1
+wap-wsg-idm-ecid-wtls1
+wap-wsg-idm-ecid-wtls3
+wap-wsg-idm-ecid-wtls4
+wap-wsg-idm-ecid-wtls5
+wap-wsg-idm-ecid-wtls6
+wap-wsg-idm-ecid-wtls7
+wap-wsg-idm-ecid-wtls8
+wap-wsg-idm-ecid-wtls9
+wap-wsg-idm-ecid-wtls10
+wap-wsg-idm-ecid-wtls11
+wap-wsg-idm-ecid-wtls12
+anyPolicy
+X509v3 Any Policy
+policyMappings
+X509v3 Policy Mappings
+inhibitAnyPolicy
+X509v3 Inhibit Any Policy
+Oakley-EC2N-3
+ipsec3
+Oakley-EC2N-4
+ipsec4
+CAMELLIA-128-CBC
+camellia-128-cbc
+CAMELLIA-192-CBC
+camellia-192-cbc
+CAMELLIA-256-CBC
+camellia-256-cbc
+CAMELLIA-128-ECB
+camellia-128-ecb
+CAMELLIA-192-ECB
+camellia-192-ecb
+CAMELLIA-256-ECB
+camellia-256-ecb
+CAMELLIA-128-CFB
+camellia-128-cfb
+CAMELLIA-192-CFB
+camellia-192-cfb
+CAMELLIA-256-CFB
+camellia-256-cfb
+CAMELLIA-128-CFB1
+camellia-128-cfb1
+CAMELLIA-192-CFB1
+camellia-192-cfb1
+CAMELLIA-256-CFB1
+camellia-256-cfb1
+CAMELLIA-128-CFB8
+camellia-128-cfb8
+CAMELLIA-192-CFB8
+camellia-192-cfb8
+CAMELLIA-256-CFB8
+camellia-256-cfb8
+CAMELLIA-128-OFB
+camellia-128-ofb
+CAMELLIA-192-OFB
+camellia-192-ofb
+CAMELLIA-256-OFB
+camellia-256-ofb
+subjectDirectoryAttributes
+X509v3 Subject Directory Attributes
+issuingDistributionPoint
+X509v3 Issuing Distribution Point
+certificateIssuer
+X509v3 Certificate Issuer
+KISA
+kisa
+SEED-ECB
+seed-ecb
+SEED-CBC
+seed-cbc
+SEED-OFB
+seed-ofb
+SEED-CFB
+seed-cfb
+HMAC-MD5
+hmac-md5
+HMAC-SHA1
+hmac-sha1
+id-PasswordBasedMAC
+password based MAC
+id-DHBasedMac
+Diffie-Hellman based MAC
+id-it-suppLangTags
+caRepository
+CA Repository
+id-smime-ct-compressedData
+id-ct-asciiTextWithCRLF
+id-aes128-wrap
+id-aes192-wrap
+id-aes256-wrap
+ecdsa-with-Recommended
+ecdsa-with-Specified
+ecdsa-with-SHA224
+ecdsa-with-SHA256
+ecdsa-with-SHA384
+ecdsa-with-SHA512
+hmacWithMD5
+hmacWithSHA224
+hmacWithSHA256
+hmacWithSHA384
+hmacWithSHA512
+dsa_with_SHA224
+dsa_with_SHA256
+whirlpool
+cryptopro
+cryptocom
+id-GostR3411-94-with-GostR3410-2001
+GOST R 34.11-94 with GOST R 34.10-2001
+id-GostR3411-94-with-GostR3410-94
+GOST R 34.11-94 with GOST R 34.10-94
+md_gost94
+GOST R 34.11-94
+id-HMACGostR3411-94
+HMAC GOST 34.11-94
+gost2001
+GOST R 34.10-2001
+gost94
+GOST R 34.10-94
+gost89
+GOST 28147-89
+gost89-cnt
+gost-mac
+GOST 28147-89 MAC
+prf-gostr3411-94
+GOST R 34.11-94 PRF
+id-GostR3410-2001DH
+GOST R 34.10-2001 DH
+id-GostR3410-94DH
+GOST R 34.10-94 DH
+id-Gost28147-89-CryptoPro-KeyMeshing
+id-Gost28147-89-None-KeyMeshing
+id-GostR3411-94-TestParamSet
+id-GostR3411-94-CryptoProParamSet
+id-Gost28147-89-TestParamSet
+id-Gost28147-89-CryptoPro-A-ParamSet
+id-Gost28147-89-CryptoPro-B-ParamSet
+id-Gost28147-89-CryptoPro-C-ParamSet
+id-Gost28147-89-CryptoPro-D-ParamSet
+id-Gost28147-89-CryptoPro-Oscar-1-1-ParamSet
+id-Gost28147-89-CryptoPro-Oscar-1-0-ParamSet
+id-Gost28147-89-CryptoPro-RIC-1-ParamSet
+id-GostR3410-94-TestParamSet
+id-GostR3410-94-CryptoPro-A-ParamSet
+id-GostR3410-94-CryptoPro-B-ParamSet
+id-GostR3410-94-CryptoPro-C-ParamSet
+id-GostR3410-94-CryptoPro-D-ParamSet
+id-GostR3410-94-CryptoPro-XchA-ParamSet
+id-GostR3410-94-CryptoPro-XchB-ParamSet
+id-GostR3410-94-CryptoPro-XchC-ParamSet
+id-GostR3410-2001-TestParamSet
+id-GostR3410-2001-CryptoPro-A-ParamSet
+id-GostR3410-2001-CryptoPro-B-ParamSet
+id-GostR3410-2001-CryptoPro-C-ParamSet
+id-GostR3410-2001-CryptoPro-XchA-ParamSet
+id-GostR3410-2001-CryptoPro-XchB-ParamSet
+id-GostR3410-94-a
+id-GostR3410-94-aBis
+id-GostR3410-94-b
+id-GostR3410-94-bBis
+id-Gost28147-89-cc
+GOST 28147-89 Cryptocom ParamSet
+gost94cc
+GOST 34.10-94 Cryptocom
+gost2001cc
+GOST 34.10-2001 Cryptocom
+id-GostR3411-94-with-GostR3410-94-cc
+GOST R 34.11-94 with GOST R 34.10-94 Cryptocom
+id-GostR3411-94-with-GostR3410-2001-cc
+GOST R 34.11-94 with GOST R 34.10-2001 Cryptocom
+id-GostR3410-2001-ParamSet-cc
+GOST R 3410-2001 Parameter Set Cryptocom
+hmac
+LocalKeySet
+Microsoft Local Key set
+freshestCRL
+X509v3 Freshest CRL
+id-on-permanentIdentifier
+Permanent Identifier
+searchGuide
+businessCategory
+postalAddress
+postOfficeBox
+physicalDeliveryOfficeName
+telephoneNumber
+telexNumber
+teletexTerminalIdentifier
+facsimileTelephoneNumber
+x121Address
+internationaliSDNNumber
+registeredAddress
+destinationIndicator
+preferredDeliveryMethod
+presentationAddress
+supportedApplicationContext
+member
+owner
+roleOccupant
+seeAlso
+userPassword
+userCertificate
+cACertificate
+authorityRevocationList
+certificateRevocationList
+crossCertificatePair
+enhancedSearchGuide
+protocolInformation
+distinguishedName
+uniqueMember
+houseIdentifier
+supportedAlgorithms
+deltaRevocationList
+dmdName
+id-alg-PWRI-KEK
+CMAC
+cmac
+id-aes128-GCM
+aes-128-gcm
+id-aes128-CCM
+aes-128-ccm
+id-aes128-wrap-pad
+id-aes192-GCM
+aes-192-gcm
+id-aes192-CCM
+aes-192-ccm
+id-aes192-wrap-pad
+id-aes256-GCM
+aes-256-gcm
+id-aes256-CCM
+aes-256-ccm
+id-aes256-wrap-pad
+AES-128-CTR
+aes-128-ctr
+AES-192-CTR
+aes-192-ctr
+AES-256-CTR
+aes-256-ctr
+id-camellia128-wrap
+id-camellia192-wrap
+id-camellia256-wrap
+anyExtendedKeyUsage
+Any Extended Key Usage
+MGF1
+mgf1
+RSASSA-PSS
+rsassaPss
+AES-128-XTS
+aes-128-xts
+AES-256-XTS
+aes-256-xts
+RC4-HMAC-MD5
+rc4-hmac-md5
+AES-128-CBC-HMAC-SHA1
+aes-128-cbc-hmac-sha1
+AES-192-CBC-HMAC-SHA1
+aes-192-cbc-hmac-sha1
+AES-256-CBC-HMAC-SHA1
+aes-256-cbc-hmac-sha1
+RSAES-OAEP
+rsaesOaep
+dhpublicnumber
+X9.42 DH
+brainpoolP160r1
+brainpoolP160t1
+brainpoolP192r1
+brainpoolP192t1
+brainpoolP224t1
+brainpoolP256t1
+brainpoolP320t1
+brainpoolP384t1
+brainpoolP512t1
+PSPECIFIED
+pSpecified
+dhSinglePass-stdDH-sha1kdf-scheme
+dhSinglePass-stdDH-sha224kdf-scheme
+dhSinglePass-stdDH-sha256kdf-scheme
+dhSinglePass-stdDH-sha384kdf-scheme
+dhSinglePass-stdDH-sha512kdf-scheme
+dhSinglePass-cofactorDH-sha1kdf-scheme
+dhSinglePass-cofactorDH-sha224kdf-scheme
+dhSinglePass-cofactorDH-sha256kdf-scheme
+dhSinglePass-cofactorDH-sha384kdf-scheme
+dhSinglePass-cofactorDH-sha512kdf-scheme
+dh-std-kdf
+dh-cofactor-kdf
+ChaCha20-Poly1305
+chacha20-poly1305
+KxRSA
+kx-rsa
+KxECDHE
+kx-ecdhe
+KxPSK
+kx-psk
+AuthRSA
+auth-rsa
+AuthECDSA
+auth-ecdsa
+AuthPSK
+auth-psk
+KxANY
+kx-any
+AuthANY
+auth-any
+ED448
+X448
+AES-128-CBC-HMAC-SHA256
+aes-128-cbc-hmac-sha256
+AES-256-CBC-HMAC-SHA256
+aes-256-cbc-hmac-sha256
+HKDF
+hkdf
+ffdhe2048
+ffdhe4096
+ffdhe3072
+ffdhe8192
+MLKEM512IPD
+MLKEM768IPD
+MLKEM1024IPD
+MLKEM512
+MLKEM768
+MLKEM1024
+X25519MLKEM768
+SecP256r1MLKEM768
+PQDSA
+SecP384r1MLKEM1024
+CCRandomGenerateBytes failed.
+
+/aws-lc/crypto/rsa_extra/rsassa_pss_asn1.c
+/aws-lc/crypto/rsa_extra/rsa_asn1.c
+rsa_asn1.c
+/aws-lc/crypto/rsa_extra/rsa_crypt.c
+/aws-lc/crypto/stack/stack.c
+/aws-lc/crypto/ube/ube.c
+kCFAllocatorNull
+CFDataCreateWithBytesNoCopy
+CFPropertyListCreateWithData
+CFPropertyListCreateFromXMLData
+CFStringCreateWithCStringNoCopy
+CFDictionaryGetValue
+CFGetTypeID
+CFStringGetTypeID
+CFStringGetCString
+CFRelease
+/System/Library/CoreServices/SystemVersion.plist
+ProductVersion
+%d.%d.%d

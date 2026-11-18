@@ -1,0 +1,28 @@
+[package]
+name = "airlift_ffi"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "airlift_ffi"
+crate-type = ["staticlib", "rlib"]
+
+[dependencies]
+# ring backend: aws-lc-rs needs cmake/nasm on the iOS cross-build, ring does not.
+idevice = { version = "0.1.68", default-features = false, features = [
+    "ring",
+    "afc",
+    "remote_pairing",
+    "rsd",
+    "tcp",
+    "tunnel_tcp_stack",
+] }
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "net", "time", "io-util"] }
+plist = "1.8"
+sha2 = "0.10"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
