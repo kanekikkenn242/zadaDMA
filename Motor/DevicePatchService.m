@@ -75,14 +75,28 @@
                                                    error:&containerError];
     if (container.length) {
         [ContainerAccess note:[NSString stringWithFormat:@"apply:container %@", container]];
+        NSError *grantError = nil;
+        int64_t grant = [ContainerAccess acquireAccessToPath:container error:&grantError];
+        [ContainerAccess note:[NSString stringWithFormat:@"apply:grant=%lld", (long long)grant]];
         NSError *mcmError = nil;
-        if ([PatchTransaction applyPackage:pkg container:container bundleID:bundleID error:&mcmError]) {
+        BOOL applied = [PatchTransaction applyPackage:pkg
+                                            container:container
+                                             bundleID:bundleID
+                                                error:&mcmError];
+        if (grant >= 0) [ContainerAccess releaseAccess:grant];
+        if (applied) {
             [ContainerAccess note:@"apply:done-mcm"];
             return YES;
         }
         [ContainerAccess note:@"apply:mcm-failed"];
         NSString *reason = mcmError.localizedFailureReason ?: mcmError.localizedDescription;
         if (reason.length) [reasons addObject:[NSString stringWithFormat:@"MCM: %@", reason]];
+        if (grant < 0) {
+            NSString *grantDetail = grantError.localizedFailureReason ?: grantError.localizedDescription;
+            if (grantDetail.length) {
+                [diagnostics addObject:[NSString stringWithFormat:@"grant: %@", grantDetail]];
+            }
+        }
         for (NSString *line in mcmError.userInfo[@"ZDMADiagnostics"]) {
             [diagnostics addObject:[NSString stringWithFormat:@"MCM: %@", line]];
         }
@@ -148,44 +162,94 @@
 + (BOOL)restoreGroup:(NSString *)group forBundleID:(NSString *)bundleID error:(NSError **)err {
     [ContainerAccess note:[NSString stringWithFormat:@"restore:begin %@ %@", bundleID, group]];
 
+    // 1. Local path first: MCM resolves the container, worse_query grants the
+    //    sandbox extension. No pairing is required when this succeeds.
+    NSError *containerError = nil;
+    NSString *localContainer = [self containerPathForBundleID:bundleID
+                                                      timeout:6.0
+                                                        error:&containerError];
+    int64_t localGrant = -1;
+    if (localContainer.length) {
+        localGrant = [ContainerAccess acquireAccessToPath:localContainer error:nil];
+        [ContainerAccess note:[NSString stringWithFormat:@"restore:local-grant=%lld",
+                               (long long)localGrant]];
+    } else {
+        [ContainerAccess note:@"restore:no-local-container"];
+    }
+
+    NSString *remoteBundle = nil;
+    NSError *bundleError = nil;
+    if ([AirliftBridge isAvailable]) {
+        remoteBundle = [AirliftBridge bundlePathForBundleID:bundleID
+                                                        log:^(NSString *line) {
+            [ContainerAccess note:[NSString stringWithFormat:@"restore-bundle: %@", line]];
+        }
+                                                      error:&bundleError];
+        if (!remoteBundle.length) {
+            [ContainerAccess note:[NSString stringWithFormat:@"restore:no-bundle %@",
+                                   bundleError.localizedFailureReason ?: bundleError.localizedDescription ?: @""]];
+        }
+    }
+
+    int64_t bundleGrant = -1;
+    if (remoteBundle.length && localGrant >= 0) {
+        bundleGrant = [ContainerAccess acquireAccessToPath:remoteBundle error:nil];
+        [ContainerAccess note:[NSString stringWithFormat:@"restore:bundle-grant=%lld",
+                               (long long)bundleGrant]];
+    }
+
+    NSError *restoreError = nil;
+    BOOL restored = NO;
+    if (localGrant >= 0) {
+        restored = [PatchTransaction restoreGroup:group
+                                         bundleID:bundleID
+                                        container:localContainer
+                                       bundlePath:remoteBundle
+                                      localAccess:YES
+                                            error:&restoreError];
+        if (restored) {
+            [ContainerAccess note:@"restore:done-local"];
+        } else {
+            [ContainerAccess note:@"restore:local-failed"];
+        }
+    }
+    if (bundleGrant >= 0) [ContainerAccess releaseAccess:bundleGrant];
+    if (localGrant >= 0) [ContainerAccess releaseAccess:localGrant];
+    if (restored) return YES;
+
+    // 2. Airlift fallback: requires the RPPairing import.
     if (![AirliftBridge isAvailable]) {
         if (err) {
-            *err = [NSError errorWithDomain:@"zadaDMA.patch" code:EACCES userInfo:@{
-                NSLocalizedDescriptionKey: @"Pairing-u mungon; origjinali nuk u kthye.",
-                NSLocalizedFailureReasonErrorKey:
-                    @"Importo rppairing.plist para se ta fikësh kartën."}];
+            NSMutableDictionary *info = [NSMutableDictionary dictionary];
+            info[NSLocalizedDescriptionKey] = @"Origjinali nuk u kthye.";
+            NSString *reason = restoreError.localizedFailureReason ?: restoreError.localizedDescription;
+            info[NSLocalizedFailureReasonErrorKey] = reason.length
+                ? reason
+                : @"Sandbox grant dështoi dhe pairing-u mungon.";
+            *err = [NSError errorWithDomain:@"zadaDMA.patch" code:EACCES userInfo:info];
         }
         [ContainerAccess note:@"restore:no-pairing"];
         return NO;
     }
 
-    NSError *restoreError = nil;
-    NSError *containerError = nil;
+    NSError *airliftContainerError = nil;
     NSString *remoteContainer = [AirliftBridge containerForBundleID:bundleID
                                                                 log:^(NSString *line) {
         [ContainerAccess note:[NSString stringWithFormat:@"restore-airlift: %@", line]];
     }
-                                                              error:&containerError];
+                                                              error:&airliftContainerError];
     if (!remoteContainer.length) {
         [ContainerAccess note:[NSString stringWithFormat:@"restore:no-container %@",
-                               containerError.localizedFailureReason ?: containerError.localizedDescription ?: @""]];
-    }
-    NSError *bundleError = nil;
-    NSString *remoteBundle = [AirliftBridge bundlePathForBundleID:bundleID
-                                                              log:^(NSString *line) {
-        [ContainerAccess note:[NSString stringWithFormat:@"restore-bundle: %@", line]];
-    }
-                                                            error:&bundleError];
-    if (!remoteBundle.length) {
-        [ContainerAccess note:[NSString stringWithFormat:@"restore:no-bundle %@",
-                               bundleError.localizedFailureReason ?: bundleError.localizedDescription ?: @""]];
+                               airliftContainerError.localizedFailureReason ?: airliftContainerError.localizedDescription ?: @""]];
     }
 
+    NSError *airliftError = nil;
     if ([PatchTransaction restoreGroup:group
                               bundleID:bundleID
                              container:remoteContainer
                             bundlePath:remoteBundle
-                                 error:&restoreError]) {
+                           localAccess:NO
+                                 error:&airliftError]) {
         [ContainerAccess note:@"restore:done"];
         return YES;
     }
@@ -199,7 +263,10 @@
         NSMutableDictionary *info = [NSMutableDictionary dictionary];
         info[NSLocalizedDescriptionKey] = [NSString stringWithFormat:
                                            @"Kthimi i origjinalit për %@ dështoi.", bundleID];
-        NSString *reason = restoreError.localizedFailureReason ?: restoreError.localizedDescription;
+        NSString *reason = airliftError.localizedFailureReason
+            ?: airliftError.localizedDescription
+            ?: restoreError.localizedFailureReason
+            ?: restoreError.localizedDescription;
         if (reason.length) info[NSLocalizedFailureReasonErrorKey] = reason;
         if (diagnostics.count) info[@"ZDMADiagnostics"] = diagnostics;
         *err = [NSError errorWithDomain:@"zadaDMA.patch" code:EIO userInfo:info];

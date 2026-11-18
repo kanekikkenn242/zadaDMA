@@ -770,6 +770,7 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
             bundleID:(NSString *)bundleID
            container:(NSString *)container
           bundlePath:(NSString *)bundlePath
+         localAccess:(BOOL)localAccess
                error:(NSError **)err {
     if (!group.length) {
         if (err) *err = [NSError errorWithDomain:@"patch" code:EINVAL
@@ -843,11 +844,23 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
             continue;
         }
         NSError *readError = nil;
-        NSData *current = [AirliftBridge readFileAtPath:path
-                                                    log:^(NSString *line) {
-            [ContainerAccess note:[NSString stringWithFormat:@"restore-read: %@", line]];
+        NSData *current = nil;
+        if (localAccess) {
+            current = [NSData dataWithContentsOfFile:path
+                                             options:0
+                                               error:&readError];
+            if (!current.length) {
+                [ContainerAccess note:[NSString stringWithFormat:@"restore:local-read-failed %@: %@",
+                                       path, readError.localizedFailureReason
+                                           ?: readError.localizedDescription ?: @""]];
+            }
+        } else {
+            current = [AirliftBridge readFileAtPath:path
+                                                log:^(NSString *line) {
+                [ContainerAccess note:[NSString stringWithFormat:@"restore-read: %@", line]];
+            }
+                                              error:&readError];
         }
-                                                  error:&readError];
         if (!current.length) {
             missing++;
             NSString *parent = [path stringByDeletingLastPathComponent];
@@ -875,25 +888,78 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
 
     NSUInteger restored = 0;
     for (NSString *parent in plan) {
-        [ContainerAccess note:[NSString stringWithFormat:@"restore:airlift %@", parent]];
-        NSError *writeError = nil;
-        BOOL ok = [AirliftBridge writeFiles:plan[parent]
-                          toTargetDirectory:parent
-                                        log:^(NSString *line) {
-            [ContainerAccess note:[NSString stringWithFormat:@"restore-airlift: %@", line]];
-        }
-                                      error:&writeError];
-        if (!ok) {
-            if (err) {
-                NSString *reason = writeError.localizedFailureReason ?: writeError.localizedDescription;
-                *err = [NSError errorWithDomain:@"patch" code:EIO userInfo:@{
-                    NSLocalizedDescriptionKey: @"originali nuk u shkrua dot",
-                    NSLocalizedFailureReasonErrorKey: reason ?: @"Airlift"}];
+        NSDictionary<NSString *, NSData *> *files = plan[parent];
+        if (localAccess) {
+            for (NSString *leaf in files) {
+                NSString *full = [parent stringByAppendingPathComponent:leaf];
+                NSData *bytes = files[leaf];
+                NSString *root = nil;
+                if (container.length && UnderRoot(container, full)) {
+                    root = container;
+                } else if (bundlePath.length && UnderRoot(bundlePath, full)) {
+                    root = bundlePath;
+                }
+                if (!root.length || RejectSymlink(root, full)) {
+                    if (err) {
+                        *err = [NSError errorWithDomain:@"patch" code:EPERM userInfo:@{
+                            NSLocalizedDescriptionKey: @"originali nuk u shkrua dot",
+                            NSLocalizedFailureReasonErrorKey: [NSString stringWithFormat:
+                                @"rruga e origjinalit është e pavlefshme: %@", full]}];
+                    }
+                    return NO;
+                }
+                NSError *writeError = nil;
+                if (![bytes writeToFile:full
+                                options:NSDataWritingAtomic
+                                  error:&writeError]) {
+                    if (err) {
+                        *err = [NSError errorWithDomain:@"patch" code:EIO userInfo:@{
+                            NSLocalizedDescriptionKey: @"originali nuk u shkrua dot",
+                            NSLocalizedFailureReasonErrorKey: writeError.localizedFailureReason
+                                ?: writeError.localizedDescription ?: full}];
+                    }
+                    [ContainerAccess note:[NSString stringWithFormat:
+                                           @"restore:local-write-failed %@", full]];
+                    return NO;
+                }
+                NSData *check = [NSData dataWithContentsOfFile:full];
+                if (!check.length ||
+                    ![SHA256Hex(check) isEqualToString:SHA256Hex(bytes)]) {
+                    if (err) {
+                        *err = [NSError errorWithDomain:@"patch" code:EIO userInfo:@{
+                            NSLocalizedDescriptionKey: @"originali nuk u verifikua dot",
+                            NSLocalizedFailureReasonErrorKey: [NSString stringWithFormat:
+                                @"SHA256 nuk përputhet pas shkrimit: %@", full]}];
+                    }
+                    [ContainerAccess note:[NSString stringWithFormat:
+                                           @"restore:local-verify-failed %@", full]];
+                    return NO;
+                }
+                [ContainerAccess note:[NSString stringWithFormat:
+                                       @"restore:local-wrote %@", full]];
             }
-            return NO;
+            restored += files.count;
+        } else {
+            [ContainerAccess note:[NSString stringWithFormat:@"restore:airlift %@", parent]];
+            NSError *writeError = nil;
+            BOOL ok = [AirliftBridge writeFiles:files
+                              toTargetDirectory:parent
+                                            log:^(NSString *line) {
+                [ContainerAccess note:[NSString stringWithFormat:@"restore-airlift: %@", line]];
+            }
+                                          error:&writeError];
+            if (!ok) {
+                if (err) {
+                    NSString *reason = writeError.localizedFailureReason ?: writeError.localizedDescription;
+                    *err = [NSError errorWithDomain:@"patch" code:EIO userInfo:@{
+                        NSLocalizedDescriptionKey: @"originali nuk u shkrua dot",
+                        NSLocalizedFailureReasonErrorKey: reason ?: @"Airlift"}];
+                }
+                return NO;
+            }
+            restored += files.count;
         }
-        restored += plan[parent].count;
-        verifiedByParent[parent] = @(verifiedByParent[parent].unsignedIntegerValue + plan[parent].count);
+        verifiedByParent[parent] = @(verifiedByParent[parent].unsignedIntegerValue + files.count);
     }
 
     // A missing path in a parent directory that also produced a verified path

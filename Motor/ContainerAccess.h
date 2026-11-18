@@ -30,9 +30,20 @@ NS_ASSUME_NONNULL_BEGIN
 /// YES when the private container API could be loaded on this OS.
 + (BOOL)isAvailable;
 
-/// Activates a sandbox extension for an already-known container path using
-/// the legacy bad_query path-traversal query.
+/// Activates a process-wide sandbox extension for an already-known path. Uses
+/// the iOS 26/27 App Group symlink query (worse_query) first, then the legacy
+/// bad_query path-traversal query.
 + (BOOL)grantAccessToPath:(NSString *)path error:(NSError **)error;
+
+/// Same grant, but scoped: the caller owns the returned sandbox-extension
+/// handle and must pass it to `releaseAccess:` when the write is done.
+/// Returns a negative value on failure.
++ (int64_t)acquireAccessToPath:(NSString *)path error:(NSError **)error;
++ (void)releaseAccess:(int64_t)handle;
+
+/// The App Group X uses for worse_query when the signing profile carries no
+/// `com.apple.security.application-groups` entitlement. Exposed for tracing.
++ (NSString *)worseQueryGroup;
 
 /// Releases all leases/extension handles held by the process.
 + (void)releaseAll;
