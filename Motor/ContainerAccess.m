@@ -742,13 +742,20 @@ static __attribute__((unused)) NSString *zdma_launchservices_container(NSString 
         [diag addObject:@"MCM: libsystem_containermanager ose simbolet mungojnë"];
     }
 
-    // Fallbacks that rely on the path-traversal grant (bad_query) or private
-    // LaunchServices calls are intentionally disabled in the write path: a
-    // wrong guess kills the process instead of returning an error. The
-    // filesystem scan is kept only as a read-only diagnostic.
+    // Fallback used by X on builds where MCM refuses to mint the class-2
+    // token: read each container's metadata plist directly and return the one
+    // whose MCMMetadataIdentifier matches. Reading another app's metadata
+    // needs the same scoped extension the write will use, so grant the data
+    // root around the scan and release it immediately afterwards.
+    int64_t scanGrant = [self acquireAccessToPath:@"/var/mobile/Containers/Data/Application"
+                                            error:nil];
+    [diag addObject:[NSString stringWithFormat:@"FS scan grant %lld", (long long)scanGrant]];
     NSString *scanned = zdma_scan_filesystem(bundleID, diag);
+    if (scanGrant >= 0) [self releaseAccess:scanGrant];
     if (scanned.length) {
-        [diag addObject:[NSString stringWithFormat:@"FS path (pa lease): %@", scanned]];
+        [diag addObject:[NSString stringWithFormat:@"FS metadata: %@", scanned]];
+        zdma_trace([NSString stringWithFormat:@"resolve:scan %@", scanned]);
+        return scanned;
     }
 
     if (error) {
