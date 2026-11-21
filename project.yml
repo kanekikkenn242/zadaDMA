@@ -51,6 +51,7 @@ targets:
         OTHER_LDFLAGS: 
           - "-ObjC"
           - "-lc++"
+          - "-lz"
           - "-lzdma_crypto"
           - "-lzdma_pairing"
           - "-lairlift_ffi"

@@ -2,6 +2,7 @@
 #import "PatchPackageCodec.h"
 #import "ContainerAccess.h"
 #import "AirliftBridge.h"
+#import "AssetSlotAnchor.h"
 #include <sys/statvfs.h>
 #include <sys/stat.h>
 #include <stdint.h>
@@ -213,6 +214,22 @@ static BOOL EnoughSpace(NSString *dir, uint64_t need, NSError **err) {
 }
 
 NSString *const PatchTransactionAirliftContainerKey = @"zadaDMA.airlift.container";
+
+/// A package is authored against one game build. When the device holds a
+/// different build of the same asset, writing the package bytes wholesale
+/// would replace the device's layout with a stale one; relocating only the
+/// bone float slots keeps the installed build intact.
+static NSData *ReanchoredBlob(NSData *blob, NSString *dst, NSData *_Nullable current) {
+    if (!blob.length || !current.length) return blob;
+    NSData *patched = [AssetSlotAnchor patchedAssetFromPackage:blob device:current];
+    if (!patched.length) {
+        [ContainerAccess note:@"reanchor:no-marker — using package asset"];
+        return blob;
+    }
+    [ContainerAccess note:[NSString stringWithFormat:@"reanchor:%@ %lu B -> %lu B",
+                           dst, (unsigned long)blob.length, (unsigned long)patched.length]];
+    return patched;
+}
 
 // ---------------------------------------------------------------------------
 // Original-file store
@@ -474,8 +491,10 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
                 return NO;
             }
             [ContainerAccess note:[NSString stringWithFormat:@"tx:target %@", full]];
-            total+=blob.length+4096;
-            [plan addObject:@{@"src":src,@"dst":full,@"blob":blob,@"digest":want?:SHA256Hex(blob),
+            NSData *current = [fm fileExistsAtPath:full] ? [NSData dataWithContentsOfFile:full] : nil;
+            NSData *effective = ReanchoredBlob(blob, dst, current);
+            total+=effective.length+4096;
+            [plan addObject:@{@"src":src,@"dst":full,@"blob":effective,@"digest":SHA256Hex(effective),
                               @"group":groupName}];
         }
     }
@@ -761,7 +780,7 @@ static NSMutableArray<NSString *> *gLastResolvedTargets;
                     }
                     [ContainerAccess note:[NSString stringWithFormat:@"original:saved %@ (%lu B)",
                                            remote, (unsigned long)original.length]];
-                    writeFiles[leaf] = blob;
+                    writeFiles[leaf] = ReanchoredBlob(blob, remote, original);
                     continue;
                 }
                 // A `{gz}` target in the app bundle is guaranteed to exist
